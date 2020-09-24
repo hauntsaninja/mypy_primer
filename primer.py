@@ -141,12 +141,18 @@ async def setup_new_and_old_mypy(
             return await get_recent_tag(repo_dir)
         return old_mypy_revision
 
-    new_mypy = BASE / "new_mypy"
-    old_mypy = BASE / "old_mypy"
-
-    return await asyncio.gather(
-        setup_mypy(new_mypy, new_mypy_revision), setup_mypy(old_mypy, get_old_revision)
+    new_mypy, old_mypy = await asyncio.gather(
+        setup_mypy(BASE / "new_mypy", new_mypy_revision),
+        setup_mypy(BASE / "old_mypy", get_old_revision),
     )
+
+    if ARGS.debug:
+        new_mypy_version = (await run([str(new_mypy), "--version"], output=True)).stdout.strip()
+        print(f"{Style.BLUE}new mypy version: {new_mypy_version}{Style.RESET}")
+        old_mypy_version = (await run([str(old_mypy), "--version"], output=True)).stdout.strip()
+        print(f"{Style.BLUE}old mypy version: {old_mypy_version}{Style.RESET}")
+
+    return new_mypy, old_mypy
 
 
 @dataclass
