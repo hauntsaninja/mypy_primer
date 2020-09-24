@@ -201,9 +201,9 @@ class Project:
 
     async def primer_result(self, new_mypy: str, old_mypy: str, project_base: Path) -> PrimerResult:
         await self.setup(project_base)
-        new_result, old_result = await asyncio.gather(
-            self.run_mypy(new_mypy, project_base), self.run_mypy(old_mypy, project_base)
-        )
+        # run them serially so that we are correctly limited by --concurrency
+        new_result = await self.run_mypy(new_mypy, project_base)
+        old_result = await self.run_mypy(old_mypy, project_base)
         return PrimerResult(self, new_result, old_result)
 
 
