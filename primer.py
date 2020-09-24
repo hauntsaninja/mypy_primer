@@ -428,8 +428,73 @@ PROJECTS = [
         failures_expected=False,
     ),
     Project(
+        url="https://github.com/scikit-learn/scikit-learn.git",
+        mypy_cmd="{mypy} sklearn",
+        failures_expected=False,
+    ),
+    Project(
+        url="https://github.com/scrapy/scrapy.git",
+        mypy_cmd="{mypy} scrapy tests",
+        failures_expected=False,
+    ),
+    Project(
+        url="https://github.com/pypa/twine.git",
+        mypy_cmd="{mypy} twine",
+        failures_expected=False,
+    ),
+    Project(
+        url="https://github.com/more-itertools/more-itertools.git",
+        mypy_cmd="{mypy} more_itertools",
+        failures_expected=False,
+    ),
+    Project(
+        url="https://github.com/pydata/xarray.git",
+        mypy_cmd="{mypy} .",
+        failures_expected=False,
+    ),
+    Project(
+        url="https://github.com/pallets/werkzeug.git",
+        mypy_cmd="{mypy} src/werkzeug tests",
+        failures_expected=False,
+    ),
+    Project(
+        url="https://github.com/bokeh/bokeh.git",
+        mypy_cmd="{mypy} bokeh release",
+        failures_expected=False,
+    ),
+    Project(
         url="https://github.com/mystor/git-revise.git",
         mypy_cmd="{mypy} gitrevise",
+        failures_expected=False,
+    ),
+    Project(
+        url="https://github.com/PyGithub/PyGithub.git",
+        mypy_cmd="{mypy} github tests",
+        failures_expected=False,
+    ),
+    Project(
+        url="https://github.com/we-like-parsers/pegen.git",
+        mypy_cmd="{mypy}",
+        failures_expected=False,
+    ),
+    Project(
+        url="https://github.com/zulip/zulip.git",
+        mypy_cmd="{mypy} zerver zilencer zproject zthumbor tools analytics corporate scripts --platform=linux",
+        failures_expected=False,
+    ),
+    Project(
+        url="https://github.com/dropbox/stone.git",
+        mypy_cmd="{mypy} stone test",
+        failures_expected=False,
+    ),
+    Project(
+        url="https://github.com/yelp/paasta.git",
+        mypy_cmd="{mypy} paasta_tools",
+        failures_expected=False,
+    ),
+    Project(
+        url="https://github.com/PrefectHQ/prefect.git",
+        mypy_cmd="{mypy} src",
         failures_expected=False,
     ),
     # failures expected...
@@ -442,11 +507,29 @@ PROJECTS = [
         url="https://github.com/pypa/pip.git",
         mypy_cmd="{mypy} src",
     ),
+    Project(
+        # relies on setup.py to create a version.py file
+        url="https://github.com/pytorch/vision.git",
+        mypy_cmd="{mypy}",
+    ),
+    # TODO: needs mypy-zope
     # Project(
-    #     url="https://github.com/scipy/scipy.git",
-    #     mypy_cmd="{mypy} scipy",
-    #     deps=["git+git://github.com/numpy/numpy-stubs.git@master"],
+    #     url="https://github.com/twisted/twisted.git",
+    #     mypy_cmd="{mypy} src",
     # ),
+    Project(
+        url="https://github.com/tornadoweb/tornado.git",
+        mypy_cmd="{mypy} tornado",
+    ),
+    Project(
+        url="https://github.com/sympy/sympy.git",
+        mypy_cmd="{mypy} sympy",
+    ),
+    Project(
+        url="https://github.com/scipy/scipy.git",
+        mypy_cmd="{mypy} scipy",
+        deps=["git+git://github.com/numpy/numpy-stubs.git@master"],
+    ),
 ]
 
 
