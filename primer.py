@@ -168,8 +168,8 @@ class Project:
     mypy_cmd: str
     revision: Optional[str] = None
     deps: Optional[List[str]] = None
-    # if failures_expected, there is no recent version of mypy which passes cleanly
-    failures_expected: bool = True
+    # if expected_success, there is a recent version of mypy which passes cleanly
+    expected_success: bool = False
 
     @property
     def name(self) -> str:
@@ -210,11 +210,9 @@ class Project:
             cwd=project_base / self.name,
             env=env,
         )
-        if proc.returncode:
-            status = "unexpected failure" if not self.failures_expected else "failure"
-        else:
-            status = "success"
-        return MypyResult(mypy_cmd, status, proc.stderr + proc.stdout)
+        return MypyResult(
+            mypy_cmd, proc.stderr + proc.stdout, not bool(proc.returncode), self.expected_success
+        )
 
     async def primer_result(self, new_mypy: str, old_mypy: str, project_base: Path) -> PrimerResult:
         await self.setup(project_base)
@@ -241,12 +239,13 @@ for source in sources:
 @dataclass
 class MypyResult:
     command: str
-    status: str
     output: str
+    success: bool
+    expected_success: bool
 
     def __str__(self) -> str:
         ret = "> " + self.command + "\n"
-        if self.status == "unexpected failure":
+        if self.expected_success and not self.success:
             ret += f"\t{Style.RED}{Style.BOLD}UNEXPECTED FAILURE{Style.RESET}\n"
         ret += textwrap.indent(self.output, "\t")
         return ret
@@ -325,8 +324,8 @@ async def primer() -> None:
         project_iter = (
             p for p in project_iter if re.search(ARGS.project_selector, p.url, flags=re.I)
         )
-    if ARGS.success_expected:
-        project_iter = (p for p in project_iter if not p.failures_expected)
+    if ARGS.expected_success:
+        project_iter = (p for p in project_iter if p.expected_success)
     if ARGS.project_date:
         project_iter = (replace(p, revision=ARGS.project_date) for p in project_iter)
 
@@ -357,6 +356,8 @@ async def primer() -> None:
         for project in project_iter
     )
     async for result in yield_with_max_concurrency(results, concurrency):
+        if ARGS.old_success and not result.old_result.success:
+            continue
         print(result)
 
 
@@ -377,14 +378,17 @@ def main() -> None:
     proj_group = parser.add_argument_group("project filtration")
     proj_group.add_argument("-k", "--project-selector", help="regex to filter projects")
     proj_group.add_argument(
-        "--success-expected",
+        "--expected-success",
         action="store_true",
-        help="filter out projects where we could expect failures",
+        help="filter to projects where a recent mypy version succeeded",
     )
 
     output_group = parser.add_argument_group("output")
     output_group.add_argument(
-        "--diff-only", action="store_true", help="only output diff in mypy output"
+        "--old-success", action="store_true", help="only output if old mypy run was successful"
+    )
+    output_group.add_argument(
+        "--diff-only", action="store_true", help="only output the diff between mypy runs"
     )
 
     misc_group = parser.add_argument_group("misc")
@@ -415,54 +419,54 @@ PROJECTS = [
         url="https://github.com/python/mypy.git",
         mypy_cmd="{mypy} --config-file mypy_self_check.ini -p mypy -p mypyc",
         deps=["pytest"],
-        failures_expected=False,
+        expected_success=True,
     ),
     Project(
         url="https://github.com/psf/black.git",
         mypy_cmd="{mypy} src",
-        failures_expected=False,
+        expected_success=True,
     ),
     Project(
         url="https://github.com/hauntsaninja/pyp.git",
         mypy_cmd="{mypy} --strict -m pyp",
-        failures_expected=False,
+        expected_success=True,
     ),
     Project(
         url="https://github.com/hauntsaninja/boostedblob.git",
         mypy_cmd="{mypy} boostedblob",
-        failures_expected=False,
+        expected_success=True,
     ),
     Project(
         url="https://github.com/pytest-dev/pytest.git",
         mypy_cmd="{mypy} src testing",
-        failures_expected=False,
+        expected_success=True,
     ),
     Project(
         url="https://github.com/pandas-dev/pandas.git",
         mypy_cmd="{mypy} pandas",
-        failures_expected=False,
+        expected_success=True,
     ),
     Project(
         url="https://github.com/pycqa/pylint.git",
         mypy_cmd="{mypy} pylint/checkers --ignore-missing-imports",
-        failures_expected=False,
+        expected_success=True,
     ),
     Project(
         url="https://github.com/aio-libs/aiohttp.git",
         mypy_cmd="{mypy} aiohttp",
         deps=["-rrequirements/ci-wheel.txt"],
-        failures_expected=False,
+        expected_success=True,
     ),
     Project(
         url="https://github.com/pypa/bandersnatch.git",
         mypy_cmd="{mypy} src src/bandersnatch/tests",
-        failures_expected=False,
+        expected_success=True,
     ),
     Project(
         url="https://github.com/quora/asynq.git",
         mypy_cmd="{mypy} asynq",
         deps=["-rrequirements.txt"],
-        failures_expected=False,
+        expected_success=True,
     ),
     Project(
         url="https://github.com/python-attrs/attrs.git",
@@ -471,83 +475,83 @@ PROJECTS = [
             " src/attr/exceptions.pyi src/attr/filters.pyi src/attr/setters.pyi"
             " src/attr/validators.pyi tests/typing_example.py"
         ),
-        failures_expected=False,
+        expected_success=True,
     ),
     Project(
         url="https://github.com/sphinx-doc/sphinx.git",
         mypy_cmd="{mypy} sphinx",
         deps=["docutils-stubs"],
-        failures_expected=False,
+        expected_success=True,
     ),
     Project(
         url="https://github.com/scikit-learn/scikit-learn.git",
         mypy_cmd="{mypy} sklearn",
-        failures_expected=False,
+        expected_success=True,
     ),
     Project(
         url="https://github.com/scrapy/scrapy.git",
         mypy_cmd="{mypy} scrapy tests",
-        failures_expected=False,
+        expected_success=True,
     ),
     Project(
         url="https://github.com/pypa/twine.git",
         mypy_cmd="{mypy} twine",
-        failures_expected=False,
+        expected_success=True,
     ),
     Project(
         url="https://github.com/more-itertools/more-itertools.git",
         mypy_cmd="{mypy} more_itertools",
-        failures_expected=False,
+        expected_success=True,
     ),
     Project(
         url="https://github.com/pydata/xarray.git",
         mypy_cmd="{mypy} .",
-        failures_expected=False,
+        expected_success=True,
     ),
     Project(
         url="https://github.com/pallets/werkzeug.git",
         mypy_cmd="{mypy} src/werkzeug tests",
-        failures_expected=False,
+        expected_success=True,
     ),
     Project(
         url="https://github.com/bokeh/bokeh.git",
         mypy_cmd="{mypy} bokeh release",
-        failures_expected=False,
+        expected_success=True,
     ),
     Project(
         url="https://github.com/mystor/git-revise.git",
         mypy_cmd="{mypy} gitrevise",
-        failures_expected=False,
+        expected_success=True,
     ),
     Project(
         url="https://github.com/PyGithub/PyGithub.git",
         mypy_cmd="{mypy} github tests",
-        failures_expected=False,
+        expected_success=True,
     ),
     Project(
         url="https://github.com/we-like-parsers/pegen.git",
         mypy_cmd="{mypy}",
-        failures_expected=False,
+        expected_success=True,
     ),
     Project(
         url="https://github.com/zulip/zulip.git",
         mypy_cmd="{mypy} zerver zilencer zproject zthumbor tools analytics corporate scripts --platform=linux",
-        failures_expected=False,
+        expected_success=True,
     ),
     Project(
         url="https://github.com/dropbox/stone.git",
         mypy_cmd="{mypy} stone test",
-        failures_expected=False,
+        expected_success=True,
     ),
     Project(
         url="https://github.com/yelp/paasta.git",
         mypy_cmd="{mypy} paasta_tools",
-        failures_expected=False,
+        expected_success=True,
     ),
     Project(
         url="https://github.com/PrefectHQ/prefect.git",
         mypy_cmd="{mypy} src",
-        failures_expected=False,
+        expected_success=True,
     ),
     # failures expected...
     Project(
