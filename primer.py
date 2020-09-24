@@ -47,7 +47,7 @@ async def run(
     cmd: List[str], output: bool = False, check: bool = True, **kwargs: Any
 ) -> subprocess.CompletedProcess[str]:
     if ARGS.debug:
-        log = " ".join(cmd)
+        log = " ".join(map(shlex.quote, cmd))
         log = f"{Style.BLUE}{log}"
         if "cwd" in kwargs:
             log += f"\t{Style.DIM} in {kwargs['cwd']}"
@@ -68,6 +68,13 @@ async def run(
     if check and proc.returncode:
         raise subprocess.CalledProcessError(proc.returncode, cmd, output=stdout, stderr=stderr)
     return subprocess.CompletedProcess(cmd, proc.returncode, stdout, stderr)
+
+
+def line_count(path: Path) -> int:
+    buf_size = 1024 * 1024
+    with open(path, "rb") as f:
+        buf_iter = iter(lambda: f.raw.read(buf_size), b"")  # type: ignore
+        return sum(buf.count(b"\n") for buf in buf_iter)
 
 
 async def clone(repo_url: str, cwd: Path, shallow: bool = False) -> None:
@@ -180,9 +187,9 @@ class Project:
             for dep in self.deps:
                 await run([str(venv_dir / "bin" / "pip"), "install", dep], cwd=repo_dir)
 
-    async def run_mypy(self, mypy: str, project_base: Path) -> MypyResult:
+    def get_mypy_cmd(self, mypy: str, project_base: Path) -> str:
         mypy_cmd = self.mypy_cmd
-        assert "{mypy}" in mypy_cmd
+        assert mypy_cmd.startswith("{mypy}")
         if self.deps:
             python_exe = self.venv_dir(project_base) / "bin" / "python"
             mypy_cmd += f" --python-executable={python_exe}"
@@ -190,6 +197,10 @@ class Project:
             mypy_cmd += f" --custom-typeshed-dir={ARGS.custom_typeshed_dir}"
         mypy_cmd += " --no-incremental --cache-dir=/dev/null"
         mypy_cmd = mypy_cmd.format(mypy=mypy)
+        return mypy_cmd
+
+    async def run_mypy(self, mypy: str, project_base: Path) -> MypyResult:
+        mypy_cmd = self.get_mypy_cmd(mypy, project_base)
         env = os.environ.copy()
         env["MYPY_FORCE_COLOR"] = "1"
         proc = await run(
@@ -203,7 +214,7 @@ class Project:
             status = "unexpected failure" if not self.failures_expected else "failure"
         else:
             status = "success"
-        return MypyResult(mypy_cmd, status, proc.stdout)
+        return MypyResult(mypy_cmd, status, proc.stderr + proc.stdout)
 
     async def primer_result(self, new_mypy: str, old_mypy: str, project_base: Path) -> PrimerResult:
         await self.setup(project_base)
@@ -211,6 +222,20 @@ class Project:
         new_result = await self.run_mypy(new_mypy, project_base)
         old_result = await self.run_mypy(old_mypy, project_base)
         return PrimerResult(self, new_result, old_result)
+
+    async def source_paths(self, mypy_python: str, project_base: Path) -> List[Path]:
+        await self.setup(project_base)
+        mypy_cmd = self.get_mypy_cmd("mypy", project_base)
+        program = f"""
+import io, mypy.fscache, mypy.main
+args = "{mypy_cmd}".split()[1:]
+sources, _ = mypy.main.process_options(args, io.StringIO(), io.StringIO(), fscache=mypy.fscache.FileSystemCache())
+for source in sources:
+    if source.path is not None:  # can happen for modules...
+        print(source.path)
+"""
+        proc = await run([mypy_python, "-c", program], output=True, cwd=project_base / self.name)
+        return [project_base / self.name / p for p in proc.stdout.splitlines()]
 
 
 @dataclass
@@ -305,14 +330,32 @@ async def primer() -> None:
     if ARGS.project_date:
         project_iter = (replace(p, revision=ARGS.project_date) for p in project_iter)
 
+    concurrency = ARGS.concurrency
+    if not concurrency:
+        concurrency = multiprocessing.cpu_count()
+
+    if ARGS.coverage:
+        projects = list(project_iter)
+        mypy_python = str(new_mypy.parent / "python")
+        all_paths = [
+            path
+            async for paths in yield_with_max_concurrency(
+                (project.source_paths(mypy_python, project_base) for project in projects),
+                concurrency,
+            )
+            for path in paths
+        ]
+        num_lines = sum(map(line_count, all_paths))
+
+        print(f"Checking {len(projects)} projects...")
+        print(f"Containing {len(all_paths)} files...")
+        print(f"Totalling to {num_lines} lines...")
+        return
+
     results = (
         project.primer_result(str(new_mypy), str(old_mypy), project_base)
         for project in project_iter
     )
-
-    concurrency = ARGS.concurrency
-    if not concurrency:
-        concurrency = multiprocessing.cpu_count()
     async for result in yield_with_max_concurrency(results, concurrency):
         print(result)
 
@@ -356,6 +399,9 @@ def main() -> None:
     primer_group.add_argument("--debug", action="store_true", help="print commands as they run")
     primer_group.add_argument(
         "--clear", action="store_true", help="delete previously used repos and venvs"
+    )
+    primer_group.add_argument(
+        "--coverage", action="store_true", help="print files and lines covered"
     )
 
     global ARGS
