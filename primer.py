@@ -316,30 +316,39 @@ ARGS: argparse.Namespace
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--new", help="new mypy version, defaults to HEAD")
-    parser.add_argument("--old", help="old mypy version, defaults to latest tag")
-    parser.add_argument(
+
+    mypy_group = parser.add_argument_group("mypy")
+    mypy_group.add_argument("--new", help="new mypy version, defaults to HEAD")
+    mypy_group.add_argument("--old", help="old mypy version, defaults to latest tag")
+    mypy_group.add_argument(
         "--repo", default="https://github.com/python/mypy.git", help="mypy repo to use"
     )
-    parser.add_argument("--custom-typeshed-dir", help="typeshed directory to use")
+    mypy_group.add_argument("--custom-typeshed-dir", help="typeshed directory to use")
 
-    parser.add_argument("-k", "--project-selector", help="regex to filter projects")
-    parser.add_argument(
+    proj_group = parser.add_argument_group("project filtration")
+    proj_group.add_argument("-k", "--project-selector", help="regex to filter projects")
+    proj_group.add_argument(
         "--success-expected",
         action="store_true",
         help="filter out projects where we could expect failures",
     )
 
-    parser.add_argument(
-        "--project-date", help="check out all projects on a given date, in case of bitrot"
+    output_group = parser.add_argument_group("output")
+    output_group.add_argument(
+        "--diff-only", action="store_true", help="only output diff in mypy output"
     )
-    parser.add_argument("--diff-only", action="store_true", help="only output diff in mypy output")
 
-    parser.add_argument(
+    misc_group = parser.add_argument_group("misc")
+    misc_group.add_argument(
+        "--project-date", help="checkout projects on a given date, in case of bitrot"
+    )
+
+    primer_group = parser.add_argument_group("primer")
+    primer_group.add_argument(
         "-j", "--concurrency", default=0, type=int, help="number of subprocesses to use at a time"
     )
-    parser.add_argument("--debug", action="store_true", help="print commands as they run")
-    parser.add_argument(
+    primer_group.add_argument("--debug", action="store_true", help="print commands as they run")
+    primer_group.add_argument(
         "--clear", action="store_true", help="delete previously used repos and venvs"
     )
 
