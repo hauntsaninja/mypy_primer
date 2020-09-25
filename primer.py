@@ -21,6 +21,7 @@ from typing import (
     AsyncIterator,
     Awaitable,
     Callable,
+    Dict,
     Iterator,
     List,
     Optional,
@@ -330,6 +331,47 @@ def select_projects() -> Iterator[Project]:
     return project_iter
 
 
+async def bisect() -> None:
+    mypy_exe = await setup_mypy(
+        ARGS.base_dir / "bisect_mypy", revision_or_recent_tag_fn(ARGS.old), editable=True
+    )
+    repo_dir = ARGS.base_dir / "bisect_mypy" / "mypy"
+    assert repo_dir.is_dir()
+
+    projects = list(select_projects())
+    await asyncio.wait([project.setup() for project in projects])
+
+    async def run_wrapper(project: Project) -> Tuple[Project, MypyResult]:
+        return project, (await project.run_mypy(str(mypy_exe)))
+
+    results_fut = await asyncio.gather(*(run_wrapper(project) for project in projects))
+    old_results: Dict[Project, MypyResult] = dict(results_fut)
+
+    await run(["git", "bisect", "reset"], cwd=repo_dir)
+    await run(["git", "bisect", "start"], cwd=repo_dir)
+    await run(["git", "bisect", "good"], cwd=repo_dir)
+    new_revision = await get_revision_for_revision_or_date(ARGS.new or "origin/HEAD", repo_dir)
+    await run(["git", "bisect", "bad", new_revision], cwd=repo_dir)
+
+    def are_results_good(results: Dict[Project, MypyResult]) -> bool:
+        return all(results[project].output == old_results[project].output for project in projects)
+
+    while True:
+        await run(["git", "submodule", "update", "--init"], cwd=repo_dir)
+        results_fut = await asyncio.gather(*(run_wrapper(project) for project in projects))
+        results: Dict[Project, MypyResult] = dict(results_fut)
+
+        state = "good" if are_results_good(results) else "bad"
+        proc = await run(["git", "bisect", state], output=True, cwd=repo_dir)
+
+        if ARGS.debug:
+            print(f"{Style.BLUE}{proc.stdout}{Style.RESET}")
+
+        if "first bad commit" in proc.stdout:
+            print(proc.stdout)
+            return
+
+
 async def coverage() -> None:
     mypy_exe = await setup_mypy(ARGS.base_dir / "new_mypy", ARGS.new)
 
@@ -417,6 +459,7 @@ def main() -> None:
     primer_group.add_argument(
         "--coverage", action="store_true", help="find files and lines covered"
     )
+    primer_group.add_argument("--bisect", action="store_true", help="find bad mypy revision")
 
     global ARGS
     ARGS = parser.parse_args(sys.argv[1:])
@@ -429,6 +472,8 @@ def main() -> None:
 
     if ARGS.coverage:
         asyncio.run(coverage())
+    elif ARGS.bisect:
+        asyncio.run(bisect())
     else:
         asyncio.run(primer())
 
