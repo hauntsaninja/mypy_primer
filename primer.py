@@ -22,12 +22,24 @@ T = TypeVar("T")
 RevisionLike = Union[str, None, Callable[[Path], Awaitable[str]]]
 
 
+# ==============================
+# utils
+# ==============================
+
+
 class Style(str, Enum):
     RED = "\033[91m"
     BLUE = "\033[94m"
     BOLD = "\033[1m"
     DIM = "\033[2m"
     RESET = "\033[0m"
+
+
+def strip_colour_code(text: str) -> str:
+    return re.sub("\\x1b.*?m", "", text)
+
+
+_semaphore: Optional[asyncio.Semaphore] = None
 
 
 async def run(
@@ -40,9 +52,10 @@ async def run(
         kwargs.setdefault("stdout", subprocess.DEVNULL)
         kwargs.setdefault("stderr", subprocess.DEVNULL)
 
-    if not hasattr(ARGS, "semaphore"):
-        ARGS.semaphore = asyncio.BoundedSemaphore(ARGS.concurrency)
-    async with ARGS.semaphore:
+    global _semaphore
+    if _semaphore is None:
+        _semaphore = asyncio.BoundedSemaphore(ARGS.concurrency)
+    async with _semaphore:
         if ARGS.debug:
             log = " ".join(map(shlex.quote, cmd))
             log = f"{Style.BLUE}{log}"
@@ -67,6 +80,11 @@ def line_count(path: Path) -> int:
     with open(path, "rb") as f:
         buf_iter = iter(lambda: f.raw.read(buf_size), b"")  # type: ignore
         return sum(buf.count(b"\n") for buf in buf_iter)
+
+
+# ==============================
+# git utils
+# ==============================
 
 
 async def clone(repo_url: str, cwd: Path, shallow: bool = False) -> None:
@@ -131,6 +149,15 @@ async def get_recent_tag(repo_dir: Path) -> str:
     return proc.stdout.strip()
 
 
+def revision_or_recent_tag_fn(revision: Optional[str]) -> RevisionLike:
+    return revision if revision is not None else get_recent_tag
+
+
+# ==============================
+# mypy utils
+# ==============================
+
+
 async def setup_mypy(mypy_dir: Path, revision_like: RevisionLike, editable: bool = False) -> Path:
     mypy_dir.mkdir(exist_ok=True)
     repo_dir = await ensure_repo_at_revision(ARGS.repo, mypy_dir, revision_like)
@@ -146,12 +173,6 @@ async def setup_mypy(mypy_dir: Path, revision_like: RevisionLike, editable: bool
     mypy_exe = venv_dir / "bin" / "mypy"
     assert mypy_exe.exists()
     return mypy_exe
-
-
-def revision_or_recent_tag_fn(revision: Optional[str]) -> RevisionLike:
-    if revision is not None:
-        return revision
-    return get_recent_tag
 
 
 async def setup_new_and_old_mypy(
@@ -171,6 +192,11 @@ async def setup_new_and_old_mypy(
         print(f"{Style.BLUE}old mypy version: {old_version.stdout.strip()}{Style.RESET}")
 
     return new_mypy, old_mypy
+
+
+# ==============================
+# classes
+# ==============================
 
 
 @dataclass(frozen=True)
@@ -238,7 +264,8 @@ class Project:
         program = f"""
 import io, mypy.fscache, mypy.main
 args = "{mypy_cmd}".split()[1:]
-sources, _ = mypy.main.process_options(args, io.StringIO(), io.StringIO(), fscache=mypy.fscache.FileSystemCache())
+fscache = mypy.fscache.FileSystemCache()
+sources, _ = mypy.main.process_options(args, io.StringIO(), io.StringIO(), fscache=fscache)
 for source in sources:
     if source.path is not None:  # can happen for modules...
         print(source.path)
@@ -297,6 +324,11 @@ class PrimerResult:
         return ret
 
 
+# ==============================
+# main logic
+# ==============================
+
+
 def select_projects() -> Iterator[Project]:
     project_iter = (p for p in PROJECTS)
     if ARGS.project_selector:
@@ -335,7 +367,7 @@ async def bisect() -> None:
     def are_results_good(results: Dict[Project, MypyResult]) -> bool:
         if ARGS.bisect_error:
             return not any(
-                re.search(ARGS.bisect_error, re.sub("\\x1b.*?m", "", results[project].output))
+                re.search(ARGS.bisect_error, strip_colour_code(results[project].output))
                 for project in projects
             )
         return all(results[project].output == old_results[project].output for project in projects)
@@ -391,10 +423,7 @@ async def primer() -> None:
         print(result)
 
 
-ARGS: argparse.Namespace
-
-
-def main() -> None:
+def parse_options(argv: List[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser()
 
     mypy_group = parser.add_argument_group("mypy")
@@ -450,8 +479,15 @@ def main() -> None:
         "--bisect-error", help="find bad mypy revision based on an error regex"
     )
 
+    return parser.parse_args(argv)
+
+
+ARGS: argparse.Namespace
+
+
+def main() -> None:
     global ARGS
-    ARGS = parser.parse_args(sys.argv[1:])
+    ARGS = parse_options(sys.argv[1:])
 
     if ARGS.base_dir.exists() and ARGS.clear:
         shutil.rmtree(ARGS.base_dir)
@@ -467,6 +503,11 @@ def main() -> None:
         coro = primer()
 
     asyncio.run(coro)
+
+
+# ==============================
+# project definitions
+# ==============================
 
 
 PROJECTS = [
@@ -590,7 +631,10 @@ PROJECTS = [
     ),
     Project(
         url="https://github.com/zulip/zulip.git",
-        mypy_cmd="{mypy} zerver zilencer zproject zthumbor tools analytics corporate scripts --platform=linux",
+        mypy_cmd=(
+            "{mypy} zerver zilencer zproject zthumbor tools analytics corporate scripts"
+            " --platform=linux"
+        ),
         expected_success=True,
     ),
     Project(
