@@ -519,7 +519,11 @@ def main() -> None:
     else:
         coro = primer()
 
-    asyncio.run(coro)
+    try:
+        asyncio.run(coro)
+    finally:
+        if ARGS.base_dir.exists() and ARGS.clear:
+            shutil.rmtree(ARGS.base_dir)
 
 
 # ==============================
