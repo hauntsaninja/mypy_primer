@@ -117,11 +117,18 @@ async def ensure_repo_at_revision(repo_url: str, cwd: Path, revision_like: Revis
         await clone(repo_url, cwd, shallow=revision_like is None)
     assert repo_dir.is_dir()
 
-    # TODO: could fail if we had a shallow clone
-    revision = (await revision_like(repo_dir)) if callable(revision_like) else revision_like
-    if revision is not None:
-        revision = await get_revision_for_revision_or_date(revision, repo_dir)
-        await checkout(revision, repo_dir)
+    for retry in (True, False):
+        try:
+            revision = (await revision_like(repo_dir)) if callable(revision_like) else revision_like
+            if revision is not None:
+                revision = await get_revision_for_revision_or_date(revision, repo_dir)
+                await checkout(revision, repo_dir)
+        except subprocess.CalledProcessError:
+            if retry:
+                await run(["git", "fetch", "--unshallow"], cwd=repo_dir)
+                continue
+            raise
+        break
     return repo_dir
 
 
