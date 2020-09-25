@@ -333,7 +333,14 @@ async def bisect() -> None:
     await run(["git", "bisect", "bad", new_revision], cwd=repo_dir)
 
     def are_results_good(results: Dict[Project, MypyResult]) -> bool:
+        if ARGS.bisect_error:
+            return not any(
+                re.search(ARGS.bisect_error, re.sub("\\x1b.*?m", "", results[project].output))
+                for project in projects
+            )
         return all(results[project].output == old_results[project].output for project in projects)
+
+    assert are_results_good(old_results)
 
     while True:
         await run(["git", "submodule", "update", "--init"], cwd=repo_dir)
@@ -439,6 +446,9 @@ def main() -> None:
         "--coverage", action="store_true", help="find files and lines covered"
     )
     primer_group.add_argument("--bisect", action="store_true", help="find bad mypy revision")
+    primer_group.add_argument(
+        "--bisect-error", help="find bad mypy revision based on an error regex"
+    )
 
     global ARGS
     ARGS = parser.parse_args(sys.argv[1:])
@@ -451,7 +461,7 @@ def main() -> None:
 
     if ARGS.coverage:
         coro = coverage()
-    elif ARGS.bisect:
+    elif ARGS.bisect or ARGS.bisect_error:
         coro = bisect()
     else:
         coro = primer()
