@@ -16,7 +16,19 @@ from dataclasses import dataclass, replace
 from datetime import date
 from enum import Enum
 from pathlib import Path
-from typing import Any, Awaitable, Callable, Dict, Iterator, List, Optional, Tuple, TypeVar, Union
+from typing import (
+    Any,
+    Awaitable,
+    Callable,
+    Dict,
+    Iterator,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    TypeVar,
+    Union,
+)
 
 T = TypeVar("T")
 RevisionLike = Union[str, None, Callable[[Path], Awaitable[str]]]
@@ -224,20 +236,20 @@ class Project:
             for dep in self.deps:
                 await run([str(self.venv_dir / "bin" / "pip"), "install", dep], cwd=repo_dir)
 
-    def get_mypy_cmd(self, mypy: str) -> str:
+    def get_mypy_cmd(self, mypy: str, additional_flags: Sequence[str] = ()) -> str:
         mypy_cmd = self.mypy_cmd
         assert mypy_cmd.startswith("{mypy}")
         if self.deps:
             python_exe = self.venv_dir / "bin" / "python"
             mypy_cmd += f" --python-executable={python_exe}"
-        if ARGS.custom_typeshed_dir:
-            mypy_cmd += f" --custom-typeshed-dir={ARGS.custom_typeshed_dir}"
+        if additional_flags:
+            mypy_cmd += " " + " ".join(additional_flags)
         mypy_cmd += " --no-incremental --cache-dir=/dev/null"
         mypy_cmd = mypy_cmd.format(mypy=mypy)
         return mypy_cmd
 
-    async def run_mypy(self, mypy: str) -> MypyResult:
-        mypy_cmd = self.get_mypy_cmd(mypy)
+    async def run_mypy(self, mypy: str, additional_flags: Sequence[str] = ()) -> MypyResult:
+        mypy_cmd = self.get_mypy_cmd(mypy, additional_flags)
         env = os.environ.copy()
         env["MYPY_FORCE_COLOR"] = "1"
         proc = await run(
@@ -253,8 +265,11 @@ class Project:
 
     async def primer_result(self, new_mypy: str, old_mypy: str) -> PrimerResult:
         await self.setup()
+        new_additional_flags = []
+        if ARGS.new_custom_typeshed_dir:
+            new_additional_flags = [f"--custom-typeshed-dir={ARGS.new_custom_typeshed_dir}"]
         new_result, old_result = await asyncio.gather(
-            self.run_mypy(new_mypy), self.run_mypy(old_mypy)
+            self.run_mypy(new_mypy, new_additional_flags), self.run_mypy(old_mypy)
         )
         return PrimerResult(self, new_result, old_result)
 
@@ -353,7 +368,7 @@ async def bisect() -> None:
     await asyncio.wait([project.setup() for project in projects])
 
     async def run_wrapper(project: Project) -> Tuple[Project, MypyResult]:
-        return project, (await project.run_mypy(str(mypy_exe)))
+        return project, (await project.run_mypy(str(mypy_exe), ARGS.new_custom_typeshed_dir))
 
     results_fut = await asyncio.gather(*(run_wrapper(project) for project in projects))
     old_results: Dict[Project, MypyResult] = dict(results_fut)
@@ -432,7 +447,9 @@ def parse_options(argv: List[str]) -> argparse.Namespace:
     mypy_group.add_argument(
         "--repo", default="https://github.com/python/mypy.git", help="mypy repo to use"
     )
-    mypy_group.add_argument("--custom-typeshed-dir", help="typeshed directory to use")
+    mypy_group.add_argument(
+        "--new-custom-typeshed-dir", help="typeshed directory to use with new mypy"
+    )
 
     proj_group = parser.add_argument_group("project selection")
     proj_group.add_argument("-k", "--project-selector", help="regex to filter projects")
