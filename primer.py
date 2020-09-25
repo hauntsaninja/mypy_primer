@@ -16,19 +16,7 @@ from dataclasses import dataclass, replace
 from datetime import date
 from enum import Enum
 from pathlib import Path
-from typing import (
-    Any,
-    AsyncIterator,
-    Awaitable,
-    Callable,
-    Dict,
-    Iterator,
-    List,
-    Optional,
-    Tuple,
-    TypeVar,
-    Union,
-)
+from typing import Any, Awaitable, Callable, Dict, Iterator, List, Optional, Tuple, TypeVar, Union
 
 T = TypeVar("T")
 RevisionLike = Union[str, None, Callable[[Path], Awaitable[str]]]
@@ -45,22 +33,27 @@ class Style(str, Enum):
 async def run(
     cmd: List[str], output: bool = False, check: bool = True, **kwargs: Any
 ) -> subprocess.CompletedProcess[str]:
-    if ARGS.debug:
-        log = " ".join(map(shlex.quote, cmd))
-        log = f"{Style.BLUE}{log}"
-        if "cwd" in kwargs:
-            log += f"\t{Style.DIM} in {kwargs['cwd']}"
-        log += Style.RESET
-        print(log)
-
     if output:
         kwargs["stdout"] = subprocess.PIPE
         kwargs["stderr"] = subprocess.PIPE
     else:
         kwargs.setdefault("stdout", subprocess.DEVNULL)
         kwargs.setdefault("stderr", subprocess.DEVNULL)
-    proc = await asyncio.create_subprocess_exec(*cmd, **kwargs)
-    stdout_b, stderr_b = await proc.communicate()
+
+    if not hasattr(ARGS, "semaphore"):
+        ARGS.semaphore = asyncio.BoundedSemaphore(ARGS.concurrency)
+    async with ARGS.semaphore:
+        if ARGS.debug:
+            log = " ".join(map(shlex.quote, cmd))
+            log = f"{Style.BLUE}{log}"
+            if "cwd" in kwargs:
+                log += f"\t{Style.DIM} in {kwargs['cwd']}"
+            log += Style.RESET
+            print(log)
+
+        proc = await asyncio.create_subprocess_exec(*cmd, **kwargs)
+        stdout_b, stderr_b = await proc.communicate()
+
     stdout = stdout_b.decode("utf-8") if stdout_b is not None else None
     stderr = stderr_b.decode("utf-8") if stderr_b is not None else None
     assert proc.returncode is not None
@@ -170,10 +163,12 @@ async def setup_new_and_old_mypy(
     )
 
     if ARGS.debug:
-        new_mypy_version = (await run([str(new_mypy), "--version"], output=True)).stdout.strip()
-        print(f"{Style.BLUE}new mypy version: {new_mypy_version}{Style.RESET}")
-        old_mypy_version = (await run([str(old_mypy), "--version"], output=True)).stdout.strip()
-        print(f"{Style.BLUE}old mypy version: {old_mypy_version}{Style.RESET}")
+        new_version, old_version = await asyncio.gather(
+            run([str(new_mypy), "--version"], output=True),
+            run([str(old_mypy), "--version"], output=True),
+        )
+        print(f"{Style.BLUE}new mypy version: {new_version.stdout.strip()}{Style.RESET}")
+        print(f"{Style.BLUE}old mypy version: {old_version.stdout.strip()}{Style.RESET}")
 
     return new_mypy, old_mypy
 
@@ -232,9 +227,9 @@ class Project:
 
     async def primer_result(self, new_mypy: str, old_mypy: str) -> PrimerResult:
         await self.setup()
-        # run them serially so that we are correctly limited by --concurrency
-        new_result = await self.run_mypy(new_mypy)
-        old_result = await self.run_mypy(old_mypy)
+        new_result, old_result = await asyncio.gather(
+            self.run_mypy(new_mypy), self.run_mypy(old_mypy)
+        )
         return PrimerResult(self, new_result, old_result)
 
     async def source_paths(self, mypy_python: str) -> List[Path]:
@@ -302,29 +297,6 @@ class PrimerResult:
         return ret
 
 
-async def yield_with_max_concurrency(
-    streams: Iterator[Awaitable[T]], concurrency: int
-) -> AsyncIterator[T]:
-    assert isinstance(streams, Iterator)
-    pending = set()
-
-    def enqueue(c: int) -> None:
-        try:
-            for _ in range(c):
-                pending.add(next(streams))
-        except StopIteration:
-            pass
-
-    enqueue(concurrency)
-    while pending:
-        done, pending = await asyncio.wait(pending, return_when=asyncio.FIRST_COMPLETED)  # type: ignore
-        concurrency = 0
-        for fut in done:
-            yield (await fut)
-            concurrency += 1
-        enqueue(concurrency)
-
-
 def select_projects() -> Iterator[Project]:
     project_iter = (p for p in PROJECTS)
     if ARGS.project_selector:
@@ -387,11 +359,10 @@ async def coverage() -> None:
     assert mypy_python.exists()
     all_paths = [
         path
-        async for paths in yield_with_max_concurrency(
-            (project.source_paths(str(mypy_python)) for project in projects),
-            ARGS.concurrency,
+        for paths in asyncio.as_completed(
+            [project.source_paths(str(mypy_python)) for project in projects]
         )
-        for path in paths
+        for path in (await paths)
     ]
     num_lines = sum(map(line_count, all_paths))
 
@@ -405,8 +376,9 @@ async def primer() -> None:
         new_mypy_revision=ARGS.new, old_mypy_revision=revision_or_recent_tag_fn(ARGS.old)
     )
 
-    results = (project.primer_result(str(new_mypy), str(old_mypy)) for project in select_projects())
-    async for result in yield_with_max_concurrency(results, ARGS.concurrency):
+    results = [project.primer_result(str(new_mypy), str(old_mypy)) for project in select_projects()]
+    for result_fut in asyncio.as_completed(results):
+        result = await result_fut
         if ARGS.old_success and not result.old_result.success:
             continue
         print(result)
@@ -478,11 +450,13 @@ def main() -> None:
     ARGS.projects_dir.mkdir(exist_ok=True)
 
     if ARGS.coverage:
-        asyncio.run(coverage())
+        coro = coverage()
     elif ARGS.bisect:
-        asyncio.run(bisect())
+        coro = bisect()
     else:
-        asyncio.run(primer())
+        coro = primer()
+
+    asyncio.run(coro)
 
 
 PROJECTS = [
