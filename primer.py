@@ -442,32 +442,61 @@ def parse_options(argv: List[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser()
 
     mypy_group = parser.add_argument_group("mypy")
-    mypy_group.add_argument("--new", help="new mypy version, defaults to HEAD")
-    mypy_group.add_argument("--old", help="old mypy version, defaults to latest tag")
     mypy_group.add_argument(
-        "--repo", default="https://github.com/python/mypy.git", help="mypy repo to use"
+        "--new",
+        help="new mypy version, defaults to HEAD (anything commit-ish, or isoformatted date)",
     )
     mypy_group.add_argument(
-        "--new-custom-typeshed-dir", help="typeshed directory to use with new mypy"
+        "--old",
+        help="old mypy version, defaults to latest tag (anything commit-ish, or isoformatted date)",
+    )
+    mypy_group.add_argument(
+        "--repo",
+        default="https://github.com/python/mypy.git",
+        help="mypy repo to use (passed to git clone)",
+    )
+    mypy_group.add_argument(
+        "--new-custom-typeshed-dir", help="typeshed directory to use with the new mypy run"
     )
 
     proj_group = parser.add_argument_group("project selection")
-    proj_group.add_argument("-k", "--project-selector", help="regex to filter projects")
+    proj_group.add_argument(
+        "-k", "--project-selector", help="regex to filter projects (matches against url)"
+    )
     proj_group.add_argument(
         "--expected-success",
         action="store_true",
-        help="filter to projects where a recent mypy version succeeded",
+        help=(
+            "filter to hardcoded subset of projects where some recent mypy version succeeded "
+            "aka are committed to the mypy way of life. also look at: --old-success"
+        ),
     )
     proj_group.add_argument(
-        "--project-date", help="checkout projects on a given date, in case of bitrot"
+        "--project-date",
+        help="checkout all projects as they were on a given date, in case of bitrot",
     )
 
     output_group = parser.add_argument_group("output")
     output_group.add_argument(
-        "--old-success", action="store_true", help="only output if old mypy run was successful"
+        "--diff-only",
+        action="store_true",
+        help="only output the diff between mypy runs for each project",
     )
     output_group.add_argument(
-        "--diff-only", action="store_true", help="only output the diff between mypy runs"
+        "--old-success",
+        action="store_true",
+        help="only output a result for a project if the old mypy run was successful",
+    )
+
+    modes_group = parser.add_argument_group("modes")
+    modes_group.add_argument(
+        "--coverage", action="store_true", help="count files and lines covered"
+    )
+    modes_group.add_argument(
+        "--bisect", action="store_true", help="find first mypy revision to introduce a difference"
+    )
+    modes_group.add_argument(
+        "--bisect-error", help="find first mypy revision with output matching given regex"
     )
 
     primer_group = parser.add_argument_group("primer")
@@ -485,16 +514,7 @@ def parse_options(argv: List[str]) -> argparse.Namespace:
         type=Path,
         help="dir to store repos and venvs",
     )
-    primer_group.add_argument(
-        "--clear", action="store_true", help="delete previously used repos and venvs"
-    )
-    primer_group.add_argument(
-        "--coverage", action="store_true", help="find files and lines covered"
-    )
-    primer_group.add_argument("--bisect", action="store_true", help="find bad mypy revision")
-    primer_group.add_argument(
-        "--bisect-error", help="find bad mypy revision based on an error regex"
-    )
+    primer_group.add_argument("--clear", action="store_true", help="delete repos and venvs")
 
     return parser.parse_args(argv)
 
