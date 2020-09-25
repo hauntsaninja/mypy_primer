@@ -32,8 +32,6 @@ from typing import (
 T = TypeVar("T")
 RevisionLike = Union[str, None, Callable[[Path], Awaitable[str]]]
 
-BASE = Path("/tmp/mypy_primer")
-
 
 class Style(str, Enum):
     RED = "\033[91m"
@@ -90,6 +88,10 @@ async def refresh(repo_dir: Path) -> None:
     await run(["git", "reset", "--hard", "origin/HEAD"], cwd=repo_dir)
 
 
+async def checkout(revision: str, repo_dir: Path) -> None:
+    await run(["git", "checkout", "--force", "--recurse-submodules", revision], cwd=repo_dir)
+
+
 async def get_revision_for_date(dt: date, repo_dir: Path) -> str:
     proc = await run(
         ["git", "rev-list", "-1", "--before", dt.isoformat(), "HEAD"], output=True, cwd=repo_dir
@@ -97,14 +99,13 @@ async def get_revision_for_date(dt: date, repo_dir: Path) -> str:
     return proc.stdout.strip()
 
 
-async def checkout(revision: str, repo_dir: Path) -> None:
+async def get_revision_for_revision_or_date(revision: str, repo_dir: Path) -> str:
     try:
         # try and interpret revision as an isoformatted date
         dt = date.fromisoformat(revision)
-        revision = await get_revision_for_date(dt, repo_dir)
+        return await get_revision_for_date(dt, repo_dir)
     except ValueError:
-        pass
-    await run(["git", "checkout", "--force", "--recurse-submodules", revision], cwd=repo_dir)
+        return revision
 
 
 async def ensure_repo_at_revision(repo_url: str, cwd: Path, revision_like: RevisionLike) -> Path:
@@ -118,6 +119,7 @@ async def ensure_repo_at_revision(repo_url: str, cwd: Path, revision_like: Revis
     # TODO: could fail if we had a shallow clone
     revision = (await revision_like(repo_dir)) if callable(revision_like) else revision_like
     if revision is not None:
+        revision = await get_revision_for_revision_or_date(revision, repo_dir)
         await checkout(revision, repo_dir)
     return repo_dir
 
@@ -128,29 +130,35 @@ async def get_recent_tag(repo_dir: Path) -> str:
     return proc.stdout.strip()
 
 
-async def setup_mypy(mypy_dir: Path, revision_like: RevisionLike) -> Path:
+async def setup_mypy(mypy_dir: Path, revision_like: RevisionLike, editable: bool = False) -> Path:
     mypy_dir.mkdir(exist_ok=True)
     repo_dir = await ensure_repo_at_revision(ARGS.repo, mypy_dir, revision_like)
 
-    venv.create(mypy_dir / "venv", with_pip=True, clear=True)
-    await run([str(mypy_dir / "venv" / "bin" / "pip"), "install", str(repo_dir)])
-    mypy_exe = mypy_dir / "venv" / "bin" / "mypy"
+    venv_dir = mypy_dir / "venv"
+    venv.create(venv_dir, with_pip=True, clear=True)
+    install_cmd = [str(venv_dir / "bin" / "pip"), "install"]
+    if editable:
+        install_cmd.append("--editable")
+    install_cmd.append(str(repo_dir))
+    await run(install_cmd)
 
+    mypy_exe = venv_dir / "bin" / "mypy"
     assert mypy_exe.exists()
     return mypy_exe
 
 
-async def setup_new_and_old_mypy(
-    new_mypy_revision: Optional[str] = None, old_mypy_revision: Optional[str] = None
-) -> Tuple[Path, Path]:
-    async def get_old_revision(repo_dir: Path) -> str:
-        if old_mypy_revision is None:
-            return await get_recent_tag(repo_dir)
-        return old_mypy_revision
+def revision_or_recent_tag_fn(revision: Optional[str]) -> RevisionLike:
+    if revision is not None:
+        return revision
+    return get_recent_tag
 
+
+async def setup_new_and_old_mypy(
+    new_mypy_revision: RevisionLike, old_mypy_revision: RevisionLike
+) -> Tuple[Path, Path]:
     new_mypy, old_mypy = await asyncio.gather(
-        setup_mypy(BASE / "new_mypy", new_mypy_revision),
-        setup_mypy(BASE / "old_mypy", get_old_revision),
+        setup_mypy(ARGS.base_dir / "new_mypy", new_mypy_revision),
+        setup_mypy(ARGS.base_dir / "old_mypy", old_mypy_revision),
     )
 
     if ARGS.debug:
@@ -175,23 +183,23 @@ class Project:
     def name(self) -> str:
         return Path(self.url).stem
 
-    def venv_dir(self, project_base: Path) -> Path:
-        return project_base / f"_{self.name}_venv"
+    @property
+    def venv_dir(self) -> Path:
+        return ARGS.projects_dir / f"_{self.name}_venv"
 
-    async def setup(self, project_base: Path) -> None:
-        repo_dir = await ensure_repo_at_revision(self.url, project_base, self.revision)
-        assert repo_dir == project_base / self.name
+    async def setup(self) -> None:
+        repo_dir = await ensure_repo_at_revision(self.url, ARGS.projects_dir, self.revision)
+        assert repo_dir == ARGS.projects_dir / self.name
         if self.deps:
-            venv_dir = self.venv_dir(project_base)
-            venv.create(venv_dir, with_pip=True, clear=True)
+            venv.create(self.venv_dir, with_pip=True, clear=True)
             for dep in self.deps:
-                await run([str(venv_dir / "bin" / "pip"), "install", dep], cwd=repo_dir)
+                await run([str(self.venv_dir / "bin" / "pip"), "install", dep], cwd=repo_dir)
 
-    def get_mypy_cmd(self, mypy: str, project_base: Path) -> str:
+    def get_mypy_cmd(self, mypy: str) -> str:
         mypy_cmd = self.mypy_cmd
         assert mypy_cmd.startswith("{mypy}")
         if self.deps:
-            python_exe = self.venv_dir(project_base) / "bin" / "python"
+            python_exe = self.venv_dir / "bin" / "python"
             mypy_cmd += f" --python-executable={python_exe}"
         if ARGS.custom_typeshed_dir:
             mypy_cmd += f" --custom-typeshed-dir={ARGS.custom_typeshed_dir}"
@@ -199,31 +207,31 @@ class Project:
         mypy_cmd = mypy_cmd.format(mypy=mypy)
         return mypy_cmd
 
-    async def run_mypy(self, mypy: str, project_base: Path) -> MypyResult:
-        mypy_cmd = self.get_mypy_cmd(mypy, project_base)
+    async def run_mypy(self, mypy: str) -> MypyResult:
+        mypy_cmd = self.get_mypy_cmd(mypy)
         env = os.environ.copy()
         env["MYPY_FORCE_COLOR"] = "1"
         proc = await run(
             shlex.split(mypy_cmd),
             output=True,
             check=False,
-            cwd=project_base / self.name,
+            cwd=ARGS.projects_dir / self.name,
             env=env,
         )
         return MypyResult(
             mypy_cmd, proc.stderr + proc.stdout, not bool(proc.returncode), self.expected_success
         )
 
-    async def primer_result(self, new_mypy: str, old_mypy: str, project_base: Path) -> PrimerResult:
-        await self.setup(project_base)
+    async def primer_result(self, new_mypy: str, old_mypy: str) -> PrimerResult:
+        await self.setup()
         # run them serially so that we are correctly limited by --concurrency
-        new_result = await self.run_mypy(new_mypy, project_base)
-        old_result = await self.run_mypy(old_mypy, project_base)
+        new_result = await self.run_mypy(new_mypy)
+        old_result = await self.run_mypy(old_mypy)
         return PrimerResult(self, new_result, old_result)
 
-    async def source_paths(self, mypy_python: str, project_base: Path) -> List[Path]:
-        await self.setup(project_base)
-        mypy_cmd = self.get_mypy_cmd("mypy", project_base)
+    async def source_paths(self, mypy_python: str) -> List[Path]:
+        await self.setup()
+        mypy_cmd = self.get_mypy_cmd("mypy")
         program = f"""
 import io, mypy.fscache, mypy.main
 args = "{mypy_cmd}".split()[1:]
@@ -232,8 +240,10 @@ for source in sources:
     if source.path is not None:  # can happen for modules...
         print(source.path)
 """
-        proc = await run([mypy_python, "-c", program], output=True, cwd=project_base / self.name)
-        return [project_base / self.name / p for p in proc.stdout.splitlines()]
+        proc = await run(
+            [mypy_python, "-c", program], output=True, cwd=ARGS.projects_dir / self.name
+        )
+        return [ARGS.projects_dir / self.name / p for p in proc.stdout.splitlines()]
 
 
 @dataclass
@@ -307,18 +317,7 @@ async def yield_with_max_concurrency(
         enqueue(concurrency)
 
 
-async def primer() -> None:
-    if BASE.exists() and ARGS.clear:
-        shutil.rmtree(BASE)
-    BASE.mkdir(exist_ok=True)
-
-    new_mypy, old_mypy = await setup_new_and_old_mypy(
-        new_mypy_revision=ARGS.new, old_mypy_revision=ARGS.old
-    )
-
-    project_base = BASE / "projects"
-    project_base.mkdir(exist_ok=True)
-
+def select_projects() -> Iterator[Project]:
     project_iter = (p for p in PROJECTS)
     if ARGS.project_selector:
         project_iter = (
@@ -328,34 +327,37 @@ async def primer() -> None:
         project_iter = (p for p in project_iter if p.expected_success)
     if ARGS.project_date:
         project_iter = (replace(p, revision=ARGS.project_date) for p in project_iter)
+    return project_iter
 
-    concurrency = ARGS.concurrency
-    if not concurrency:
-        concurrency = multiprocessing.cpu_count()
 
-    if ARGS.coverage:
-        projects = list(project_iter)
-        mypy_python = str(new_mypy.parent / "python")
-        all_paths = [
-            path
-            async for paths in yield_with_max_concurrency(
-                (project.source_paths(mypy_python, project_base) for project in projects),
-                concurrency,
-            )
-            for path in paths
-        ]
-        num_lines = sum(map(line_count, all_paths))
+async def coverage() -> None:
+    mypy_exe = await setup_mypy(ARGS.base_dir / "new_mypy", ARGS.new)
 
-        print(f"Checking {len(projects)} projects...")
-        print(f"Containing {len(all_paths)} files...")
-        print(f"Totalling to {num_lines} lines...")
-        return
+    projects = list(select_projects())
+    mypy_python = mypy_exe.parent / "python"
+    assert mypy_python.exists()
+    all_paths = [
+        path
+        async for paths in yield_with_max_concurrency(
+            (project.source_paths(str(mypy_python)) for project in projects),
+            ARGS.concurrency,
+        )
+        for path in paths
+    ]
+    num_lines = sum(map(line_count, all_paths))
 
-    results = (
-        project.primer_result(str(new_mypy), str(old_mypy), project_base)
-        for project in project_iter
+    print(f"Checking {len(projects)} projects...")
+    print(f"Containing {len(all_paths)} files...")
+    print(f"Totalling to {num_lines} lines...")
+
+
+async def primer() -> None:
+    new_mypy, old_mypy = await setup_new_and_old_mypy(
+        new_mypy_revision=ARGS.new, old_mypy_revision=revision_or_recent_tag_fn(ARGS.old)
     )
-    async for result in yield_with_max_concurrency(results, concurrency):
+
+    results = (project.primer_result(str(new_mypy), str(old_mypy)) for project in select_projects())
+    async for result in yield_with_max_concurrency(results, ARGS.concurrency):
         if ARGS.old_success and not result.old_result.success:
             continue
         print(result)
@@ -375,12 +377,15 @@ def main() -> None:
     )
     mypy_group.add_argument("--custom-typeshed-dir", help="typeshed directory to use")
 
-    proj_group = parser.add_argument_group("project filtration")
+    proj_group = parser.add_argument_group("project selection")
     proj_group.add_argument("-k", "--project-selector", help="regex to filter projects")
     proj_group.add_argument(
         "--expected-success",
         action="store_true",
         help="filter to projects where a recent mypy version succeeded",
+    )
+    proj_group.add_argument(
+        "--project-date", help="checkout projects on a given date, in case of bitrot"
     )
 
     output_group = parser.add_argument_group("output")
@@ -391,27 +396,41 @@ def main() -> None:
         "--diff-only", action="store_true", help="only output the diff between mypy runs"
     )
 
-    misc_group = parser.add_argument_group("misc")
-    misc_group.add_argument(
-        "--project-date", help="checkout projects on a given date, in case of bitrot"
-    )
-
     primer_group = parser.add_argument_group("primer")
     primer_group.add_argument(
-        "-j", "--concurrency", default=0, type=int, help="number of subprocesses to use at a time"
+        "-j",
+        "--concurrency",
+        default=multiprocessing.cpu_count(),
+        type=int,
+        help="number of subprocesses to use at a time",
     )
     primer_group.add_argument("--debug", action="store_true", help="print commands as they run")
+    primer_group.add_argument(
+        "--base-dir",
+        default=Path("/tmp/mypy_primer"),
+        type=Path,
+        help="dir to store repos and venvs",
+    )
     primer_group.add_argument(
         "--clear", action="store_true", help="delete previously used repos and venvs"
     )
     primer_group.add_argument(
-        "--coverage", action="store_true", help="print files and lines covered"
+        "--coverage", action="store_true", help="find files and lines covered"
     )
 
     global ARGS
     ARGS = parser.parse_args(sys.argv[1:])
 
-    asyncio.run(primer())
+    if ARGS.base_dir.exists() and ARGS.clear:
+        shutil.rmtree(ARGS.base_dir)
+    ARGS.base_dir.mkdir(exist_ok=True)
+    ARGS.projects_dir = ARGS.base_dir / "projects"
+    ARGS.projects_dir.mkdir(exist_ok=True)
+
+    if ARGS.coverage:
+        asyncio.run(coverage())
+    else:
+        asyncio.run(primer())
 
 
 PROJECTS = [
