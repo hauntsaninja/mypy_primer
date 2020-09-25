@@ -170,7 +170,7 @@ async def setup_new_and_old_mypy(
     return new_mypy, old_mypy
 
 
-@dataclass
+@dataclass(frozen=True)
 class Project:
     url: str
     mypy_cmd: str
@@ -246,7 +246,7 @@ for source in sources:
         return [ARGS.projects_dir / self.name / p for p in proc.stdout.splitlines()]
 
 
-@dataclass
+@dataclass(frozen=True)
 class MypyResult:
     command: str
     output: str
@@ -261,7 +261,7 @@ class MypyResult:
         return ret
 
 
-@dataclass
+@dataclass(frozen=True)
 class PrimerResult:
     project: Project
     new_result: MypyResult
