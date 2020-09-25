@@ -86,7 +86,7 @@ async def clone(repo_url: str, cwd: Path, shallow: bool = False) -> None:
 async def refresh(repo_dir: Path) -> None:
     await run(["git", "fetch"], cwd=repo_dir)
     await run(["git", "clean", "-ffxd"], cwd=repo_dir)
-    await run(["git", "reset", "--hard", "origin/HEAD"], cwd=repo_dir)
+    await run(["git", "reset", "--hard", "origin/HEAD", "--recurse-submodules"], cwd=repo_dir)
 
 
 async def checkout(revision: str, repo_dir: Path) -> None:
