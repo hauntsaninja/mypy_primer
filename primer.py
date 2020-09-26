@@ -727,7 +727,7 @@ PROJECTS = [
         deps=["git+git://github.com/numpy/numpy-stubs.git@master"],
     ),
 ]
-
+assert len(PROJECTS) == len({p.name for p in PROJECTS})
 
 if __name__ == "__main__":
     main()
