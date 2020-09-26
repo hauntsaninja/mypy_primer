@@ -3,6 +3,24 @@
 mypy_primer makes it easy to run [mypy](https://github.com/python/mypy/) over a few million lines of
 open source projects for the purpose of finding regressions or evaluating changes.
 
+## Explanation
+
+Here's what mypy_primer does:
+- Clones a copy of mypy (potentially from a fork you specified)
+- Checks out a "new" and "old" revision of mypy
+- Clones a hardcoded list of projects (potentially filtered by you)
+- Installs necessary stubs and dependencies per project
+- Runs the appropriate mypy command per project
+- Shows you the potentially differing results!
+- Lets you bisect to find the commit that causes a given change
+
+mypy_primer contains a hardcoded list of open source projects and their respective mypy setups (to
+which contributions are gladly accepted). The list is visible at the bottom of `primer.py` and many
+of them should be recognisable names. I used https://grep.app to help me; a mypy.ini or "mypy" in a
+tox.ini / setup.cfg / .travis.yml / etc is a pretty strong signal. This hardcoded list is in theory
+susceptible to bitrot, but if you pass e.g. the flag `--project-date 2020-09-25` to mypy_primer,
+it'll check out projects as they were today and things should work!
+
 ## Usage
 
 ```
