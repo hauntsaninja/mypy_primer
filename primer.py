@@ -441,12 +441,15 @@ async def bisect() -> None:
         state = "good" if are_results_good(results) else "bad"
         proc = await run(["git", "bisect", state], output=True, cwd=repo_dir)
 
-        if ARGS.debug:
-            print(f"{Style.BLUE}{proc.stdout}{Style.RESET}")
-
         if "first bad commit" in proc.stdout:
             print(proc.stdout)
             return
+
+        if ARGS.debug:
+            print(format(Style.BLUE))
+            print("\n".join(str(result) for result in results.values()))
+            print(proc.stdout)
+            print(format(Style.RESET))
 
 
 async def coverage() -> None:
