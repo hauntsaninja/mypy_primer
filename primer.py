@@ -244,6 +244,8 @@ class Project:
             mypy_cmd += f" --python-executable={python_exe}"
         if additional_flags:
             mypy_cmd += " " + " ".join(additional_flags)
+        if ARGS.output == "concise":
+            mypy_cmd += "  --no-pretty"
         mypy_cmd += " --no-incremental --cache-dir=/dev/null"
         mypy_cmd = mypy_cmd.format(mypy=mypy)
         return mypy_cmd
@@ -301,7 +303,7 @@ class MypyResult:
     def __str__(self) -> str:
         ret = "> " + self.command + "\n"
         if self.expected_success and not self.success:
-            ret += f"\t{Style.RED}{Style.BOLD}UNEXPECTED FAILURE{Style.RESET}\n"
+            ret += f"{Style.RED}{Style.BOLD}UNEXPECTED FAILURE{Style.RESET}\n"
         ret += textwrap.indent(self.output, "\t")
         return ret
 
@@ -314,20 +316,44 @@ class PrimerResult:
 
     def diff(self) -> str:
         d = difflib.Differ()
-        diff = d.compare(self.old_result.output.splitlines(), self.new_result.output.splitlines())
+        old_lines = self.old_result.output.splitlines()
+        new_lines = self.new_result.output.splitlines()
+        if ARGS.output == "concise":
+            assert "source file" in old_lines[-1]
+            assert "source file" in new_lines[-1]
+            old_lines.pop()
+            new_lines.pop()
+        diff = d.compare(old_lines, new_lines)
         return "\n".join(line for line in diff if line[0] in ("+", "-"))
 
-    def __str__(self) -> str:
+    def header(self) -> str:
         ret = f"\n{Style.BOLD}{self.project.name}{Style.RESET}\n"
         ret += self.project.url + "\n"
+        return ret
 
-        if not ARGS.diff_only:
-            ret += "----------\n\n"
-            ret += "old mypy\n"
-            ret += str(self.old_result)
-            ret += "----------\n\n"
-            ret += "new mypy\n"
-            ret += str(self.new_result)
+    def format_concise(self) -> str:
+        return self.diff()
+
+    def format_diff_only(self) -> str:
+        ret = self.header()
+
+        diff = self.diff()
+        if diff:
+            ret += "----------\n"
+            ret += textwrap.indent(diff, "\t")
+            ret += "\n"
+
+        ret += "==========\n"
+        return ret
+
+    def format_full(self) -> str:
+        ret = self.header()
+        ret += "----------\n\n"
+        ret += "old mypy\n"
+        ret += str(self.old_result)
+        ret += "----------\n\n"
+        ret += "new mypy\n"
+        ret += str(self.new_result)
 
         diff = self.diff()
         if diff:
@@ -335,7 +361,8 @@ class PrimerResult:
             ret += "diff\n"
             ret += textwrap.indent(diff, "\t")
             ret += "\n"
-        ret += "==========\n\n"
+
+        ret += "==========\n"
         return ret
 
 
@@ -435,7 +462,18 @@ async def primer() -> None:
         result = await result_fut
         if ARGS.old_success and not result.old_result.success:
             continue
-        print(result)
+        if ARGS.output == "full":
+            print(result.format_full())
+        elif ARGS.output == "diff":
+            print(result.format_diff_only())
+        elif ARGS.output == "concise":
+            # using ARGS.output == "concise" also causes us to:
+            # - drop the mypy summary line to reduce noise in the diff
+            # - always pass in --no-pretty
+            concise = result.format_concise()
+            if concise:
+                print(concise)
+                print()
 
 
 def parse_options(argv: List[str]) -> argparse.Namespace:
@@ -478,9 +516,14 @@ def parse_options(argv: List[str]) -> argparse.Namespace:
 
     output_group = parser.add_argument_group("output")
     output_group.add_argument(
-        "--diff-only",
-        action="store_true",
-        help="only output the diff between mypy runs for each project",
+        "-o",
+        "--output",
+        choices=("full", "diff", "concise"),
+        default="full",
+        help=(
+            "'full' shows both outputs + diff; 'diff' shows only the diff; 'concise' shows only"
+            " the diff but very compact"
+        ),
     )
     output_group.add_argument(
         "--old-success",

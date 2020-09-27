@@ -27,9 +27,9 @@ it'll check out projects as they were today and things should work!
 λ python -m primer --help
 usage: primer.py [-h] [--new NEW] [--old OLD] [--repo REPO]
                  [--new-custom-typeshed-dir NEW_CUSTOM_TYPESHED_DIR] [-k PROJECT_SELECTOR]
-                 [--expected-success] [--project-date PROJECT_DATE] [--diff-only] [--old-success]
-                 [--coverage] [--bisect] [--bisect-error BISECT_ERROR] [-j CONCURRENCY] [--debug]
-                 [--base-dir BASE_DIR] [--clear]
+                 [--expected-success] [--project-date PROJECT_DATE] [-o {full,diff,concise}]
+                 [--old-success] [--coverage] [--bisect] [--bisect-error BISECT_ERROR]
+                 [-j CONCURRENCY] [--debug] [--base-dir BASE_DIR] [--clear]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -53,7 +53,9 @@ project selection:
                         checkout all projects as they were on a given date, in case of bitrot
 
 output:
-  --diff-only           only output the diff between mypy runs for each project
+  -o {full,diff,concise}, --output {full,diff,concise}
+                        'full' shows both outputs + diff; 'diff' shows only the diff; 'concise'
+                        shows only the diff but very compact
   --old-success         only output a result for a project if the old mypy run was successful
 
 modes:
@@ -74,7 +76,7 @@ primer:
 
 See the difference between HEAD and latest release with:
 ```
-python -m primer --diff-only
+python -m primer -o diff
 ```
 
 See the impact of your risky change with:
@@ -84,7 +86,7 @@ python -m primer --repo https://github.com/hauntsaninja/mypy.git --old master --
 
 See the impact of your risky typeshed change with:
 ```
-python -m primer --new-custom-typeshed-dir ~/dev/typeshed --old origin/HEAD --diff-only
+python -m primer --new-custom-typeshed-dir ~/dev/typeshed --old origin/HEAD -o concise
 ```
 
 Filter to projects you care about:
