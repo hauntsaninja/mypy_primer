@@ -213,7 +213,7 @@ async def setup_new_and_old_mypy(
 
 @dataclass(frozen=True)
 class Project:
-    url: str
+    location: str
     mypy_cmd: str
     revision: Optional[str] = None
     deps: Optional[List[str]] = None
@@ -222,14 +222,29 @@ class Project:
 
     @property
     def name(self) -> str:
-        return Path(self.url).stem
+        return Path(self.location).stem
 
     @property
     def venv_dir(self) -> Path:
         return ARGS.projects_dir / f"_{self.name}_venv"  # type: ignore[no-any-return]
 
     async def setup(self) -> None:
-        repo_dir = await ensure_repo_at_revision(self.url, ARGS.projects_dir, self.revision)
+        if Path(self.location).is_file():
+            # allow a project to be a single file
+            repo_dir = ARGS.projects_dir / self.name
+            shutil.rmtree(repo_dir)
+            repo_dir.mkdir()
+            shutil.copy(Path(self.location), repo_dir / Path(self.location).name)
+        elif Path(self.location).is_dir() and not (Path(self.location) / ".git").exists():
+            # allow a project to be a local folder (that isn't a git repo)
+            repo_dir = ARGS.projects_dir / self.name
+            shutil.rmtree(repo_dir)
+            shutil.copytree(Path(self.location), repo_dir)
+        else:
+            # usually projects are something clonable
+            repo_dir = await ensure_repo_at_revision(
+                self.location, ARGS.projects_dir, self.revision
+            )
         assert repo_dir == ARGS.projects_dir / self.name
         if self.deps:
             venv.create(self.venv_dir, with_pip=True, clear=True)
@@ -328,7 +343,7 @@ class PrimerResult:
 
     def header(self) -> str:
         ret = f"\n{Style.BOLD}{self.project.name}{Style.RESET}\n"
-        ret += self.project.url + "\n"
+        ret += self.project.location + "\n"
         return ret
 
     def format_concise(self) -> str:
@@ -375,7 +390,7 @@ def select_projects() -> Iterator[Project]:
     project_iter = (p for p in PROJECTS)
     if ARGS.project_selector:
         project_iter = (
-            p for p in project_iter if re.search(ARGS.project_selector, p.url, flags=re.I)
+            p for p in project_iter if re.search(ARGS.project_selector, p.location, flags=re.I)
         )
     if ARGS.expected_success:
         project_iter = (p for p in project_iter if p.expected_success)
@@ -499,7 +514,7 @@ def parse_options(argv: List[str]) -> argparse.Namespace:
 
     proj_group = parser.add_argument_group("project selection")
     proj_group.add_argument(
-        "-k", "--project-selector", help="regex to filter projects (matches against url)"
+        "-k", "--project-selector", help="regex to filter projects (matches against location)"
     )
     proj_group.add_argument(
         "--expected-success",
@@ -596,44 +611,44 @@ def main() -> None:
 
 PROJECTS = [
     Project(
-        url="https://github.com/python/mypy.git",
+        location="https://github.com/python/mypy.git",
         mypy_cmd="{mypy} --config-file mypy_self_check.ini -p mypy -p mypyc",
         deps=["pytest"],
         expected_success=True,
     ),
     Project(
-        url="https://github.com/psf/black.git",
+        location="https://github.com/psf/black.git",
         mypy_cmd="{mypy} src",
         expected_success=True,
     ),
     Project(
-        url="https://github.com/hauntsaninja/pyp.git",
+        location="https://github.com/hauntsaninja/pyp.git",
         mypy_cmd="{mypy} --strict -m pyp",
         expected_success=True,
     ),
     Project(
-        url="https://github.com/pytest-dev/pytest.git",
+        location="https://github.com/pytest-dev/pytest.git",
         mypy_cmd="{mypy} src testing",
         expected_success=True,
     ),
     Project(
-        url="https://github.com/pandas-dev/pandas.git",
+        location="https://github.com/pandas-dev/pandas.git",
         mypy_cmd="{mypy} pandas",
         expected_success=True,
     ),
     Project(
-        url="https://github.com/pycqa/pylint.git",
+        location="https://github.com/pycqa/pylint.git",
         mypy_cmd="{mypy} pylint/checkers --ignore-missing-imports",
         expected_success=True,
     ),
     Project(
-        url="https://github.com/aio-libs/aiohttp.git",
+        location="https://github.com/aio-libs/aiohttp.git",
         mypy_cmd="{mypy} aiohttp",
         deps=["-rrequirements/ci-wheel.txt"],
         expected_success=True,
     ),
     Project(
-        url="https://github.com/python-attrs/attrs.git",
+        location="https://github.com/python-attrs/attrs.git",
         mypy_cmd=(
             "{mypy} src/attr/__init__.pyi src/attr/_version_info.pyi src/attr/converters.pyi"
             " src/attr/exceptions.pyi src/attr/filters.pyi src/attr/setters.pyi"
@@ -642,79 +657,79 @@ PROJECTS = [
         expected_success=True,
     ),
     Project(
-        url="https://github.com/sphinx-doc/sphinx.git",
+        location="https://github.com/sphinx-doc/sphinx.git",
         mypy_cmd="{mypy} sphinx",
         deps=["docutils-stubs"],
         expected_success=True,
     ),
     Project(
-        url="https://github.com/scikit-learn/scikit-learn.git",
+        location="https://github.com/scikit-learn/scikit-learn.git",
         mypy_cmd="{mypy} sklearn",
         expected_success=True,
     ),
     Project(
-        url="https://github.com/pypa/bandersnatch.git",
+        location="https://github.com/pypa/bandersnatch.git",
         mypy_cmd="{mypy} src src/bandersnatch/tests",
         expected_success=True,
     ),
     Project(
-        url="https://github.com/hauntsaninja/boostedblob.git",
+        location="https://github.com/hauntsaninja/boostedblob.git",
         mypy_cmd="{mypy} boostedblob",
         expected_success=True,
     ),
     Project(
-        url="https://github.com/quora/asynq.git",
+        location="https://github.com/quora/asynq.git",
         mypy_cmd="{mypy} asynq",
         deps=["-rrequirements.txt"],
         expected_success=True,
     ),
     Project(
-        url="https://github.com/scrapy/scrapy.git",
+        location="https://github.com/scrapy/scrapy.git",
         mypy_cmd="{mypy} scrapy tests",
         expected_success=True,
     ),
     Project(
-        url="https://github.com/pypa/twine.git",
+        location="https://github.com/pypa/twine.git",
         mypy_cmd="{mypy} twine",
         expected_success=True,
     ),
     Project(
-        url="https://github.com/more-itertools/more-itertools.git",
+        location="https://github.com/more-itertools/more-itertools.git",
         mypy_cmd="{mypy} more_itertools",
         expected_success=True,
     ),
     Project(
-        url="https://github.com/pydata/xarray.git",
+        location="https://github.com/pydata/xarray.git",
         mypy_cmd="{mypy} .",
         expected_success=True,
     ),
     Project(
-        url="https://github.com/pallets/werkzeug.git",
+        location="https://github.com/pallets/werkzeug.git",
         mypy_cmd="{mypy} src/werkzeug tests",
         expected_success=True,
     ),
     Project(
-        url="https://github.com/bokeh/bokeh.git",
+        location="https://github.com/bokeh/bokeh.git",
         mypy_cmd="{mypy} bokeh release",
         expected_success=True,
     ),
     Project(
-        url="https://github.com/mystor/git-revise.git",
+        location="https://github.com/mystor/git-revise.git",
         mypy_cmd="{mypy} gitrevise",
         expected_success=True,
     ),
     Project(
-        url="https://github.com/PyGithub/PyGithub.git",
+        location="https://github.com/PyGithub/PyGithub.git",
         mypy_cmd="{mypy} github tests",
         expected_success=True,
     ),
     Project(
-        url="https://github.com/we-like-parsers/pegen.git",
+        location="https://github.com/we-like-parsers/pegen.git",
         mypy_cmd="{mypy}",
         expected_success=True,
     ),
     Project(
-        url="https://github.com/zulip/zulip.git",
+        location="https://github.com/zulip/zulip.git",
         mypy_cmd=(
             "{mypy} zerver zilencer zproject zthumbor tools analytics corporate scripts"
             " --platform=linux"
@@ -722,166 +737,162 @@ PROJECTS = [
         expected_success=True,
     ),
     Project(
-        url="https://github.com/dropbox/stone.git",
+        location="https://github.com/dropbox/stone.git",
         mypy_cmd="{mypy} stone test",
         expected_success=True,
     ),
     Project(
-        url="https://github.com/yelp/paasta.git",
+        location="https://github.com/yelp/paasta.git",
         mypy_cmd="{mypy} paasta_tools",
         expected_success=True,
     ),
     Project(
-        url="https://github.com/PrefectHQ/prefect.git",
+        location="https://github.com/PrefectHQ/prefect.git",
         mypy_cmd="{mypy} src",
         expected_success=True,
     ),
     Project(
-        url="https://github.com/pallets/itsdangerous",
+        location="https://github.com/pallets/itsdangerous",
         mypy_cmd="{mypy}",
         deps=["pytest"],
         expected_success=True,
     ),
     Project(
-        url="https://github.com/jab/bidict.git",
+        location="https://github.com/jab/bidict.git",
         mypy_cmd="{mypy} bidict",
         expected_success=True,
     ),
     Project(
-        url="https://github.com/jaraco/zipp.git",
+        location="https://github.com/jaraco/zipp.git",
         mypy_cmd="{mypy} .",
         expected_success=True,
     ),
     Project(
-        url="https://github.com/aaugustin/websockets.git",
+        location="https://github.com/aaugustin/websockets.git",
         mypy_cmd="{mypy} --strict src",
         expected_success=True,
     ),
     Project(
-        url="https://github.com/pycqa/isort.git",
+        location="https://github.com/pycqa/isort.git",
         mypy_cmd="{mypy} --ignore-missing-imports isort",
         expected_success=True,
     ),
     Project(
-        url="https://github.com/aio-libs/aioredis.git",
+        location="https://github.com/aio-libs/aioredis.git",
         mypy_cmd="{mypy} aioredis --ignore-missing-imports",
         expected_success=True,
     ),
     Project(
-        url="https://github.com/agronholm/anyio.git",
+        location="https://github.com/agronholm/anyio.git",
         mypy_cmd="{mypy} src",
         expected_success=True,
     ),
     Project(
-        url="https://github.com/aio-libs/yarl.git",
+        location="https://github.com/aio-libs/yarl.git",
         mypy_cmd="{mypy} --show-error-codes yarl tests",
         deps=["multidict"],
         expected_success=True,
     ),
     Project(
-        url="https://github.com/freqtrade/freqtrade.git",
+        location="https://github.com/freqtrade/freqtrade.git",
         mypy_cmd="{mypy} freqtrade scripts",
         expected_success=True,
     ),
     Project(
-        url="https://github.com/google/jax.git",
+        location="https://github.com/google/jax.git",
         mypy_cmd="{mypy} jax",
         expected_success=True,
     ),
     Project(
-        url="https://github.com/dulwich/dulwich.git",
+        location="https://github.com/dulwich/dulwich.git",
         mypy_cmd="{mypy} dulwich",
         expected_success=True,
     ),
     Project(
-        url="https://github.com/optuna/optuna.git",
+        location="https://github.com/optuna/optuna.git",
         mypy_cmd="{mypy} .",
         expected_success=True,
     ),
     Project(
-        url="https://github.com/trailofbits/manticore.git",
+        location="https://github.com/trailofbits/manticore.git",
         mypy_cmd="{mypy}",
         expected_success=True,
     ),
     Project(
-        url="https://github.com/aiortc/aiortc",
+        location="https://github.com/aiortc/aiortc",
         mypy_cmd="{mypy} src",
         expected_success=True,
     ),
     Project(
-        url="https://github.com/willmcgugan/rich.git",
+        location="https://github.com/willmcgugan/rich.git",
         mypy_cmd="{mypy} -p rich --ignore-missing-imports --warn-unreachable",
         expected_success=True,
     ),
     Project(
-        url="https://github.com/Akuli/porcupine.git",
+        location="https://github.com/Akuli/porcupine.git",
         mypy_cmd="{mypy} porcupine more_plugins",
         expected_success=True,
     ),
     Project(
-        url="https://github.com/dedupeio/dedupe.git",
+        location="https://github.com/dedupeio/dedupe.git",
         mypy_cmd="{mypy} --ignore-missing-imports dedupe",
         expected_success=True,
     ),
     # failures expected...
     Project(
-        url="https://github.com/pyppeteer/pyppeteer.git",
+        location="https://github.com/pyppeteer/pyppeteer.git",
         mypy_cmd="{mypy} pyppeteer --config-file tox.ini",
         deps=["."],
     ),
     Project(
-        url="https://github.com/pypa/pip.git",
+        location="https://github.com/pypa/pip.git",
         mypy_cmd="{mypy} src",
     ),
     Project(
         # relies on setup.py to create a version.py file
-        url="https://github.com/pytorch/vision.git",
+        location="https://github.com/pytorch/vision.git",
         mypy_cmd="{mypy}",
     ),
     # TODO: needs mypy-zope plugin
     # Project(
-    #     url="https://github.com/twisted/twisted.git",
+    #     location="https://github.com/twisted/twisted.git",
     #     mypy_cmd="{mypy} src",
     # ),
     # Other repos with plugins: dry-python/returns, strawberry-graphql/strawberry, edgedb/edgedb
     Project(
-        url="https://github.com/tornadoweb/tornado.git",
+        location="https://github.com/tornadoweb/tornado.git",
         mypy_cmd="{mypy} tornado",
     ),
     Project(
-        url="https://github.com/sympy/sympy.git",
+        location="https://github.com/sympy/sympy.git",
         mypy_cmd="{mypy} sympy",
     ),
     Project(
-        url="https://github.com/scipy/scipy.git",
+        location="https://github.com/scipy/scipy.git",
         mypy_cmd="{mypy} scipy",
         deps=["git+git://github.com/numpy/numpy-stubs.git@master"],
     ),
     Project(
-        url="https://github.com/python-poetry/poetry.git",
+        location="https://github.com/python-poetry/poetry.git",
         mypy_cmd="{mypy} poetry",
     ),
     Project(
-        url="https://github.com/pycqa/flake8.git",
+        location="https://github.com/pycqa/flake8.git",
         mypy_cmd="{mypy} src",
     ),
     Project(
-        url="https://github.com/home-assistant/core.git",
+        location="https://github.com/home-assistant/core.git",
         mypy_cmd="{mypy} homeassistant",
     ),
     Project(
-        url="https://github.com/awslabs/sockeye.git",
+        location="https://github.com/awslabs/sockeye.git",
         mypy_cmd=(
             "{mypy} --ignore-missing-imports --follow-imports=silent"
             " @typechecked-files --no-strict-optional"
         ),
     ),
     Project(
-        url="https://github.com/pytorch/pytorch.git",
-        mypy_cmd="{mypy} .",
-    ),
-    Project(
-        url="https://github.com/kornia/kornia.git",
+        location="https://github.com/kornia/kornia.git",
         mypy_cmd="{mypy} kornia",
     ),
 ]

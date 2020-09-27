@@ -45,7 +45,7 @@ mypy:
 
 project selection:
   -k PROJECT_SELECTOR, --project-selector PROJECT_SELECTOR
-                        regex to filter projects (matches against url)
+                        regex to filter projects (matches against location)
   --expected-success    filter to hardcoded subset of projects where some recent mypy version
                         succeeded aka are committed to the mypy way of life. also look at: --old-
                         success
@@ -117,9 +117,9 @@ python -m primer --coverage -k pypa
 For the record, the total is currently:
 ```
 λ python -m primer --coverage
-Checking 55 projects...
-Containing 13304 files...
-Totalling to 4022194 lines...
+Checking 54 projects...
+Containing 12194 files...
+Totalling to 3747435 lines...
 ```
 (We use mypy internals to calculate this, so it's pretty accurate, if fragile)
 
