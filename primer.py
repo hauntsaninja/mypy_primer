@@ -226,7 +226,7 @@ class Project:
 
     @property
     def venv_dir(self) -> Path:
-        return ARGS.projects_dir / f"_{self.name}_venv"
+        return ARGS.projects_dir / f"_{self.name}_venv"  # type: ignore[no-any-return]
 
     async def setup(self) -> None:
         repo_dir = await ensure_repo_at_revision(self.url, ARGS.projects_dir, self.revision)
