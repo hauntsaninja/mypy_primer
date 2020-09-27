@@ -229,17 +229,17 @@ class Project:
         return ARGS.projects_dir / f"_{self.name}_venv"  # type: ignore[no-any-return]
 
     async def setup(self) -> None:
-        if Path(self.location).is_file():
-            # allow a project to be a single file
+        if Path(self.location).exists():
             repo_dir = ARGS.projects_dir / self.name
-            shutil.rmtree(repo_dir)
-            repo_dir.mkdir()
-            shutil.copy(Path(self.location), repo_dir / Path(self.location).name)
-        elif Path(self.location).is_dir() and not (Path(self.location) / ".git").exists():
-            # allow a project to be a local folder (that isn't a git repo)
-            repo_dir = ARGS.projects_dir / self.name
-            shutil.rmtree(repo_dir)
-            shutil.copytree(Path(self.location), repo_dir)
+            if repo_dir.exists():
+                shutil.rmtree(repo_dir)
+            if Path(self.location).is_file():
+                # allow a project to be a single file
+                repo_dir.mkdir()
+                shutil.copy(Path(self.location), repo_dir / Path(self.location).name)
+            elif Path(self.location).is_dir() and not (Path(self.location) / ".git").exists():
+                # allow a project to be a local folder (that isn't a git repo)
+                shutil.copytree(Path(self.location), repo_dir)
         else:
             # usually projects are something clonable
             repo_dir = await ensure_repo_at_revision(
@@ -409,11 +409,11 @@ async def bisect() -> None:
     projects = list(select_projects())
     await asyncio.wait([project.setup() for project in projects])
 
-    async def run_wrapper(project: Project) -> Tuple[Project, MypyResult]:
-        return project, (await project.run_mypy(str(mypy_exe), ARGS.new_custom_typeshed_dir))
+    async def run_wrapper(project: Project) -> Tuple[str, MypyResult]:
+        return project.name, (await project.run_mypy(str(mypy_exe), ARGS.new_custom_typeshed_dir))
 
     results_fut = await asyncio.gather(*(run_wrapper(project) for project in projects))
-    old_results: Dict[Project, MypyResult] = dict(results_fut)
+    old_results: Dict[str, MypyResult] = dict(results_fut)
 
     await run(["git", "bisect", "reset"], cwd=repo_dir)
     await run(["git", "bisect", "start"], cwd=repo_dir)
@@ -421,20 +421,22 @@ async def bisect() -> None:
     new_revision = await get_revision_for_revision_or_date(ARGS.new or "origin/HEAD", repo_dir)
     await run(["git", "bisect", "bad", new_revision], cwd=repo_dir)
 
-    def are_results_good(results: Dict[Project, MypyResult]) -> bool:
+    def are_results_good(results: Dict[str, MypyResult]) -> bool:
         if ARGS.bisect_error:
             return not any(
-                re.search(ARGS.bisect_error, strip_colour_code(results[project].output))
+                re.search(ARGS.bisect_error, strip_colour_code(results[project.name].output))
                 for project in projects
             )
-        return all(results[project].output == old_results[project].output for project in projects)
+        return all(
+            results[project.name].output == old_results[project.name].output for project in projects
+        )
 
     assert are_results_good(old_results)
 
     while True:
         await run(["git", "submodule", "update", "--init"], cwd=repo_dir)
         results_fut = await asyncio.gather(*(run_wrapper(project) for project in projects))
-        results: Dict[Project, MypyResult] = dict(results_fut)
+        results: Dict[str, MypyResult] = dict(results_fut)
 
         state = "good" if are_results_good(results) else "bad"
         proc = await run(["git", "bisect", state], output=True, cwd=repo_dir)
