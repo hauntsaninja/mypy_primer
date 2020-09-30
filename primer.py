@@ -148,8 +148,11 @@ async def ensure_repo_at_revision(repo_url: str, cwd: Path, revision_like: Revis
                 await checkout(revision, repo_dir)
         except subprocess.CalledProcessError:
             if retry:
-                await run(["git", "fetch", "--unshallow", "--all", "--tags"], cwd=repo_dir)
-                continue
+                try:
+                    await run(["git", "fetch", "--unshallow", "--all", "--tags"], cwd=repo_dir)
+                    continue
+                except subprocess.CalledProcessError:
+                    pass
             raise
         break
     return repo_dir
