@@ -367,10 +367,14 @@ class PrimerResult:
         old_lines = self.old_result.output.splitlines()
         new_lines = self.new_result.output.splitlines()
         if ARGS.output == "concise":
-            assert "source file" in old_lines[-1]
-            assert "source file" in new_lines[-1]
-            old_lines.pop()
-            new_lines.pop()
+            if "source file" in old_lines[-1]:
+                old_lines.pop()
+            else:
+                assert "INTERNAL ERROR" in self.old_result.output
+            if "source file" in new_lines[-1]:
+                new_lines.pop()
+            else:
+                assert "INTERNAL ERROR" in self.new_result.output
         diff = d.compare(old_lines, new_lines)
         return "\n".join(line for line in diff if line[0] in ("+", "-"))
 
