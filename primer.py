@@ -960,6 +960,10 @@ PROJECTS = [
         location="https://github.com/kornia/kornia.git",
         mypy_cmd="{mypy} kornia",
     ),
+    Project(
+        location="https://github.com/ibis-project/ibis.git",
+        mypy_cmd="{mypy} --ignore-missing-imports ibis",
+    ),
 ]
 assert len(PROJECTS) == len({p.name for p in PROJECTS})
 
