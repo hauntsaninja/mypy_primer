@@ -26,10 +26,11 @@ it'll check out projects as they were today and things should work!
 ```
 λ python -m primer --help
 usage: primer.py [-h] [--new NEW] [--old OLD] [--repo REPO]
-                 [--new-custom-typeshed-dir NEW_CUSTOM_TYPESHED_DIR] [-k PROJECT_SELECTOR]
-                 [--expected-success] [--project-date PROJECT_DATE] [-o {full,diff,concise}]
-                 [--old-success] [--coverage] [--bisect] [--bisect-error BISECT_ERROR]
-                 [-j CONCURRENCY] [--debug] [--base-dir BASE_DIR] [--clear]
+                 [--custom-typeshed-repo CUSTOM_TYPESHED_REPO] [--new-typeshed NEW_TYPESHED]
+                 [--old-typeshed OLD_TYPESHED] [-k PROJECT_SELECTOR] [--expected-success]
+                 [--project-date PROJECT_DATE] [-o {full,diff,concise}] [--old-success]
+                 [--coverage] [--bisect] [--bisect-error BISECT_ERROR] [-j CONCURRENCY] [--debug]
+                 [--base-dir BASE_DIR] [--clear]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -40,8 +41,14 @@ mypy:
   --old OLD             old mypy version, defaults to latest tag (anything commit-ish, or
                         isoformatted date)
   --repo REPO           mypy repo to use (passed to git clone)
-  --new-custom-typeshed-dir NEW_CUSTOM_TYPESHED_DIR
-                        typeshed directory to use with the new mypy run
+  --custom-typeshed-repo CUSTOM_TYPESHED_REPO
+                        typeshed repo to use (passed to git clone)
+  --new-typeshed NEW_TYPESHED
+                        new typeshed version, defaults to mypy's (anything commit-ish, or
+                        isoformatted date)
+  --old-typeshed OLD_TYPESHED
+                        old typeshed version, defaults to mypy's (anything commit-ish, or
+                        isoformatted date)
 
 project selection:
   -k PROJECT_SELECTOR, --project-selector PROJECT_SELECTOR
@@ -81,12 +88,12 @@ python -m primer -o diff
 
 See the impact of your risky change with:
 ```
-python -m primer --repo https://github.com/hauntsaninja/mypy.git --old master --new my_risky_change
+python -m primer --repo https://github.com/hauntsaninja/mypy.git --new my_risky_change --old master
 ```
 
 See the impact of your risky typeshed change with:
 ```
-python -m primer --new-custom-typeshed-dir ~/dev/typeshed --old origin/HEAD -o concise
+python -m primer --custom-typeshed-repo ~/dev/typeshed --new-typeshed my_risky_change --old-typeshed master --new v0.782 --old v0.782 -o concise
 ```
 
 Filter to projects you care about:

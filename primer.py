@@ -209,6 +209,32 @@ async def setup_new_and_old_mypy(
     return new_mypy, old_mypy
 
 
+async def setup_new_and_old_typeshed(
+    new_typeshed_revision: RevisionLike, old_typeshed_revision: RevisionLike
+) -> Tuple[Optional[Path], Optional[Path]]:
+    typeshed_repo = ARGS.custom_typeshed_repo
+
+    new_typeshed_dir = None
+    old_typeshed_dir = None
+    if ARGS.new_typeshed:
+        parent_dir = ARGS.base_dir / "new_typeshed"
+        if parent_dir.exists():
+            shutil.rmtree(parent_dir)
+        parent_dir.mkdir(exist_ok=True)
+        new_typeshed_dir = await ensure_repo_at_revision(
+            typeshed_repo, ARGS.base_dir / "new_typeshed", new_typeshed_revision
+        )
+    if ARGS.old_typeshed:
+        parent_dir = ARGS.base_dir / "old_typeshed"
+        if parent_dir.exists():
+            shutil.rmtree(parent_dir)
+        parent_dir.mkdir(exist_ok=True)
+        old_typeshed_dir = await ensure_repo_at_revision(
+            typeshed_repo, parent_dir, old_typeshed_revision
+        )
+    return new_typeshed_dir, old_typeshed_dir
+
+
 # ==============================
 # classes
 # ==============================
@@ -283,13 +309,17 @@ class Project:
             mypy_cmd, proc.stderr + proc.stdout, not bool(proc.returncode), self.expected_success
         )
 
-    async def primer_result(self, new_mypy: str, old_mypy: str) -> PrimerResult:
+    async def primer_result(
+        self,
+        new_mypy: str,
+        old_mypy: str,
+        new_additional_flags: Sequence[str] = (),
+        old_additional_flags: Sequence[str] = (),
+    ) -> PrimerResult:
         await self.setup()
-        new_additional_flags = []
-        if ARGS.new_custom_typeshed_dir:
-            new_additional_flags = [f"--custom-typeshed-dir={ARGS.new_custom_typeshed_dir}"]
         new_result, old_result = await asyncio.gather(
-            self.run_mypy(new_mypy, new_additional_flags), self.run_mypy(old_mypy)
+            self.run_mypy(new_mypy, new_additional_flags),
+            self.run_mypy(old_mypy, old_additional_flags),
         )
         return PrimerResult(self, new_result, old_result)
 
@@ -403,6 +433,9 @@ def select_projects() -> Iterator[Project]:
 
 
 async def bisect() -> None:
+    assert not ARGS.new_typeshed
+    assert not ARGS.old_typeshed
+
     mypy_exe = await setup_mypy(
         ARGS.base_dir / "bisect_mypy", revision_or_recent_tag_fn(ARGS.old), editable=True
     )
@@ -413,7 +446,7 @@ async def bisect() -> None:
     await asyncio.wait([project.setup() for project in projects])
 
     async def run_wrapper(project: Project) -> Tuple[str, MypyResult]:
-        return project.name, (await project.run_mypy(str(mypy_exe), ARGS.new_custom_typeshed_dir))
+        return project.name, (await project.run_mypy(str(mypy_exe)))
 
     results_fut = await asyncio.gather(*(run_wrapper(project) for project in projects))
     old_results: Dict[str, MypyResult] = dict(results_fut)
@@ -479,8 +512,22 @@ async def primer() -> None:
     new_mypy, old_mypy = await setup_new_and_old_mypy(
         new_mypy_revision=ARGS.new, old_mypy_revision=revision_or_recent_tag_fn(ARGS.old)
     )
+    new_typeshed_dir, old_typeshed_dir = await setup_new_and_old_typeshed(
+        ARGS.new_typeshed, ARGS.old_typeshed
+    )
+    new_additional_flags = []
+    if new_typeshed_dir:
+        new_additional_flags += [f"--custom-typeshed-dir={new_typeshed_dir}"]
+    old_additional_flags = []
+    if old_typeshed_dir:
+        old_additional_flags += [f"--custom-typeshed-dir={old_typeshed_dir}"]
 
-    results = [project.primer_result(str(new_mypy), str(old_mypy)) for project in select_projects()]
+    results = [
+        project.primer_result(
+            str(new_mypy), str(old_mypy), new_additional_flags, old_additional_flags
+        )
+        for project in select_projects()
+    ]
     for result_fut in asyncio.as_completed(results):
         result = await result_fut
         if ARGS.old_success and not result.old_result.success:
@@ -517,7 +564,17 @@ def parse_options(argv: List[str]) -> argparse.Namespace:
         help="mypy repo to use (passed to git clone)",
     )
     mypy_group.add_argument(
-        "--new-custom-typeshed-dir", help="typeshed directory to use with the new mypy run"
+        "--custom-typeshed-repo",
+        default="https://github.com/python/typeshed.git",
+        help="typeshed repo to use (passed to git clone)",
+    )
+    mypy_group.add_argument(
+        "--new-typeshed",
+        help="new typeshed version, defaults to mypy's (anything commit-ish, or isoformatted date)",
+    )
+    mypy_group.add_argument(
+        "--old-typeshed",
+        help="old typeshed version, defaults to mypy's (anything commit-ish, or isoformatted date)",
     )
 
     proj_group = parser.add_argument_group("project selection")
