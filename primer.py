@@ -903,6 +903,16 @@ PROJECTS = [
         mypy_cmd="{mypy} --ignore-missing-imports dedupe",
         expected_success=True,
     ),
+    Project(
+        location="https://github.com/schemathesis/schemathesis.git",
+        mypy_cmd="{mypy} src/schemathesis",
+        expected_success=True,
+    ),
+    Project(
+        location="https://github.com/graphql-python/graphql-core.git",
+        mypy_cmd="{mypy} src tests",
+        expected_success=True,
+    ),
     # failures expected...
     Project(
         location="https://github.com/pyppeteer/pyppeteer.git",
@@ -963,6 +973,19 @@ PROJECTS = [
     Project(
         location="https://github.com/ibis-project/ibis.git",
         mypy_cmd="{mypy} --ignore-missing-imports ibis",
+    ),
+    Project(
+        location="https://github.com/streamlit/streamlit.git",
+        mypy_cmd="{mypy} --config-file=lib/mypy.ini lib scripts",
+        deps=["tornado", "packaging"],
+    ),
+    Project(
+        location="https://github.com/dragonchain/dragonchain.git",
+        mypy_cmd="{mypy} dragonchain --error-summary",
+    ),
+    Project(
+        location="https://github.com/mikeshardmind/SinbadCogs.git",
+        mypy_cmd="{mypy} .",
     ),
 ]
 assert len(PROJECTS) == len({p.name for p in PROJECTS})
