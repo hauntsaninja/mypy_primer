@@ -145,10 +145,20 @@ async def ensure_repo_at_revision(repo_url: str, cwd: Path, revision_like: Revis
             revision = (await revision_like(repo_dir)) if callable(revision_like) else revision_like
             if revision is not None:
                 revision = await get_revision_for_revision_or_date(revision, repo_dir)
+                # checking out a local branch is probably not what we want, so preemptively delete
+                try:
+                    await checkout("origin/HEAD", repo_dir)
+                    await run(["git", "branch", "-D", revision], output=True, cwd=repo_dir)
+                except subprocess.CalledProcessError as e:
+                    # defensiveness against errors we encounter
+                    if "not found" not in e.stderr:
+                        raise
                 await checkout(revision, repo_dir)
         except subprocess.CalledProcessError:
             if retry:
                 try:
+                    refspec = "+refs/heads/*:refs/remotes/origin/*"
+                    await run(["git", "config", "remote.origin.fetch", refspec], cwd=repo_dir)
                     await run(["git", "fetch", "--unshallow", "--all", "--tags"], cwd=repo_dir)
                     continue
                 except subprocess.CalledProcessError:
