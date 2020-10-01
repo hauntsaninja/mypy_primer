@@ -223,13 +223,12 @@ async def setup_new_and_old_mypy(
         setup_mypy(ARGS.base_dir / "old_mypy", old_mypy_revision),
     )
 
-    if ARGS.debug:
-        new_version, old_version = await asyncio.gather(
-            run([str(new_mypy), "--version"], output=True),
-            run([str(old_mypy), "--version"], output=True),
-        )
-        print(f"{Style.BLUE}new mypy version: {new_version.stdout.strip()}{Style.RESET}")
-        print(f"{Style.BLUE}old mypy version: {old_version.stdout.strip()}{Style.RESET}")
+    new_version, old_version = await asyncio.gather(
+        run([str(new_mypy), "--version"], output=True),
+        run([str(old_mypy), "--version"], output=True),
+    )
+    print(f"{Style.BLUE}new mypy version: {new_version.stdout.strip()}{Style.RESET}")
+    print(f"{Style.BLUE}old mypy version: {old_version.stdout.strip()}{Style.RESET}")
 
     return new_mypy, old_mypy
 
