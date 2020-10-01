@@ -185,15 +185,30 @@ def revision_or_recent_tag_fn(revision: Optional[str]) -> RevisionLike:
 
 async def setup_mypy(mypy_dir: Path, revision_like: RevisionLike, editable: bool = False) -> Path:
     mypy_dir.mkdir(exist_ok=True)
-    repo_dir = await ensure_repo_at_revision(ARGS.repo, mypy_dir, revision_like)
-
     venv_dir = mypy_dir / "venv"
     venv.create(venv_dir, with_pip=True, clear=True)
-    install_cmd = [str(venv_dir / "bin" / "pip"), "install"]
-    if editable:
-        install_cmd.append("--editable")
-    install_cmd.append(str(repo_dir))
-    await run(install_cmd)
+    pip_exe = str(venv_dir / "bin" / "pip")
+
+    install_from_repo = True
+    if (
+        isinstance(revision_like, str)
+        and not editable
+        and ARGS.repo == "https://github.com/python/mypy.git"
+    ):
+        # optimistically attempt to install the revision of mypy we want from pypi
+        try:
+            await run([pip_exe, "install", f"mypy=={revision_like}"])
+            install_from_repo = False
+        except subprocess.CalledProcessError:
+            install_from_repo = True
+
+    if install_from_repo:
+        repo_dir = await ensure_repo_at_revision(ARGS.repo, mypy_dir, revision_like)
+        install_cmd = [pip_exe, "install"]
+        if editable:
+            install_cmd.append("--editable")
+        install_cmd.append(str(repo_dir))
+        await run(install_cmd)
 
     mypy_exe = venv_dir / "bin" / "mypy"
     assert mypy_exe.exists()
@@ -566,16 +581,25 @@ def parse_options(argv: List[str]) -> argparse.Namespace:
     mypy_group = parser.add_argument_group("mypy")
     mypy_group.add_argument(
         "--new",
-        help="new mypy version, defaults to HEAD (anything commit-ish, or isoformatted date)",
+        help=(
+            "new mypy version, defaults to HEAD "
+            "(pypi version, anything commit-ish, or isoformatted date)"
+        ),
     )
     mypy_group.add_argument(
         "--old",
-        help="old mypy version, defaults to latest tag (anything commit-ish, or isoformatted date)",
+        help=(
+            "old mypy version, defaults to latest tag "
+            "(pypi version, anything commit-ish, or isoformatted date)"
+        ),
     )
     mypy_group.add_argument(
         "--repo",
         default="https://github.com/python/mypy.git",
-        help="mypy repo to use (passed to git clone)",
+        help=(
+            "mypy repo to use (passed to git clone. if unspecified, we first try pypi, "
+            "then fall back to github)"
+        ),
     )
     mypy_group.add_argument(
         "--custom-typeshed-repo",

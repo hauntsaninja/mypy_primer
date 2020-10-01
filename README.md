@@ -36,11 +36,12 @@ optional arguments:
   -h, --help            show this help message and exit
 
 mypy:
-  --new NEW             new mypy version, defaults to HEAD (anything commit-ish, or isoformatted
-                        date)
-  --old OLD             old mypy version, defaults to latest tag (anything commit-ish, or
+  --new NEW             new mypy version, defaults to HEAD (pypi version, anything commit-ish, or
                         isoformatted date)
-  --repo REPO           mypy repo to use (passed to git clone)
+  --old OLD             old mypy version, defaults to latest tag (pypi version, anything commit-
+                        ish, or isoformatted date)
+  --repo REPO           mypy repo to use (passed to git clone. if unspecified, we first try pypi,
+                        then fall back to github)
   --custom-typeshed-repo CUSTOM_TYPESHED_REPO
                         typeshed repo to use (passed to git clone)
   --new-typeshed NEW_TYPESHED
@@ -77,6 +78,7 @@ primer:
   --debug               print commands as they run
   --base-dir BASE_DIR   dir to store repos and venvs
   --clear               delete repos and venvs
+
 ```
 
 ## Examples
