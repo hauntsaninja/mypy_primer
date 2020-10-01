@@ -140,31 +140,35 @@ async def ensure_repo_at_revision(repo_url: str, cwd: Path, revision_like: Revis
         await clone(repo_url, cwd, shallow=revision_like is None)
     assert repo_dir.is_dir()
 
+    if revision_like is None:
+        return repo_dir
+    revision = (await revision_like(repo_dir)) if callable(revision_like) else revision_like
+    revision = await get_revision_for_revision_or_date(revision, repo_dir)
+
     for retry in (True, False):
+        # checking out a local branch is probably not what we want, so preemptively delete
         try:
-            revision = (await revision_like(repo_dir)) if callable(revision_like) else revision_like
-            if revision is not None:
-                revision = await get_revision_for_revision_or_date(revision, repo_dir)
-                # checking out a local branch is probably not what we want, so preemptively delete
-                try:
-                    await checkout("origin/HEAD", repo_dir)
-                    await run(["git", "branch", "-D", revision], output=True, cwd=repo_dir)
-                except subprocess.CalledProcessError as e:
-                    # defensiveness against errors we encounter
-                    if "not found" not in e.stderr:
-                        raise
-                await checkout(revision, repo_dir)
+            await checkout("origin/HEAD", repo_dir)
+            await run(["git", "branch", "-D", revision], output=True, cwd=repo_dir)
+        except subprocess.CalledProcessError as e:
+            # out of caution, be defensive about the error here
+            if "not found" not in e.stderr:
+                raise
+
+        try:
+            await checkout(revision, repo_dir)
+            break
         except subprocess.CalledProcessError:
+            # assume checkout failed due to having a shallow clone. try to unshallow our clone
+            # and then retry
             if retry:
-                try:
-                    refspec = "+refs/heads/*:refs/remotes/origin/*"
-                    await run(["git", "config", "remote.origin.fetch", refspec], cwd=repo_dir)
-                    await run(["git", "fetch", "--unshallow", "--all", "--tags"], cwd=repo_dir)
-                    continue
-                except subprocess.CalledProcessError:
-                    pass
+                refspec = "+refs/heads/*:refs/remotes/origin/*"
+                await run(["git", "config", "remote.origin.fetch", refspec], cwd=repo_dir)
+                await run(
+                    ["git", "fetch", "--unshallow", "--all", "--tags"], cwd=repo_dir, check=False
+                )
+                continue
             raise
-        break
     return repo_dir
 
 
