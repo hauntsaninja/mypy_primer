@@ -723,6 +723,11 @@ PROJECTS = [
         expected_success=True,
     ),
     Project(
+        location="https://github.com/hauntsaninja/mypy_primer.git",
+        mypy_cmd="{mypy} -m primer --strict",
+        expected_success=True,
+    ),
+    Project(
         location="https://github.com/psf/black.git",
         mypy_cmd="{mypy} src",
         expected_success=True,
