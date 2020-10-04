@@ -954,6 +954,71 @@ PROJECTS = [
         mypy_cmd="{mypy} src tests",
         expected_success=True,
     ),
+    Project(
+        location="https://github.com/Legrandin/pycryptodome.git",
+        mypy_cmd="{mypy} lib",
+        expected_success=True,
+    ),
+    Project(
+        location="https://github.com/niklasf/python-chess.git",
+        mypy_cmd="{mypy} --strict chess",
+        expected_success=True,
+    ),
+    Project(
+        location="https://github.com/pytorch/ignite",
+        mypy_cmd="{mypy}",
+        expected_success=True,
+    ),
+    Project(
+        location="https://github.com/pypa/packaging.git",
+        mypy_cmd="{mypy} packaging",
+        expected_success=True,
+    ),
+    Project(
+        location="https://github.com/samuelcolvin/pydantic.git",
+        mypy_cmd="{mypy} pydantic",
+        expected_success=True,
+    ),
+    Project(
+        location="https://github.com/encode/starlette.git",
+        mypy_cmd="{mypy} starlette tests",
+        expected_success=True,
+    ),
+    Project(
+        location="https://github.com/aio-libs/janus.git",
+        mypy_cmd="{mypy} janus --disallow-untyped-calls --disallow-incomplete-defs --strict",
+        expected_success=True,
+    ),
+    Project(
+        location="https://github.com/alerta/alerta.git",
+        mypy_cmd="{mypy} alerta tests",
+        expected_success=True,
+    ),
+    Project(
+        location="https://github.com/nolar/kopf.git",
+        mypy_cmd="{mypy} kopf",
+        expected_success=True,
+    ),
+    Project(
+        location="https://github.com/davidhalter/parso.git",
+        mypy_cmd="{mypy} parso",
+        expected_success=True,
+    ),
+    Project(
+        location="https://github.com/konradhalas/dacite.git",
+        mypy_cmd="{mypy} dacite",
+        expected_success=True,
+    ),
+    Project(
+        location="https://github.com/ilevkivskyi/com2ann.git",
+        mypy_cmd="{mypy} --python-version=3.8 src/com2ann.py src/test_com2ann.py",
+        expected_success=True,
+    ),
+    Project(
+        location="https://github.com/srittau/python-htmlgen.git",
+        mypy_cmd="{mypy} htmlgen test_htmlgen",
+        expected_success=True,
+    ),
     # failures expected...
     Project(
         location="https://github.com/pyppeteer/pyppeteer.git",
