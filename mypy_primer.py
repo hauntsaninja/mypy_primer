@@ -13,7 +13,7 @@ import subprocess
 import sys
 import textwrap
 import venv
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from datetime import date
 from enum import Enum
 from pathlib import Path
@@ -392,8 +392,12 @@ class PrimerResult:
     project: Project
     new_result: MypyResult
     old_result: MypyResult
+    diff: str = field(init=False, repr=False, compare=False)
 
-    def diff(self) -> str:
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "diff", self._get_diff())
+
+    def _get_diff(self) -> str:
         d = difflib.Differ()
         old_lines = self.old_result.output.splitlines()
         new_lines = self.new_result.output.splitlines()
@@ -432,15 +436,14 @@ class PrimerResult:
         return ret
 
     def format_concise(self) -> str:
-        return self.diff()
+        return self.diff
 
     def format_diff_only(self) -> str:
         ret = self.header()
 
-        diff = self.diff()
-        if diff:
+        if self.diff:
             ret += "----------\n"
-            ret += textwrap.indent(diff, "\t")
+            ret += textwrap.indent(self.diff, "\t")
             ret += "\n"
 
         ret += "==========\n"
@@ -455,11 +458,10 @@ class PrimerResult:
         ret += "new mypy\n"
         ret += str(self.new_result)
 
-        diff = self.diff()
-        if diff:
+        if self.diff:
             ret += "----------\n\n"
             ret += "diff\n"
-            ret += textwrap.indent(diff, "\t")
+            ret += textwrap.indent(self.diff, "\t")
             ret += "\n"
 
         ret += "==========\n"
@@ -560,7 +562,7 @@ async def coverage() -> None:
     print(f"Totalling to {num_lines} lines...")
 
 
-async def primer() -> None:
+async def primer() -> int:
     new_mypy, old_mypy = await setup_new_and_old_mypy(
         new_mypy_revision=ARGS.new, old_mypy_revision=revision_or_recent_tag_fn(ARGS.old)
     )
@@ -580,6 +582,7 @@ async def primer() -> None:
         )
         for project in select_projects()
     ]
+    retcode = 0
     for result_fut in asyncio.as_completed(results):
         result = await result_fut
         if ARGS.old_success and not result.old_result.success:
@@ -596,6 +599,9 @@ async def primer() -> None:
             if concise:
                 print(concise)
                 print()
+        if not retcode and result.diff:
+            retcode = 1
+    return retcode
 
 
 def parse_options(argv: List[str]) -> argparse.Namespace:
@@ -706,7 +712,7 @@ def parse_options(argv: List[str]) -> argparse.Namespace:
 ARGS: argparse.Namespace
 
 
-def main() -> None:
+def main() -> Optional[int]:
     global ARGS
     ARGS = parse_options(sys.argv[1:])
 
@@ -716,6 +722,7 @@ def main() -> None:
     ARGS.projects_dir = ARGS.base_dir / "projects"
     ARGS.projects_dir.mkdir(exist_ok=True)
 
+    coro: Awaitable[Optional[int]]
     if ARGS.coverage:
         coro = coverage()
     elif ARGS.bisect or ARGS.bisect_error:
@@ -724,10 +731,11 @@ def main() -> None:
         coro = primer()
 
     try:
-        asyncio.run(coro)
+        retcode = asyncio.run(coro)
     finally:
         if ARGS.base_dir.exists() and ARGS.clear:
             shutil.rmtree(ARGS.base_dir)
+    return retcode
 
 
 # ==============================
@@ -1122,4 +1130,4 @@ PROJECTS = [
 assert len(PROJECTS) == len({p.name for p in PROJECTS})
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
