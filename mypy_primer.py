@@ -100,6 +100,8 @@ def line_count(path: Path) -> int:
 
 
 async def clone(repo_url: str, cwd: Path, shallow: bool = False) -> None:
+    if os.path.exists(repo_url):
+        repo_url = os.path.abspath(repo_url)
     cmd = ["git", "clone", "--recurse-submodules", repo_url]
     if shallow:
         cmd += ["--depth", "1"]
