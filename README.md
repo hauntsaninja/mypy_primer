@@ -15,22 +15,22 @@ Here's what mypy_primer does:
 - Lets you bisect to find the commit that causes a given change
 
 mypy_primer contains a hardcoded list of open source projects and their respective mypy setups (to
-which contributions are gladly accepted). The list is visible at the bottom of `primer.py` and many
-of them should be recognisable names. I used https://grep.app to help me; a mypy.ini or "mypy" in a
-tox.ini / setup.cfg / .travis.yml / etc is a pretty strong signal. This hardcoded list is in theory
-susceptible to bitrot, but if you pass e.g. the flag `--project-date 2020-09-25` to mypy_primer,
-it'll check out projects as they were today and things should work!
+which contributions are gladly accepted). The list is visible at the bottom of `mypy_primer.py` and
+many of them should be recognisable names. I used https://grep.app to help me; a mypy.ini or "mypy"
+in a tox.ini / setup.cfg / .travis.yml / etc is a pretty strong signal. This hardcoded list is in
+theory susceptible to bitrot, but if you pass e.g. the flag `--project-date 2020-09-25` to
+mypy_primer, it'll check out projects as they were today and things should work!
 
 ## Usage
 
 ```
-λ python -m primer --help
-usage: primer.py [-h] [--new NEW] [--old OLD] [--repo REPO]
-                 [--custom-typeshed-repo CUSTOM_TYPESHED_REPO] [--new-typeshed NEW_TYPESHED]
-                 [--old-typeshed OLD_TYPESHED] [-k PROJECT_SELECTOR] [--expected-success]
-                 [--project-date PROJECT_DATE] [-o {full,diff,concise}] [--old-success]
-                 [--coverage] [--bisect] [--bisect-error BISECT_ERROR] [-j CONCURRENCY] [--debug]
-                 [--base-dir BASE_DIR] [--clear]
+λ mypy_primer --help
+usage: mypy_primer [-h] [--new NEW] [--old OLD] [--repo REPO]
+                   [--custom-typeshed-repo CUSTOM_TYPESHED_REPO] [--new-typeshed NEW_TYPESHED]
+                   [--old-typeshed OLD_TYPESHED] [-k PROJECT_SELECTOR] [--expected-success]
+                   [--project-date PROJECT_DATE] [-o {full,diff,concise}] [--old-success]
+                   [--coverage] [--bisect] [--bisect-error BISECT_ERROR] [-j CONCURRENCY]
+                   [--debug] [--base-dir BASE_DIR] [--clear]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -78,54 +78,53 @@ primer:
   --debug               print commands as they run
   --base-dir BASE_DIR   dir to store repos and venvs
   --clear               delete repos and venvs
-
 ```
 
 ## Examples
 
 See the difference between HEAD and latest release with:
 ```
-python -m primer -o diff
+mypy_primer -o diff
 ```
 
 See the impact of your risky change with:
 ```
-python -m primer --repo https://github.com/hauntsaninja/mypy.git --new my_risky_change --old master
+mypy_primer --repo https://github.com/hauntsaninja/mypy.git --new my_risky_change --old master
 ```
 
 See the impact of your risky typeshed change with:
 ```
-python -m primer --custom-typeshed-repo ~/dev/typeshed --new-typeshed my_risky_change --old-typeshed master --new v0.782 --old v0.782 -o concise
+mypy_primer --custom-typeshed-repo ~/dev/typeshed --new-typeshed my_risky_change --old-typeshed master --new v0.782 --old v0.782 -o concise
 ```
 
 Filter to projects you care about:
 ```
-python -m primer -k hauntsaninja
+mypy_primer -k hauntsaninja
 ```
 
 Figure out what commit is causing a difference in the project you care about:
 ```
-python -m primer -k pandas --bisect
+mypy_primer -k pandas --bisect
 ```
 
 Figure out what commit is causing a specific error in the project you care about:
 ```
-python -m primer -k pandas --bisect-error 'Incompatible types in assignment'
+mypy_primer -k pandas --bisect-error 'Incompatible types in assignment'
 ```
 
 Find out what the hell mypy_primer is doing:
 ```
-python -m primer --debug
+mypy_primer --debug
 ```
 
 Or how much code it's covering (with your project selection):
 ```
-python -m primer --coverage -k pypa
+mypy_primer --coverage -k pypa
 ```
 
 For the record, the total is currently:
 ```
-λ python -m primer --coverage
+λ mypy_primer --coverage
 Checking 74 projects...
 Containing 13779 files...
 Totalling to 4101501 lines...

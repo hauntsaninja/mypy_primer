@@ -724,7 +724,7 @@ PROJECTS = [
     ),
     Project(
         location="https://github.com/hauntsaninja/mypy_primer.git",
-        mypy_cmd="{mypy} -m primer --strict",
+        mypy_cmd="{mypy} -m mypy_primer --strict",
         expected_success=True,
     ),
     Project(
