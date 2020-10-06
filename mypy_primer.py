@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import difflib
+import itertools
 import multiprocessing
 import os
 import re
@@ -397,6 +398,7 @@ class PrimerResult:
         old_lines = self.old_result.output.splitlines()
         new_lines = self.new_result.output.splitlines()
         if ARGS.output == "concise":
+            # Drop the error summary in concise mode (but be defensive about what we're dropping)
             if "source file" in old_lines[-1]:
                 old_lines.pop()
             else:
@@ -405,6 +407,18 @@ class PrimerResult:
                 new_lines.pop()
             else:
                 assert "INTERNAL ERROR" in self.new_result.output, self.new_result.output
+        # mypy's output appears to be nondeterministic for some same line errors, e.g. on pypa/pip
+        # Work around that by grouping and sorting errors from the same line
+        old_lines = [
+            line
+            for _, lines in itertools.groupby(old_lines, key=lambda x: x.split(":")[:2])
+            for line in sorted(lines)
+        ]
+        new_lines = [
+            line
+            for _, lines in itertools.groupby(new_lines, key=lambda x: x.split(":")[:2])
+            for line in sorted(lines)
+        ]
         diff = d.compare(old_lines, new_lines)
         return "\n".join(line for line in diff if line[0] in ("+", "-"))
 
