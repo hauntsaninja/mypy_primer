@@ -409,15 +409,19 @@ class PrimerResult:
                 assert "INTERNAL ERROR" in self.new_result.output, self.new_result.output
         # mypy's output appears to be nondeterministic for some same line errors, e.g. on pypa/pip
         # Work around that by grouping and sorting errors from the same line
+        # Also hide "note" lines which contain ARGS.base_dir... this hides differences between
+        # file paths, e.g., when mypy points to a stub definition.
         old_lines = [
             line
             for _, lines in itertools.groupby(old_lines, key=lambda x: x.split(":")[:2])
             for line in sorted(lines)
+            if not re.search(f"{ARGS.base_dir}.*: note:", line)
         ]
         new_lines = [
             line
             for _, lines in itertools.groupby(new_lines, key=lambda x: x.split(":")[:2])
             for line in sorted(lines)
+            if not re.search(f"{ARGS.base_dir}.*: note:", line)
         ]
         diff = d.compare(old_lines, new_lines)
         return "\n".join(line for line in diff if line[0] in ("+", "-"))
