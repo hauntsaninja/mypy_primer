@@ -1052,6 +1052,11 @@ PROJECTS = [
         mypy_cmd="{mypy} htmlgen test_htmlgen",
         expected_success=True,
     ),
+    Project(
+        location="https://github.com/mitmproxy/mitmproxy.git",
+        mypy_cmd="{mypy} .",
+        expected_success=True,
+    ),
     # failures expected...
     Project(
         location="https://github.com/pyppeteer/pyppeteer.git",
