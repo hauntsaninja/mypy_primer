@@ -371,6 +371,19 @@ for source in sources:
         )
         return [ARGS.projects_dir / self.name / p for p in proc.stdout.splitlines()]
 
+    @classmethod
+    def from_location(cls, location: str) -> Project:
+        additional_flags = ""
+        if Path(location).is_file():
+            with open(location) as f:
+                header = f.readline().strip()
+                if header.startswith("# flags:"):
+                    additional_flags = header[len("# flags:") :]
+        return Project(
+            location=location,
+            mypy_cmd=f"{{mypy}} {location} {additional_flags}",
+        )
+
 
 @dataclass(frozen=True)
 class MypyResult:
@@ -474,6 +487,8 @@ class PrimerResult:
 
 
 def select_projects() -> Iterator[Project]:
+    if ARGS.local_project:
+        return iter([Project.from_location(ARGS.local_project)])
     project_iter = (p for p in PROJECTS)
     if ARGS.project_selector:
         project_iter = (
@@ -647,6 +662,14 @@ def parse_options(argv: List[str]) -> argparse.Namespace:
     proj_group = parser.add_argument_group("project selection")
     proj_group.add_argument(
         "-k", "--project-selector", help="regex to filter projects (matches against location)"
+    )
+    proj_group.add_argument(
+        "-p",
+        "--local-project",
+        help=(
+            "run only on the given file or directory. if a single file, supports a "
+            "'# flags: ...' comment, like mypy unit tests"
+        ),
     )
     proj_group.add_argument(
         "--expected-success",

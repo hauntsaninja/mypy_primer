@@ -27,10 +27,10 @@ mypy_primer, it'll check out projects as they were today and things should work!
 λ mypy_primer --help
 usage: mypy_primer [-h] [--new NEW] [--old OLD] [--repo REPO]
                    [--custom-typeshed-repo CUSTOM_TYPESHED_REPO] [--new-typeshed NEW_TYPESHED]
-                   [--old-typeshed OLD_TYPESHED] [-k PROJECT_SELECTOR] [--expected-success]
-                   [--project-date PROJECT_DATE] [-o {full,diff,concise}] [--old-success]
-                   [--coverage] [--bisect] [--bisect-error BISECT_ERROR] [-j CONCURRENCY]
-                   [--debug] [--base-dir BASE_DIR] [--clear]
+                   [--old-typeshed OLD_TYPESHED] [-k PROJECT_SELECTOR] [-p LOCAL_PROJECT]
+                   [--expected-success] [--project-date PROJECT_DATE] [-o {full,diff,concise}]
+                   [--old-success] [--coverage] [--bisect] [--bisect-error BISECT_ERROR]
+                   [-j CONCURRENCY] [--debug] [--base-dir BASE_DIR] [--clear]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -54,6 +54,9 @@ mypy:
 project selection:
   -k PROJECT_SELECTOR, --project-selector PROJECT_SELECTOR
                         regex to filter projects (matches against location)
+  -p LOCAL_PROJECT, --local-project LOCAL_PROJECT
+                        run only on the given file or directory. if a single file, supports a '#
+                        flags: ...' comment, like mypy unit tests
   --expected-success    filter to hardcoded subset of projects where some recent mypy version
                         succeeded aka are committed to the mypy way of life. also look at: --old-
                         success
@@ -110,6 +113,11 @@ mypy_primer -k pandas --bisect
 Figure out what commit is causing a specific error in the project you care about:
 ```
 mypy_primer -k pandas --bisect-error 'Incompatible types in assignment'
+```
+
+Or on a local file / directory:
+```
+mypy_primer -p test.py --bisect --old v0.770
 ```
 
 Find out what the hell mypy_primer is doing:
