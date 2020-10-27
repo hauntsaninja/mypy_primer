@@ -528,9 +528,9 @@ async def bisect() -> None:
     await run(["git", "bisect", "bad", new_revision], cwd=repo_dir)
 
     def are_results_good(results: Dict[str, MypyResult]) -> bool:
-        if ARGS.bisect_error:
+        if ARGS.bisect_output:
             return not any(
-                re.search(ARGS.bisect_error, strip_colour_code(results[project.name].output))
+                re.search(ARGS.bisect_output, strip_colour_code(results[project.name].output))
                 for project in projects
             )
         return all(
@@ -710,7 +710,7 @@ def parse_options(argv: List[str]) -> argparse.Namespace:
         "--bisect", action="store_true", help="find first mypy revision to introduce a difference"
     )
     modes_group.add_argument(
-        "--bisect-error", help="find first mypy revision with output matching given regex"
+        "--bisect-output", help="find first mypy revision with output matching given regex"
     )
 
     primer_group = parser.add_argument_group("primer")
@@ -749,7 +749,7 @@ def main() -> Optional[int]:
     coro: Awaitable[Optional[int]]
     if ARGS.coverage:
         coro = coverage()
-    elif ARGS.bisect or ARGS.bisect_error:
+    elif ARGS.bisect or ARGS.bisect_output:
         coro = bisect()
     else:
         coro = primer()

@@ -29,7 +29,7 @@ usage: mypy_primer [-h] [--new NEW] [--old OLD] [--repo REPO]
                    [--custom-typeshed-repo CUSTOM_TYPESHED_REPO] [--new-typeshed NEW_TYPESHED]
                    [--old-typeshed OLD_TYPESHED] [-k PROJECT_SELECTOR] [-p LOCAL_PROJECT]
                    [--expected-success] [--project-date PROJECT_DATE] [-o {full,diff,concise}]
-                   [--old-success] [--coverage] [--bisect] [--bisect-error BISECT_ERROR]
+                   [--old-success] [--coverage] [--bisect] [--bisect-output BISECT_OUTPUT]
                    [-j CONCURRENCY] [--debug] [--base-dir BASE_DIR] [--clear]
 
 optional arguments:
@@ -72,7 +72,7 @@ output:
 modes:
   --coverage            count files and lines covered
   --bisect              find first mypy revision to introduce a difference
-  --bisect-error BISECT_ERROR
+  --bisect-output BISECT_OUTPUT
                         find first mypy revision with output matching given regex
 
 primer:
