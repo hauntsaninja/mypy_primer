@@ -56,7 +56,12 @@ _semaphore: Optional[asyncio.Semaphore] = None
 
 
 async def run(
-    cmd: List[str], output: bool = False, check: bool = True, **kwargs: Any
+    cmd: Union[str, List[str]],
+    *,
+    shell: bool = False,
+    output: bool = False,
+    check: bool = True,
+    **kwargs: Any,
 ) -> subprocess.CompletedProcess[str]:
     if output:
         kwargs["stdout"] = subprocess.PIPE
@@ -70,14 +75,19 @@ async def run(
         _semaphore = asyncio.BoundedSemaphore(ARGS.concurrency)
     async with _semaphore:
         if ARGS.debug:
-            log = " ".join(map(shlex.quote, cmd))
+            log = cmd if shell else " ".join(map(shlex.quote, cmd))
             log = f"{Style.BLUE}{log}"
             if "cwd" in kwargs:
                 log += f"\t{Style.DIM} in {kwargs['cwd']}"
             log += Style.RESET
             print(log)
 
-        proc = await asyncio.create_subprocess_exec(*cmd, **kwargs)
+        if shell:
+            assert isinstance(cmd, str)
+            proc = await asyncio.create_subprocess_shell(cmd, **kwargs)
+        else:
+            assert isinstance(cmd, list)
+            proc = await asyncio.create_subprocess_exec(*cmd, **kwargs)
         stdout_b, stderr_b = await proc.communicate()
 
     stdout = stdout_b.decode("utf-8") if stdout_b is not None else None
@@ -277,7 +287,7 @@ class Project:
     location: str
     mypy_cmd: str
     revision: Optional[str] = None
-    deps: Optional[List[str]] = None
+    pip_cmd: Optional[str] = None
     # if expected_success, there is a recent version of mypy which passes cleanly
     expected_success: bool = False
 
@@ -307,15 +317,19 @@ class Project:
                 self.location, ARGS.projects_dir, self.revision
             )
         assert repo_dir == ARGS.projects_dir / self.name
-        if self.deps:
+        if self.pip_cmd:
+            assert "{pip}" in self.pip_cmd
             venv.create(self.venv_dir, with_pip=True, clear=True)
-            for dep in self.deps:
-                await run([str(self.venv_dir / "bin" / "pip"), "install", dep], cwd=repo_dir)
+            await run(
+                self.pip_cmd.format(pip=str(self.venv_dir / "bin" / "pip")),
+                shell=True,
+                cwd=repo_dir,
+            )
 
     def get_mypy_cmd(self, mypy: str, additional_flags: Sequence[str] = ()) -> str:
         mypy_cmd = self.mypy_cmd
-        assert mypy_cmd.startswith("{mypy}")
-        if self.deps:
+        assert "{mypy}" in self.mypy_cmd
+        if self.pip_cmd:
             python_exe = self.venv_dir / "bin" / "python"
             mypy_cmd += f" --python-executable={python_exe}"
         if additional_flags:
@@ -331,7 +345,8 @@ class Project:
         env = os.environ.copy()
         env["MYPY_FORCE_COLOR"] = "1"
         proc = await run(
-            shlex.split(mypy_cmd),
+            mypy_cmd,
+            shell=True,
             output=True,
             check=False,
             cwd=ARGS.projects_dir / self.name,
@@ -771,7 +786,7 @@ PROJECTS = [
     Project(
         location="https://github.com/python/mypy.git",
         mypy_cmd="{mypy} --config-file mypy_self_check.ini -p mypy -p mypyc",
-        deps=["pytest"],
+        pip_cmd="{pip} install pytest",
         expected_success=True,
     ),
     Project(
@@ -807,7 +822,7 @@ PROJECTS = [
     Project(
         location="https://github.com/aio-libs/aiohttp.git",
         mypy_cmd="{mypy} aiohttp",
-        deps=["-rrequirements/ci-wheel.txt"],
+        pip_cmd="AIOHTTP_NO_EXTENSIONS=1 {pip} install -e .",
         expected_success=True,
     ),
     Project(
@@ -822,7 +837,7 @@ PROJECTS = [
     Project(
         location="https://github.com/sphinx-doc/sphinx.git",
         mypy_cmd="{mypy} sphinx",
-        deps=["docutils-stubs"],
+        pip_cmd="{pip} install docutils-stubs",
         expected_success=True,
     ),
     Project(
@@ -843,7 +858,7 @@ PROJECTS = [
     Project(
         location="https://github.com/quora/asynq.git",
         mypy_cmd="{mypy} asynq",
-        deps=["-rrequirements.txt"],
+        pip_cmd="{pip} install -r requirements.txt",
         expected_success=True,
     ),
     Project(
@@ -917,7 +932,7 @@ PROJECTS = [
     Project(
         location="https://github.com/pallets/itsdangerous",
         mypy_cmd="{mypy}",
-        deps=["pytest"],
+        pip_cmd="{pip} install pytest",
         expected_success=True,
     ),
     Project(
@@ -953,7 +968,7 @@ PROJECTS = [
     Project(
         location="https://github.com/aio-libs/yarl.git",
         mypy_cmd="{mypy} --show-error-codes yarl tests",
-        deps=["multidict"],
+        pip_cmd="{pip} install multidict",
         expected_success=True,
     ),
     Project(
@@ -1085,7 +1100,7 @@ PROJECTS = [
     Project(
         location="https://github.com/pyppeteer/pyppeteer.git",
         mypy_cmd="{mypy} pyppeteer --config-file tox.ini",
-        deps=["."],
+        pip_cmd="{pip} install -e .",
     ),
     Project(
         location="https://github.com/pypa/pip.git",
@@ -1113,7 +1128,7 @@ PROJECTS = [
     Project(
         location="https://github.com/scipy/scipy.git",
         mypy_cmd="{mypy} scipy",
-        deps=["git+git://github.com/numpy/numpy-stubs.git@master"],
+        pip_cmd="{pip} install git+git://github.com/numpy/numpy-stubs.git@master",
     ),
     Project(
         location="https://github.com/python-poetry/poetry.git",
@@ -1145,7 +1160,7 @@ PROJECTS = [
     Project(
         location="https://github.com/streamlit/streamlit.git",
         mypy_cmd="{mypy} --config-file=lib/mypy.ini lib scripts",
-        deps=["tornado", "packaging"],
+        pip_cmd="{pip} install tornado packaging",
     ),
     Project(
         location="https://github.com/dragonchain/dragonchain.git",
