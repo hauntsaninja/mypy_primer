@@ -1096,6 +1096,7 @@ PROJECTS = [
     Project(
         location="https://github.com/srittau/python-htmlgen.git",
         mypy_cmd="{mypy} htmlgen test_htmlgen",
+        pip_cmd="{pip} install asserts",
         expected_success=True,
     ),
     Project(
