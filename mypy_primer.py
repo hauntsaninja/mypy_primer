@@ -1114,7 +1114,7 @@ PROJECTS = [
     Project(
         location="https://github.com/pyppeteer/pyppeteer.git",
         mypy_cmd="{mypy} pyppeteer --config-file tox.ini",
-        pip_cmd="{pip} install -e .",
+        pip_cmd="{pip} install .",
     ),
     Project(
         location="https://github.com/pypa/pip.git",
