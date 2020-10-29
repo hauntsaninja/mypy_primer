@@ -535,6 +535,10 @@ async def bisect() -> None:
 
     results_fut = await asyncio.gather(*(run_wrapper(project) for project in projects))
     old_results: Dict[str, MypyResult] = dict(results_fut)
+    if ARGS.debug:
+        print(format(Style.BLUE))
+        print("\n".join(str(result) for result in old_results.values()))
+        print(format(Style.RESET))
 
     # Note git bisect start will clean up old bisection state
     await run(["git", "bisect", "start"], cwd=repo_dir)
