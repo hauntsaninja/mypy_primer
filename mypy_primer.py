@@ -751,30 +751,37 @@ def parse_options(argv: List[str]) -> argparse.Namespace:
 ARGS: argparse.Namespace
 
 
-def main() -> Optional[int]:
-    global ARGS
-    ARGS = parse_options(sys.argv[1:])
+def main() -> None:
+    def inner() -> Optional[int]:
+        global ARGS
+        ARGS = parse_options(sys.argv[1:])
 
-    if ARGS.base_dir.exists() and ARGS.clear:
-        shutil.rmtree(ARGS.base_dir)
-    ARGS.base_dir.mkdir(exist_ok=True)
-    ARGS.projects_dir = ARGS.base_dir / "projects"
-    ARGS.projects_dir.mkdir(exist_ok=True)
-
-    coro: Awaitable[Optional[int]]
-    if ARGS.coverage:
-        coro = coverage()
-    elif ARGS.bisect or ARGS.bisect_output:
-        coro = bisect()
-    else:
-        coro = primer()
-
-    try:
-        retcode = asyncio.run(coro)
-    finally:
         if ARGS.base_dir.exists() and ARGS.clear:
             shutil.rmtree(ARGS.base_dir)
-    return retcode
+        ARGS.base_dir.mkdir(exist_ok=True)
+        ARGS.projects_dir = ARGS.base_dir / "projects"
+        ARGS.projects_dir.mkdir(exist_ok=True)
+
+        coro: Awaitable[Optional[int]]
+        if ARGS.coverage:
+            coro = coverage()
+        elif ARGS.bisect or ARGS.bisect_output:
+            coro = bisect()
+        else:
+            coro = primer()
+
+        try:
+            retcode = asyncio.run(coro)
+        finally:
+            if ARGS.base_dir.exists() and ARGS.clear:
+                shutil.rmtree(ARGS.base_dir)
+        return retcode
+
+    try:
+        retcode = inner()
+    except Exception:
+        retcode = 70
+    sys.exit(retcode)
 
 
 # ==============================
@@ -1174,4 +1181,4 @@ PROJECTS = [
 assert len(PROJECTS) == len({p.name for p in PROJECTS})
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()
