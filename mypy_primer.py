@@ -12,6 +12,7 @@ import shutil
 import subprocess
 import sys
 import textwrap
+import traceback
 import venv
 from dataclasses import dataclass, field, replace
 from datetime import date
@@ -784,6 +785,7 @@ def main() -> None:
     try:
         retcode = inner()
     except Exception:
+        traceback.print_exc()
         retcode = 70
     sys.exit(retcode)
 
