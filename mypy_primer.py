@@ -12,6 +12,7 @@ import shutil
 import subprocess
 import sys
 import textwrap
+import time
 import traceback
 import venv
 from dataclasses import dataclass, field, replace
@@ -327,7 +328,7 @@ class Project:
                 cwd=repo_dir,
             )
 
-    def get_mypy_cmd(self, mypy: str, additional_flags: Sequence[str] = ()) -> str:
+    def get_mypy_cmd(self, mypy: Union[str, Path], additional_flags: Sequence[str] = ()) -> str:
         mypy_cmd = self.mypy_cmd
         assert "{mypy}" in self.mypy_cmd
         if self.pip_cmd:
@@ -341,7 +342,9 @@ class Project:
         mypy_cmd = mypy_cmd.format(mypy=mypy)
         return mypy_cmd
 
-    async def run_mypy(self, mypy: str, additional_flags: Sequence[str] = ()) -> MypyResult:
+    async def run_mypy(
+        self, mypy: Union[str, Path], additional_flags: Sequence[str] = ()
+    ) -> MypyResult:
         mypy_cmd = self.get_mypy_cmd(mypy, additional_flags)
         env = os.environ.copy()
         env["MYPY_FORCE_COLOR"] = "1"
@@ -499,7 +502,7 @@ class PrimerResult:
 
 
 # ==============================
-# main logic
+# project utils
 # ==============================
 
 
@@ -516,6 +519,72 @@ def select_projects() -> Iterator[Project]:
     if ARGS.project_date:
         project_iter = (replace(p, revision=ARGS.project_date) for p in project_iter)
     return project_iter
+
+
+# ==============================
+# hidden entrypoint logic
+# ==============================
+
+RECENT_MYPYS = ["0.790", "0.782", "0.770"]
+
+
+async def validate_expected_success() -> None:
+    """Check correctness of hardcoded Project.expected_success"""
+    recent_mypy_exes = await asyncio.gather(
+        *[
+            setup_mypy(ARGS.base_dir / ("mypy_" + recent_mypy), recent_mypy)
+            for recent_mypy in RECENT_MYPYS
+        ]
+    )
+
+    async def inner(project: Project) -> Optional[str]:
+        await project.setup()
+        success = None
+        for mypy_exe in recent_mypy_exes:
+            mypy_result = await project.run_mypy(mypy_exe)
+            if ARGS.debug:
+                print(format(Style.BLUE))
+                print(mypy_result)
+                print(format(Style.RESET))
+            if mypy_result.success:
+                success = mypy_exe
+                break
+        if bool(success) and not project.expected_success:
+            return (
+                f"Project {project.location} succeeded with {success}, "
+                "but is not marked as expecting success"
+            )
+        if not bool(success) and project.expected_success:
+            return f"Project {project.location} did not succeed, but is marked as expecting success"
+        return None
+
+    results = await asyncio.gather(*[inner(project) for project in select_projects()])
+    for result in results:
+        if result:
+            print(result)
+
+
+async def measure_project_runtimes() -> None:
+    """Check mypy's runtime over each project."""
+    mypy_exe = await setup_mypy(ARGS.base_dir / "timer_mypy", RECENT_MYPYS[0])
+
+    async def inner(project: Project) -> Tuple[float, Project]:
+        await project.setup()
+        start = time.time()
+        await project.run_mypy(mypy_exe)
+        end = time.time()
+        return (end - start, project)
+
+    results = sorted(
+        (await asyncio.gather(*[inner(project) for project in select_projects()])), reverse=True
+    )
+    for time_taken, project in results:
+        print(f"{time_taken:6.2f}  {project.location}")
+
+
+# ==============================
+# entrypoint logic
+# ==============================
 
 
 async def bisect() -> None:
@@ -732,6 +801,12 @@ def parse_options(argv: List[str]) -> argparse.Namespace:
     modes_group.add_argument(
         "--bisect-output", help="find first mypy revision with output matching given regex"
     )
+    modes_group.add_argument(
+        "--validate-expected-success", action="store_true", help=argparse.SUPPRESS
+    )
+    modes_group.add_argument(
+        "--measure-project-runtimes", action="store_true", help=argparse.SUPPRESS
+    )
 
     primer_group = parser.add_argument_group("primer")
     primer_group.add_argument(
@@ -772,6 +847,10 @@ def main() -> None:
             coro = coverage()
         elif ARGS.bisect or ARGS.bisect_output:
             coro = bisect()
+        elif ARGS.validate_expected_success:
+            coro = validate_expected_success()
+        elif ARGS.measure_project_runtimes:
+            coro = measure_project_runtimes()
         else:
             coro = primer()
 
