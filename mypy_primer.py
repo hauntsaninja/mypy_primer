@@ -54,6 +54,11 @@ def strip_colour_code(text: str) -> str:
     return re.sub("\\x1b.*?m", "", text)
 
 
+def debug_print(obj: Any) -> None:
+    assert ARGS.debug
+    print(obj, file=sys.stderr)
+
+
 _semaphore: Optional[asyncio.Semaphore] = None
 
 
@@ -82,7 +87,7 @@ async def run(
             if "cwd" in kwargs:
                 log += f"\t{Style.DIM} in {kwargs['cwd']}"
             log += Style.RESET
-            print(log)
+            debug_print(log)
 
         if shell:
             assert isinstance(cmd, str)
@@ -247,8 +252,8 @@ async def setup_new_and_old_mypy(
             run([str(new_mypy), "--version"], output=True),
             run([str(old_mypy), "--version"], output=True),
         )
-        print(f"{Style.BLUE}new mypy version: {new_version.stdout.strip()}{Style.RESET}")
-        print(f"{Style.BLUE}old mypy version: {old_version.stdout.strip()}{Style.RESET}")
+        debug_print(f"{Style.BLUE}new mypy version: {new_version.stdout.strip()}{Style.RESET}")
+        debug_print(f"{Style.BLUE}old mypy version: {old_version.stdout.strip()}{Style.RESET}")
 
     return new_mypy, old_mypy
 
@@ -543,9 +548,9 @@ async def validate_expected_success() -> None:
         for mypy_exe in recent_mypy_exes:
             mypy_result = await project.run_mypy(mypy_exe)
             if ARGS.debug:
-                print(format(Style.BLUE))
-                print(mypy_result)
-                print(format(Style.RESET))
+                debug_print(format(Style.BLUE))
+                debug_print(mypy_result)
+                debug_print(format(Style.RESET))
             if mypy_result.success:
                 success = mypy_exe
                 break
@@ -606,9 +611,9 @@ async def bisect() -> None:
     results_fut = await asyncio.gather(*(run_wrapper(project) for project in projects))
     old_results: Dict[str, MypyResult] = dict(results_fut)
     if ARGS.debug:
-        print(format(Style.BLUE))
-        print("\n".join(str(result) for result in old_results.values()))
-        print(format(Style.RESET))
+        debug_print(format(Style.BLUE))
+        debug_print("\n".join(str(result) for result in old_results.values()))
+        debug_print(format(Style.RESET))
 
     # Note git bisect start will clean up old bisection state
     await run(["git", "bisect", "start"], cwd=repo_dir)
@@ -641,10 +646,9 @@ async def bisect() -> None:
             return
 
         if ARGS.debug:
-            print(format(Style.BLUE))
-            print("\n".join(str(result) for result in results.values()))
-            print(proc.stdout)
-            print(format(Style.RESET))
+            debug_print("\n".join(str(result) for result in results.values()))
+            debug_print(proc.stdout)
+            debug_print(format(Style.RESET))
 
 
 async def coverage() -> None:
