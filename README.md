@@ -26,6 +26,7 @@ mypy_primer, it'll check out projects as they were today and things should work!
 ```
 λ mypy_primer --help
 usage: mypy_primer [-h] [--new NEW] [--old OLD] [--repo REPO]
+                   [--mypyc-compile-level MYPYC_COMPILE_LEVEL]
                    [--custom-typeshed-repo CUSTOM_TYPESHED_REPO] [--new-typeshed NEW_TYPESHED]
                    [--old-typeshed OLD_TYPESHED] [-k PROJECT_SELECTOR] [-p LOCAL_PROJECT]
                    [--expected-success] [--project-date PROJECT_DATE] [-o {full,diff,concise}]
@@ -42,6 +43,8 @@ mypy:
                         ish, or isoformatted date)
   --repo REPO           mypy repo to use (passed to git clone. if unspecified, we first try pypi,
                         then fall back to github)
+  --mypyc-compile-level MYPYC_COMPILE_LEVEL
+                        Compile mypy with the given mypyc optimisation level
   --custom-typeshed-repo CUSTOM_TYPESHED_REPO
                         typeshed repo to use (passed to git clone)
   --new-typeshed NEW_TYPESHED

@@ -213,6 +213,9 @@ async def setup_mypy(mypy_dir: Path, revision_like: RevisionLike, editable: bool
     venv.create(venv_dir, with_pip=True, clear=True)
     pip_exe = str(venv_dir / "bin" / "pip")
 
+    if ARGS.mypyc_compile_level is not None:
+        editable = True
+
     install_from_repo = True
     if (
         isinstance(revision_like, str)
@@ -228,6 +231,16 @@ async def setup_mypy(mypy_dir: Path, revision_like: RevisionLike, editable: bool
 
     if install_from_repo:
         repo_dir = await ensure_repo_at_revision(ARGS.repo, mypy_dir, revision_like)
+        if ARGS.mypyc_compile_level is not None:
+            env = os.environ.copy()
+            env["MYPYC_OPT_LEVEL"] = str(ARGS.mypyc_compile_level)
+            python_exe = str(venv_dir / "bin" / "python")
+            await run([pip_exe, "install", "typing_extensions", "mypy_extensions"])
+            await run(
+                [python_exe, "setup.py", "--use-mypyc", "build_ext", "--inplace"],
+                cwd=repo_dir,
+                env=env,
+            )
         install_cmd = [pip_exe, "install"]
         if editable:
             install_cmd.append("--editable")
@@ -738,6 +751,12 @@ def parse_options(argv: List[str]) -> argparse.Namespace:
             "mypy repo to use (passed to git clone. if unspecified, we first try pypi, "
             "then fall back to github)"
         ),
+    )
+    mypy_group.add_argument(
+        "--mypyc-compile-level",
+        default=None,
+        type=int,
+        help="Compile mypy with the given mypyc optimisation level",
     )
     mypy_group.add_argument(
         "--custom-typeshed-repo",
