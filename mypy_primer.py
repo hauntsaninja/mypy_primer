@@ -441,11 +441,11 @@ class PrimerResult:
         new_lines = self.new_result.output.splitlines()
         if ARGS.output == "concise":
             # Drop the error summary in concise mode (but be defensive about what we're dropping)
-            if "source file" in old_lines[-1]:
+            if "source file" in old_lines[-1] or "prevented further checking" in old_lines[-1]:
                 old_lines.pop()
             else:
                 assert "INTERNAL ERROR" in self.old_result.output, self.old_result.output
-            if "source file" in new_lines[-1]:
+            if "source file" in new_lines[-1] or "prevented further checking" in new_lines[-1]:
                 new_lines.pop()
             else:
                 assert "INTERNAL ERROR" in self.new_result.output, self.new_result.output
