@@ -1231,6 +1231,16 @@ PROJECTS = [
         mypy_cmd="{mypy} .",
         expected_success=True,
     ),
+    Project(
+        location="https://github.com/jpadilla/pyjwt.git",
+        mypy_cmd="{mypy} jwt",
+        expected_success=True,
+    ),
+    Project(
+        location="https://github.com/apache/spark.git",
+        mypy_cmd="{mypy} --config python/mypy.ini python/pyspark",
+        expected_success=True,
+    ),
     # failures expected...
     Project(
         location="https://github.com/pyppeteer/pyppeteer.git",
