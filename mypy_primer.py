@@ -487,7 +487,9 @@ class PrimerResult:
         return ret
 
     def format_concise(self) -> str:
-        return self.diff
+        if self.diff:
+            return f"{self.project.name} ({self.project.location})\n{self.diff}"
+        return ""
 
     def format_diff_only(self) -> str:
         ret = self.header()
