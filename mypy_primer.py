@@ -635,7 +635,6 @@ async def bisect() -> None:
     results_fut = await asyncio.gather(*(run_wrapper(project) for project in projects))
     old_results: Dict[str, MypyResult] = dict(results_fut)
     if ARGS.debug:
-        debug_print(format(Style.BLUE))
         debug_print("\n".join(str(result) for result in old_results.values()))
         debug_print(format(Style.RESET))
 
