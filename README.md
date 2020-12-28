@@ -29,9 +29,10 @@ usage: mypy_primer [-h] [--new NEW] [--old OLD] [--repo REPO]
                    [--mypyc-compile-level MYPYC_COMPILE_LEVEL]
                    [--custom-typeshed-repo CUSTOM_TYPESHED_REPO] [--new-typeshed NEW_TYPESHED]
                    [--old-typeshed OLD_TYPESHED] [-k PROJECT_SELECTOR] [-p LOCAL_PROJECT]
-                   [--expected-success] [--project-date PROJECT_DATE] [-o {full,diff,concise}]
-                   [--old-success] [--coverage] [--bisect] [--bisect-output BISECT_OUTPUT]
-                   [-j CONCURRENCY] [--debug] [--base-dir BASE_DIR] [--clear]
+                   [--expected-success] [--project-date PROJECT_DATE] [--num-shards NUM_SHARDS]
+                   [--shard-index SHARD_INDEX] [-o {full,diff,concise}] [--old-success]
+                   [--coverage] [--bisect] [--bisect-output BISECT_OUTPUT] [-j CONCURRENCY]
+                   [--debug] [--base-dir BASE_DIR] [--clear]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -65,6 +66,10 @@ project selection:
                         success
   --project-date PROJECT_DATE
                         checkout all projects as they were on a given date, in case of bitrot
+  --num-shards NUM_SHARDS
+                        number of shards to distribute projects across
+  --shard-index SHARD_INDEX
+                        run only on the given shard of projects
 
 output:
   -o {full,diff,concise}, --output {full,diff,concise}

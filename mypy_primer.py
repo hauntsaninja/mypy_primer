@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import difflib
+import hashlib
 import itertools
 import multiprocessing
 import os
@@ -57,6 +58,10 @@ def strip_colour_code(text: str) -> str:
 def debug_print(obj: Any) -> None:
     assert ARGS.debug
     print(obj, file=sys.stderr)
+
+
+def stable_hash(p: Project) -> int:
+    return int(hashlib.md5(p.location.encode("utf-8")).hexdigest(), 16)
 
 
 _semaphore: Optional[asyncio.Semaphore] = None
@@ -538,6 +543,10 @@ def select_projects() -> Iterator[Project]:
         project_iter = (p for p in project_iter if p.expected_success)
     if ARGS.project_date:
         project_iter = (replace(p, revision=ARGS.project_date) for p in project_iter)
+    if ARGS.num_shards:
+        project_iter = (
+            p for p in project_iter if stable_hash(p) % ARGS.num_shards == ARGS.shard_index
+        )
     return project_iter
 
 
@@ -798,6 +807,12 @@ def parse_options(argv: List[str]) -> argparse.Namespace:
         "--project-date",
         help="checkout all projects as they were on a given date, in case of bitrot",
     )
+    proj_group.add_argument(
+        "--num-shards", type=int, help="number of shards to distribute projects across"
+    )
+    proj_group.add_argument(
+        "--shard-index", type=int, help="run only on the given shard of projects"
+    )
 
     output_group = parser.add_argument_group("output")
     output_group.add_argument(
@@ -850,7 +865,10 @@ def parse_options(argv: List[str]) -> argparse.Namespace:
     )
     primer_group.add_argument("--clear", action="store_true", help="delete repos and venvs")
 
-    return parser.parse_args(argv)
+    ret = parser.parse_args(argv)
+    if (ret.num_shards is not None) != (ret.shard_index is not None):
+        parser.error("--shard-index and --num-shards must be used together")
+    return ret
 
 
 ARGS: argparse.Namespace
