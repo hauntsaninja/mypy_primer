@@ -1246,6 +1246,7 @@ PROJECTS = [
         location="https://github.com/pyppeteer/pyppeteer.git",
         mypy_cmd="{mypy} pyppeteer --config-file tox.ini",
         pip_cmd="{pip} install .",
+        revision="2d27bfdf9b6d0df32e5ebe869b057409042417a8",  # TODO: remove hardcoded revision
     ),
     Project(
         location="https://github.com/pypa/pip.git",
