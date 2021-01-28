@@ -360,7 +360,7 @@ class Project:
         if additional_flags:
             mypy_cmd += " " + " ".join(additional_flags)
         if ARGS.output == "concise":
-            mypy_cmd += "  --no-pretty"
+            mypy_cmd += "  --no-pretty --no-error-summary"
         mypy_cmd += " --no-incremental --cache-dir=/dev/null"
         mypy_cmd = mypy_cmd.format(mypy=mypy)
         return mypy_cmd
@@ -457,16 +457,6 @@ class PrimerResult:
         d = difflib.Differ()
         old_lines = self.old_result.output.splitlines()
         new_lines = self.new_result.output.splitlines()
-        if ARGS.output == "concise":
-            # Drop the error summary in concise mode (but be defensive about what we're dropping)
-            if "source file" in old_lines[-1] or "prevented further checking" in old_lines[-1]:
-                old_lines.pop()
-            else:
-                assert "INTERNAL ERROR" in self.old_result.output, self.old_result.output
-            if "source file" in new_lines[-1] or "prevented further checking" in new_lines[-1]:
-                new_lines.pop()
-            else:
-                assert "INTERNAL ERROR" in self.new_result.output, self.new_result.output
         # mypy's output appears to be nondeterministic for some same line errors, e.g. on pypa/pip
         # Work around that by grouping and sorting errors from the same line
         # Also hide "note" lines which contain ARGS.base_dir... this hides differences between
@@ -725,8 +715,7 @@ async def primer() -> int:
             print(result.format_diff_only())
         elif ARGS.output == "concise":
             # using ARGS.output == "concise" also causes us to:
-            # - drop the mypy summary line to reduce noise in the diff
-            # - always pass in --no-pretty
+            # - always pass in --no-pretty and --no-error-summary
             concise = result.format_concise()
             if concise:
                 print(concise)
