@@ -1141,11 +1141,6 @@ PROJECTS = [
         expected_success=True,
     ),
     Project(
-        location="https://github.com/Akuli/porcupine.git",
-        mypy_cmd="{mypy} porcupine more_plugins",
-        expected_success=True,
-    ),
-    Project(
         location="https://github.com/dedupeio/dedupe.git",
         mypy_cmd="{mypy} --ignore-missing-imports dedupe",
         expected_success=True,
@@ -1315,6 +1310,11 @@ PROJECTS = [
     Project(
         location="https://github.com/mikeshardmind/SinbadCogs.git",
         mypy_cmd="{mypy} .",
+    ),
+    Project(
+        # broken by changes to `--custom-typeshed-dir`
+        location="https://github.com/Akuli/porcupine.git",
+        mypy_cmd="{mypy} porcupine more_plugins",
     ),
 ]
 assert len(PROJECTS) == len({p.name for p in PROJECTS})
