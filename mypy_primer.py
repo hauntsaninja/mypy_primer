@@ -1303,6 +1303,7 @@ PROJECTS = [
     Project(
         location="https://github.com/laowantong/paroxython.git",
         mypy_cmd="{mypy} paroxython",
+        expected_success=True,
     ),
     Project(
         # broken by changes to `--custom-typeshed-dir`
