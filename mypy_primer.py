@@ -1225,6 +1225,11 @@ PROJECTS = [
         mypy_cmd="{mypy} --config python/mypy.ini python/pyspark",
         expected_success=True,
     ),
+    Project(
+        location="https://github.com/laowantong/paroxython.git",
+        mypy_cmd="{mypy} paroxython",
+        expected_success=True,
+    ),
     # failures expected...
     Project(
         location="https://github.com/pyppeteer/pyppeteer.git",
@@ -1299,11 +1304,6 @@ PROJECTS = [
     Project(
         location="https://github.com/mikeshardmind/SinbadCogs.git",
         mypy_cmd="{mypy} .",
-    ),
-    Project(
-        location="https://github.com/laowantong/paroxython.git",
-        mypy_cmd="{mypy} paroxython",
-        expected_success=True,
     ),
     Project(
         # broken by changes to `--custom-typeshed-dir`
