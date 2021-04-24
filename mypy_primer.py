@@ -1301,6 +1301,10 @@ PROJECTS = [
         mypy_cmd="{mypy} .",
     ),
     Project(
+        location="https://github.com/laowantong/paroxython.git",
+        mypy_cmd="{mypy} paroxython",
+    ),
+    Project(
         # broken by changes to `--custom-typeshed-dir`
         location="https://github.com/Akuli/porcupine.git",
         mypy_cmd="{mypy} porcupine more_plugins",
