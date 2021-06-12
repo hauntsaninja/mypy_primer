@@ -16,6 +16,7 @@ import textwrap
 import time
 import traceback
 import venv
+from collections import Counter
 from dataclasses import dataclass, field, replace
 from datetime import date
 from enum import Enum
@@ -458,23 +459,41 @@ class PrimerResult:
         old_lines = self.old_result.output.splitlines()
         new_lines = self.new_result.output.splitlines()
         # mypy's output appears to be nondeterministic for some same line errors, e.g. on pypa/pip
-        # Work around that by grouping and sorting errors from the same line
+        # Work around that by grouping errors from the same line and then by ignoring identical
+        # removal and addition pairs, e.g. "- a.py:1: error xyz" and "+ a.py:1: error xyz"
         # Also hide "note" lines which contain ARGS.base_dir... this hides differences between
         # file paths, e.g., when mypy points to a stub definition.
         old_lines = [
             line
             for _, lines in itertools.groupby(old_lines, key=lambda x: x.split(":")[:2])
-            for line in sorted(lines)
+            for line in lines
             if not re.search(f"{ARGS.base_dir}.*: note:", line)
         ]
         new_lines = [
             line
             for _, lines in itertools.groupby(new_lines, key=lambda x: x.split(":")[:2])
-            for line in sorted(lines)
+            for line in lines
             if not re.search(f"{ARGS.base_dir}.*: note:", line)
         ]
         diff = d.compare(old_lines, new_lines)
-        return "\n".join(line for line in diff if line[0] in ("+", "-"))
+        diff_lines = [line for line in diff if line[0] in ("+", "-")]
+
+        removals = Counter([line[2:] for line in diff_lines if line[0] == "-"])
+        additions = Counter([line[2:] for line in diff_lines if line[0] == "+"])
+        removals, additions = removals - additions, additions - removals
+
+        output_lines = []
+        if len(removals) != 0 or len(additions) != 0:
+            for line in diff_lines:
+                op, msg = line[0], line[2:]
+                if op == "-" and msg in removals and removals[msg] > 0:
+                    output_lines.append(line)
+                    removals[msg] -= 1
+                elif op == "+" and msg in additions and additions[msg] > 0:
+                    output_lines.append(line)
+                    additions[msg] -= 1
+
+        return "\n".join(output_lines)
 
     def header(self) -> str:
         ret = f"\n{Style.BOLD}{self.project.name}{Style.RESET}\n"
