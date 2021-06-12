@@ -15,7 +15,7 @@ import textwrap
 import time
 import traceback
 import venv
-from collections import Counter
+from collections import defaultdict
 from dataclasses import dataclass, field, replace
 from datetime import date
 from enum import Enum
@@ -467,20 +467,18 @@ class PrimerResult:
         # mypy's output appears to be nondeterministic for some same line errors, e.g. on pypa/pip
         # Work around that by ignoring identical removal and addition pairs, e.g.
         # "- a.py:1: error xyz" and "+ a.py:1: error xyz"
-        removals = Counter([line[2:] for line in diff_lines if line[0] == "-"])
-        additions = Counter([line[2:] for line in diff_lines if line[0] == "+"])
-        removals, additions = removals - additions, additions - removals
+        net_change: Dict[str, int] = defaultdict(int)
+        for line in diff_lines:
+            net_change[line[2:]] += 1 if line[0] == "+" else -1
 
         output_lines = []
-        if len(removals) != 0 or len(additions) != 0:
-            for line in diff_lines:
-                op, msg = line[0], line[2:]
-                if op == "-" and msg in removals and removals[msg] > 0:
-                    output_lines.append(line)
-                    removals[msg] -= 1
-                elif op == "+" and msg in additions and additions[msg] > 0:
-                    output_lines.append(line)
-                    additions[msg] -= 1
+        for line in diff_lines:
+            if line[0] == "+" and net_change[line[2:]] > 0:
+                output_lines.append(line)
+                net_change[line[2:]] -= 1
+            elif line[0] == "-" and net_change[line[2:]] < 0:
+                output_lines.append(line)
+                net_change[line[2:]] += 1
 
         return "\n".join(output_lines)
 
