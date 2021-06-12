@@ -4,7 +4,6 @@ import argparse
 import asyncio
 import difflib
 import hashlib
-import itertools
 import multiprocessing
 import os
 import re
@@ -458,26 +457,16 @@ class PrimerResult:
         d = difflib.Differ()
         old_lines = self.old_result.output.splitlines()
         new_lines = self.new_result.output.splitlines()
-        # mypy's output appears to be nondeterministic for some same line errors, e.g. on pypa/pip
-        # Work around that by grouping errors from the same line and then by ignoring identical
-        # removal and addition pairs, e.g. "- a.py:1: error xyz" and "+ a.py:1: error xyz"
-        # Also hide "note" lines which contain ARGS.base_dir... this hides differences between
+        # Hide "note" lines which contain ARGS.base_dir... this hides differences between
         # file paths, e.g., when mypy points to a stub definition.
-        old_lines = [
-            line
-            for _, lines in itertools.groupby(old_lines, key=lambda x: x.split(":")[:2])
-            for line in lines
-            if not re.search(f"{ARGS.base_dir}.*: note:", line)
-        ]
-        new_lines = [
-            line
-            for _, lines in itertools.groupby(new_lines, key=lambda x: x.split(":")[:2])
-            for line in lines
-            if not re.search(f"{ARGS.base_dir}.*: note:", line)
-        ]
+        old_lines = [line for line in old_lines if not re.search(f"{ARGS.base_dir}.*: note:", line)]
+        new_lines = [line for line in new_lines if not re.search(f"{ARGS.base_dir}.*: note:", line)]
         diff = d.compare(old_lines, new_lines)
         diff_lines = [line for line in diff if line[0] in ("+", "-")]
 
+        # mypy's output appears to be nondeterministic for some same line errors, e.g. on pypa/pip
+        # Work around that by ignoring identical removal and addition pairs, e.g.
+        # "- a.py:1: error xyz" and "+ a.py:1: error xyz"
         removals = Counter([line[2:] for line in diff_lines if line[0] == "-"])
         additions = Counter([line[2:] for line in diff_lines if line[0] == "+"])
         removals, additions = removals - additions, additions - removals
