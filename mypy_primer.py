@@ -4,7 +4,6 @@ import argparse
 import asyncio
 import difflib
 import hashlib
-import itertools
 import multiprocessing
 import os
 import re
@@ -16,6 +15,7 @@ import textwrap
 import time
 import traceback
 import venv
+from collections import defaultdict
 from dataclasses import dataclass, field, replace
 from datetime import date
 from enum import Enum
@@ -457,24 +457,30 @@ class PrimerResult:
         d = difflib.Differ()
         old_lines = self.old_result.output.splitlines()
         new_lines = self.new_result.output.splitlines()
-        # mypy's output appears to be nondeterministic for some same line errors, e.g. on pypa/pip
-        # Work around that by grouping and sorting errors from the same line
-        # Also hide "note" lines which contain ARGS.base_dir... this hides differences between
+        # Hide "note" lines which contain ARGS.base_dir... this hides differences between
         # file paths, e.g., when mypy points to a stub definition.
-        old_lines = [
-            line
-            for _, lines in itertools.groupby(old_lines, key=lambda x: x.split(":")[:2])
-            for line in sorted(lines)
-            if not re.search(f"{ARGS.base_dir}.*: note:", line)
-        ]
-        new_lines = [
-            line
-            for _, lines in itertools.groupby(new_lines, key=lambda x: x.split(":")[:2])
-            for line in sorted(lines)
-            if not re.search(f"{ARGS.base_dir}.*: note:", line)
-        ]
+        old_lines = [line for line in old_lines if not re.search(f"{ARGS.base_dir}.*: note:", line)]
+        new_lines = [line for line in new_lines if not re.search(f"{ARGS.base_dir}.*: note:", line)]
         diff = d.compare(old_lines, new_lines)
-        return "\n".join(line for line in diff if line[0] in ("+", "-"))
+        diff_lines = [line for line in diff if line[0] in ("+", "-")]
+
+        # mypy's output appears to be nondeterministic for some same line errors, e.g. on pypa/pip
+        # Work around that by ignoring identical removal and addition pairs, e.g.
+        # "- a.py:1: error xyz" and "+ a.py:1: error xyz"
+        net_change: Dict[str, int] = defaultdict(int)
+        for line in diff_lines:
+            net_change[line[2:]] += 1 if line[0] == "+" else -1
+
+        output_lines = []
+        for line in diff_lines:
+            if line[0] == "+" and net_change[line[2:]] > 0:
+                output_lines.append(line)
+                net_change[line[2:]] -= 1
+            elif line[0] == "-" and net_change[line[2:]] < 0:
+                output_lines.append(line)
+                net_change[line[2:]] += 1
+
+        return "\n".join(output_lines)
 
     def header(self) -> str:
         ret = f"\n{Style.BOLD}{self.project.name}{Style.RESET}\n"
