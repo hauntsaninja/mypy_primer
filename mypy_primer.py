@@ -1239,6 +1239,7 @@ PROJECTS = [
     Project(
         location="https://github.com/Akuli/porcupine.git",
         mypy_cmd="{mypy} porcupine more_plugins",
+        expected_success=True,
     ),
     # failures expected...
     Project(
