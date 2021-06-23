@@ -1243,13 +1243,15 @@ PROJECTS = [
     ),
     Project(
         location="https://github.com/common-workflow-language/schema_salad.git",
-        mypy_cmd="MYPYPATH=$MYPYPATH:typeshed {mypy} --non-interactive --install-types schema_salad",
-        expected_success=True
+        mypy_cmd="MYPYPATH=$MYPYPATH:typeshed {mypy} --non-interactive "
+        "--install-types schema_salad",
+        expected_success=True,
     ),
     Project(
         location="https://github.com/common-workflow-language/cwltool.git",
-        mypy_cmd="MYPYPATH=$MYPYPATH:typeshed {mypy} --non-interactive --install-types cwltool/*.py tests/*.py",
-        expected_success=True
+        mypy_cmd="MYPYPATH=$MYPYPATH:typeshed {mypy} --non-interactive "
+        "--install-types cwltool/*.py tests/*.py",
+        expected_success=True,
     ),
     # failures expected...
     Project(
