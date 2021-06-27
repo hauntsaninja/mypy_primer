@@ -1328,6 +1328,11 @@ PROJECTS = [
         location="https://github.com/mikeshardmind/SinbadCogs.git",
         mypy_cmd="{mypy} .",
     ),
+    Project(
+        location="https://github.com/rotki/rotki",
+        mypy_cmd="{mypy} rotkehlchen/ tools/data_faker",
+        pip_cmd="{pip} install types-requests",
+    ),
 ]
 assert len(PROJECTS) == len({p.name for p in PROJECTS})
 
