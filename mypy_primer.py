@@ -1253,6 +1253,18 @@ PROJECTS = [
         "--install-types cwltool/*.py tests/*.py",
         expected_success=True,
     ),
+    Project(
+        location="https://github.com/edgedb/edgedb.git",
+        mypy_cmd="{mypy} edb",
+        # weeeee, extract the deps by noping out setuptools.setup and reading them
+        # from the setup.py
+        pip_cmd=(
+            "{pip} install "
+            "$(python3 -c \"import setuptools; setuptools.setup=dict; import setup; "
+            "print(' '.join(setup.TEST_DEPS+setup.DOCS_DEPS+setup.RUNTIME_DEPS))\")"
+        ),
+        expected_success=True,
+    ),
     # failures expected...
     Project(
         location="https://github.com/pyppeteer/pyppeteer.git",
@@ -1274,7 +1286,7 @@ PROJECTS = [
     #     location="https://github.com/twisted/twisted.git",
     #     mypy_cmd="{mypy} src",
     # ),
-    # Other repos with plugins: dry-python/returns, strawberry-graphql/strawberry, edgedb/edgedb
+    # Other repos with plugins: dry-python/returns, strawberry-graphql/strawberry
     Project(
         location="https://github.com/tornadoweb/tornado.git",
         mypy_cmd="{mypy} tornado",
