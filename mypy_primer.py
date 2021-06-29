@@ -1260,7 +1260,7 @@ PROJECTS = [
         # from the setup.py
         pip_cmd=(
             "{pip} install "
-            "$(python3 -c \"import setuptools; setuptools.setup=dict; import setup; "
+            '$(python3 -c "import setuptools; setuptools.setup=dict; import setup; '
             "print(' '.join(setup.TEST_DEPS+setup.DOCS_DEPS+setup.RUNTIME_DEPS))\")"
         ),
         expected_success=True,
