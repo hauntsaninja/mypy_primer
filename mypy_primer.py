@@ -1345,6 +1345,12 @@ PROJECTS = [
         mypy_cmd="{mypy} rotkehlchen/ tools/data_faker",
         pip_cmd="{pip} install types-requests",
     ),
+    Project(
+        location="https://github.com/dropbox/mypy-protobuf",
+        mypy_cmd="{mypy} mypy_protobuf/",
+        pip_cmd="{pip} install types-protobuf",
+        expected_success=True,
+    ),
 ]
 assert len(PROJECTS) == len({p.name for p in PROJECTS})
 
