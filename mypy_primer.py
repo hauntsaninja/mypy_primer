@@ -122,10 +122,10 @@ def line_count(path: Path) -> int:
 # ==============================
 
 
-async def clone(repo_url: str, cwd: Path, shallow: bool = False) -> None:
+async def clone(repo_url: str, repo_dir: str, cwd: Path, shallow: bool = False) -> None:
     if os.path.exists(repo_url):
         repo_url = os.path.abspath(repo_url)
-    cmd = ["git", "clone", "--recurse-submodules", repo_url]
+    cmd = ["git", "clone", "--recurse-submodules", repo_url, repo_dir]
     if shallow:
         cmd += ["--depth", "1"]
     await run(cmd, cwd=cwd)
@@ -157,12 +157,14 @@ async def get_revision_for_revision_or_date(revision: str, repo_dir: Path) -> st
         return revision
 
 
-async def ensure_repo_at_revision(repo_url: str, cwd: Path, revision_like: RevisionLike) -> Path:
-    repo_dir = cwd / Path(repo_url).stem
+async def ensure_repo_at_revision(
+    repo_url: str, cwd: Path, revision_like: RevisionLike, project_name: Optional[str] = None
+) -> Path:
+    repo_dir = cwd / (project_name or Path(repo_url).stem)
     if repo_dir.is_dir():
         await refresh(repo_dir)
     else:
-        await clone(repo_url, cwd, shallow=revision_like is None)
+        await clone(repo_url, str(repo_dir), cwd, shallow=revision_like is None)
     assert repo_dir.is_dir()
 
     if revision_like is None:
@@ -315,10 +317,12 @@ class Project:
     pip_cmd: Optional[str] = None
     # if expected_success, there is a recent version of mypy which passes cleanly
     expected_success: bool = False
+    # If unset, infer name from location
+    name_override: Optional[str] = None
 
     @property
     def name(self) -> str:
-        return Path(self.location).stem
+        return self.name_override or Path(self.location).stem
 
     @property
     def venv_dir(self) -> Path:
@@ -339,7 +343,7 @@ class Project:
         else:
             # usually projects are something clonable
             repo_dir = await ensure_repo_at_revision(
-                self.location, ARGS.projects_dir, self.revision
+                self.location, ARGS.projects_dir, self.revision, self.name
             )
         assert repo_dir == ARGS.projects_dir / self.name
         if self.pip_cmd:
@@ -1269,6 +1273,13 @@ PROJECTS = [
         location="https://github.com/dropbox/mypy-protobuf",
         mypy_cmd="{mypy} mypy_protobuf/",
         pip_cmd="{pip} install types-protobuf",
+        expected_success=True,
+    ),
+    Project(
+        name_override="mypy-protobuf-generated-code",
+        location="https://github.com/dropbox/mypy-protobuf",
+        mypy_cmd="{mypy} test/",
+        pip_cmd="{pip} install types-protobuf grpc-stubs",
         expected_success=True,
     ),
     # ==============================

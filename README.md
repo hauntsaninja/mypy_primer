@@ -160,7 +160,6 @@ Some other things that could be done are:
 - add support for mypy plugins
 - add bisection for typeshed
 - make it possibe to dump structured output
-- multiple mypy invocations for the same project
 - improve CLI or output formatting
 - ???
 
