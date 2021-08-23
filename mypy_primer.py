@@ -1265,7 +1265,15 @@ PROJECTS = [
         ),
         expected_success=True,
     ),
-    # failures expected...
+    Project(
+        location="https://github.com/dropbox/mypy-protobuf",
+        mypy_cmd="{mypy} mypy_protobuf/",
+        pip_cmd="{pip} install types-protobuf",
+        expected_success=True,
+    ),
+    # ==============================
+    # Failures expected...
+    # ==============================
     Project(
         location="https://github.com/pyppeteer/pyppeteer.git",
         mypy_cmd="{mypy} pyppeteer --config-file tox.ini",
@@ -1346,10 +1354,9 @@ PROJECTS = [
         pip_cmd="{pip} install types-requests",
     ),
     Project(
-        location="https://github.com/dropbox/mypy-protobuf",
-        mypy_cmd="{mypy} mypy_protobuf/",
-        pip_cmd="{pip} install types-protobuf",
-        expected_success=True,
+        location="https://github.com/arviz-devs/arviz.git",
+        mypy_cmd="{mypy} .",
+        pip_cmd="{pip} install -r requirements.txt",
     ),
 ]
 assert len(PROJECTS) == len({p.name for p in PROJECTS})
