@@ -530,11 +530,14 @@ class PrimerResult:
 def select_projects() -> Iterator[Project]:
     if ARGS.local_project:
         return iter([Project.from_location(ARGS.local_project)])
-    project_iter = (p for p in PROJECTS)
+    project_iter = iter(p for p in PROJECTS)
     if ARGS.project_selector:
-        project_iter = (
+        projects = [
             p for p in project_iter if re.search(ARGS.project_selector, p.location, flags=re.I)
-        )
+        ]
+        if projects == []:
+            raise Exception(f"No projects were selected by -k {ARGS.project_selector}")
+        project_iter = iter(projects)
     if ARGS.expected_success:
         project_iter = (p for p in project_iter if p.expected_success)
     if ARGS.project_date:
@@ -691,6 +694,7 @@ async def coverage() -> None:
 
 
 async def primer() -> int:
+    projects = select_projects()
     new_mypy, old_mypy = await setup_new_and_old_mypy(
         new_mypy_revision=ARGS.new, old_mypy_revision=revision_or_recent_tag_fn(ARGS.old)
     )
@@ -708,7 +712,7 @@ async def primer() -> int:
         project.primer_result(
             str(new_mypy), str(old_mypy), new_additional_flags, old_additional_flags
         )
-        for project in select_projects()
+        for project in projects
     ]
     retcode = 0
     for result_fut in asyncio.as_completed(results):
