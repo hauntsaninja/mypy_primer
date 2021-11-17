@@ -1277,6 +1277,28 @@ PROJECTS = [
         pip_cmd="{pip} install types-protobuf",
         expected_success=True,
     ),
+    Project(
+        location="https://github.com/AlexWaygood/TestTypeshedStdlib",
+        mypy_cmd=(
+            "{mypy} . "
+            "--show-error-codes "
+            "--strict "
+            "--disallow-any-decorated "
+            "--disallow-any-expr "
+            "--disallow-any-explicit "
+            "--disallow-any-generics "
+            "--disallow-any-unimported "
+            "--disallow-untyped-calls "
+            "--disallow-incomplete-defs "
+            "--disallow-untyped-decorators "
+            "--disallow-untyped-defs "
+            "--no-implicit-optional "
+            "--strict-equality "
+            "--warn-incomplete-stub "
+            "--warn-return-any"
+        ),
+        expected_success=True
+    )
     # ==============================
     # Failures expected...
     # ==============================
