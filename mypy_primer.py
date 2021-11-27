@@ -1277,6 +1277,35 @@ PROJECTS = [
         pip_cmd="{pip} install types-protobuf",
         expected_success=True,
     ),
+    # https://github.com/spack/spack/blob/develop/lib/spack/spack/cmd/style.py
+    Project(
+        location="https://github.com/spack/spack",
+        mypy_cmd="{mypy} -p spack -p llnl",
+        expected_success=True,
+    ),
+    Project(
+        location="https://github.com/johtso/httpx-caching",
+        mypy_cmd="{mypy} .",
+        pip_cmd="{pip} install types-freezegun types-mock",
+        expected_success=True,
+    ),
+    *(
+        [
+            Project(
+                location="https://github.com/sco1/pylox",
+                mypy_cmd="{mypy} .",
+                expected_success=True,
+            ),
+            Project(
+                location="https://github.com/ppb/ppb-vector",
+                mypy_cmd="{mypy} ppb_vector tests",
+                pip_cmd="{pip} install hypothesis",
+                expected_success=True,
+            ),
+        ]
+        if sys.version_info >= (3, 10)
+        else []
+    ),
     # ==============================
     # Failures expected...
     # ==============================
@@ -1300,7 +1329,8 @@ PROJECTS = [
     #     location="https://github.com/twisted/twisted.git",
     #     mypy_cmd="{mypy} src",
     # ),
-    # Other repos with plugins: dry-python/returns, strawberry-graphql/strawberry
+    # Other repos with plugins:
+    # dry-python/returns, strawberry-graphql/strawberry, r-spacex/submanager
     Project(
         location="https://github.com/tornadoweb/tornado.git",
         mypy_cmd="{mypy} tornado",
@@ -1363,6 +1393,11 @@ PROJECTS = [
         location="https://github.com/arviz-devs/arviz.git",
         mypy_cmd="{mypy} .",
         pip_cmd="{pip} install -r requirements.txt",
+    ),
+    Project(
+        location="https://github.com/urllib3/urllib3",
+        mypy_cmd="{mypy} . --exclude setup.py",
+        pip_cmd="{pip} install -r mypy-requirements.txt",
     ),
 ]
 assert len(PROJECTS) == len({p.name for p in PROJECTS})
