@@ -1041,7 +1041,7 @@ PROJECTS = [
     ),
     Project(
         location="https://github.com/we-like-parsers/pegen.git",
-        mypy_cmd="{mypy}",
+        mypy_cmd="{mypy} src/pegen",
         expected_success=True,
     ),
     Project(
