@@ -1351,7 +1351,7 @@ PROJECTS = [
     ),
     Project(
         location="https://github.com/python-poetry/poetry.git",
-        mypy_cmd="{mypy} poetry",
+        mypy_cmd="{mypy}",
     ),
     Project(
         location="https://github.com/pycqa/flake8.git",
