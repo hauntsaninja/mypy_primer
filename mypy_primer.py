@@ -399,18 +399,23 @@ class Project:
 
     async def source_paths(self, mypy_python: str) -> List[Path]:
         await self.setup()
-        mypy_cmd = self.get_mypy_cmd("mypy")
-        program = f"""
-import io, mypy.fscache, mypy.main
-args = "{mypy_cmd}".split()[1:]
+        mypy_cmd = self.get_mypy_cmd(mypy="mypyprimersentinel")
+        mypy_cmd = mypy_cmd.split("mypyprimersentinel", maxsplit=1)[1]
+        program = """
+import io, sys, mypy.fscache, mypy.main
+args = sys.argv[1:]
 fscache = mypy.fscache.FileSystemCache()
 sources, _ = mypy.main.process_options(args, io.StringIO(), io.StringIO(), fscache=fscache)
 for source in sources:
     if source.path is not None:  # can happen for modules...
         print(source.path)
 """
+        # the extra shell stuff here makes sure we expand globs in mypy_cmd
         proc = await run(
-            [mypy_python, "-c", program], output=True, cwd=ARGS.projects_dir / self.name
+            f"{mypy_python} -c {shlex.quote(program)} {mypy_cmd}",
+            output=True,
+            cwd=ARGS.projects_dir / self.name,
+            shell=True,
         )
         return [ARGS.projects_dir / self.name / p for p in proc.stdout.splitlines()]
 
@@ -1247,14 +1252,14 @@ PROJECTS = [
     ),
     Project(
         location="https://github.com/common-workflow-language/schema_salad.git",
-        mypy_cmd="MYPYPATH=$MYPYPATH:typeshed {mypy} --non-interactive "
-        "--install-types schema_salad",
+        mypy_cmd="MYPYPATH=$MYPYPATH:typeshed {mypy} schema_salad",
+        pip_cmd="{pip} install -r mypy-requirements.txt",
         expected_success=True,
     ),
     Project(
         location="https://github.com/common-workflow-language/cwltool.git",
-        mypy_cmd="MYPYPATH=$MYPYPATH:typeshed {mypy} --non-interactive "
-        "--install-types cwltool/*.py tests/*.py",
+        mypy_cmd="MYPYPATH=$MYPYPATH:typeshed {mypy} cwltool/*.py tests/*.py",
+        pip_cmd="{pip} install -r mypy-requirements.txt",
         expected_success=True,
     ),
     Project(
