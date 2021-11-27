@@ -560,7 +560,7 @@ def select_projects() -> Iterator[Project]:
 # hidden entrypoint logic
 # ==============================
 
-RECENT_MYPYS = ["0.790", "0.782", "0.770"]
+RECENT_MYPYS = ["0.910"]
 
 
 async def validate_expected_success() -> None:
@@ -932,7 +932,7 @@ PROJECTS = [
     Project(
         location="https://github.com/python/mypy.git",
         mypy_cmd="{mypy} --config-file mypy_self_check.ini -p mypy -p mypyc",
-        pip_cmd="{pip} install pytest",
+        pip_cmd="{pip} install pytest types-typed-ast",
         expected_success=True,
     ),
     Project(
@@ -943,6 +943,7 @@ PROJECTS = [
     Project(
         location="https://github.com/psf/black.git",
         mypy_cmd="{mypy} src",
+        pip_cmd="{pip} install types-dataclasses types-typed-ast",
         expected_success=True,
     ),
     Project(
@@ -953,22 +954,28 @@ PROJECTS = [
     Project(
         location="https://github.com/pytest-dev/pytest.git",
         mypy_cmd="{mypy} src testing",
+        pip_cmd="{pip} install py types-attrs types-setuptools",
         expected_success=True,
     ),
     Project(
         location="https://github.com/pandas-dev/pandas.git",
         mypy_cmd="{mypy} pandas",
+        pip_cmd=(
+            "{pip} install numpy types-python-dateutil types-pytz types-PyMySQL "
+            "types-setuptools pytest"
+        ),
         expected_success=True,
     ),
     Project(
         location="https://github.com/pycqa/pylint.git",
         mypy_cmd="{mypy} pylint/checkers --ignore-missing-imports",
+        pip_cmd="{pip} install types-toml",
         expected_success=True,
     ),
     Project(
         location="https://github.com/aio-libs/aiohttp.git",
         mypy_cmd="{mypy} aiohttp",
-        pip_cmd="AIOHTTP_NO_EXTENSIONS=1 {pip} install -e .",
+        pip_cmd="AIOHTTP_NO_EXTENSIONS=1 {pip} install -e . pytest",
         expected_success=True,
     ),
     Project(
@@ -983,7 +990,7 @@ PROJECTS = [
     Project(
         location="https://github.com/sphinx-doc/sphinx.git",
         mypy_cmd="{mypy} sphinx",
-        pip_cmd="{pip} install docutils-stubs",
+        pip_cmd="{pip} install docutils-stubs types-typed-ast types-requests types-setuptools",
         expected_success=True,
     ),
     Project(
@@ -993,7 +1000,8 @@ PROJECTS = [
     ),
     Project(
         location="https://github.com/pypa/bandersnatch.git",
-        mypy_cmd="{mypy} src src/bandersnatch/tests",
+        mypy_cmd="{mypy} src",
+        pip_cmd="{pip} install types-filelock types-freezegun types-setuptools",
         expected_success=True,
     ),
     Project(
@@ -1010,11 +1018,13 @@ PROJECTS = [
     Project(
         location="https://github.com/scrapy/scrapy.git",
         mypy_cmd="{mypy} scrapy tests",
+        pip_cmd="{pip} install types-attrs types-pyOpenSSL types-setuptools",
         expected_success=True,
     ),
     Project(
         location="https://github.com/pypa/twine.git",
         mypy_cmd="{mypy} twine",
+        pip_cmd="{pip} install keyring types-requests",
         expected_success=True,
     ),
     Project(
@@ -1025,16 +1035,19 @@ PROJECTS = [
     Project(
         location="https://github.com/pydata/xarray.git",
         mypy_cmd="{mypy} .",
+        pip_cmd="{pip} install types-PyYAML types-python-dateutil types-pytz",
         expected_success=True,
     ),
     Project(
         location="https://github.com/pallets/werkzeug.git",
         mypy_cmd="{mypy} src/werkzeug tests",
+        pip_cmd="{pip} install types-setuptools",
         expected_success=True,
     ),
     Project(
         location="https://github.com/bokeh/bokeh.git",
         mypy_cmd="{mypy} bokeh release",
+        pip_cmd="{pip} install types-boto tornado",
         expected_success=True,
     ),
     Project(
@@ -1045,6 +1058,7 @@ PROJECTS = [
     Project(
         location="https://github.com/PyGithub/PyGithub.git",
         mypy_cmd="{mypy} github tests",
+        pip_cmd="{pip} install types-requests",
         expected_success=True,
     ),
     Project(
@@ -1057,21 +1071,34 @@ PROJECTS = [
         mypy_cmd=(
             "{mypy} zerver zilencer zproject tools analytics corporate scripts --platform=linux"
         ),
+        pip_cmd=(
+            "{pip} install types-PyYAML types-polib types-redis types-Markdown types-decorator "
+            "types-pytz types-requests types-python-dateutil types-orjson cryptography"
+        ),
         expected_success=True,
     ),
     Project(
         location="https://github.com/dropbox/stone.git",
         mypy_cmd="{mypy} stone test",
+        pip_cmd="{pip} install types-six",
         expected_success=True,
     ),
     Project(
         location="https://github.com/yelp/paasta.git",
         mypy_cmd="{mypy} paasta_tools",
+        pip_cmd=(
+            "{pip} install types-retry types-tzlocal types-ujson types-python-dateutil "
+            "types-pytz types-PyYAML types-requests"
+        ),
         expected_success=True,
     ),
     Project(
         location="https://github.com/PrefectHQ/prefect.git",
         mypy_cmd="{mypy} src",
+        pip_cmd=(
+            "{pip} install types-python-dateutil types-requests types-simplejson types-toml "
+            "types-croniter types-PyYAML types-python-slugify types-pytz"
+        ),
         expected_success=True,
     ),
     Project(
@@ -1098,6 +1125,7 @@ PROJECTS = [
     Project(
         location="https://github.com/pycqa/isort.git",
         mypy_cmd="{mypy} --ignore-missing-imports isort",
+        pip_cmd="{pip} install types-setuptools",
         expected_success=True,
     ),
     Project(
@@ -1119,26 +1147,34 @@ PROJECTS = [
     Project(
         location="https://github.com/freqtrade/freqtrade.git",
         mypy_cmd="{mypy} freqtrade scripts",
+        pip_cmd=(
+            "{pip} install types-cachetools types-requests types-python-dateutil types-tabulate "
+            "types-filelock"
+        ),
         expected_success=True,
     ),
     Project(
         location="https://github.com/google/jax.git",
         mypy_cmd="{mypy} jax",
+        pip_cmd="{pip} install types-requests",
         expected_success=True,
     ),
     Project(
         location="https://github.com/dulwich/dulwich.git",
         mypy_cmd="{mypy} dulwich",
+        pip_cmd="{pip} install types-certifi types-paramiko",
         expected_success=True,
     ),
     Project(
         location="https://github.com/optuna/optuna.git",
         mypy_cmd="{mypy} .",
+        pip_cmd="{pip} install types-PyYAML types-redis types-setuptools",
         expected_success=True,
     ),
     Project(
         location="https://github.com/trailofbits/manticore.git",
         mypy_cmd="{mypy}",
+        pip_cmd="{pip} install types-protobuf types-PyYAML types-redis types-setuptools",
         expected_success=True,
     ),
     Project(
@@ -1149,6 +1185,7 @@ PROJECTS = [
     Project(
         location="https://github.com/willmcgugan/rich.git",
         mypy_cmd="{mypy} -p rich --ignore-missing-imports --warn-unreachable",
+        pip_cmd="{pip} install types-attrs",
         expected_success=True,
     ),
     Project(
@@ -1159,6 +1196,7 @@ PROJECTS = [
     Project(
         location="https://github.com/schemathesis/schemathesis.git",
         mypy_cmd="{mypy} src/schemathesis",
+        pip_cmd="{pip} install types-attrs types-requests types-PyYAML",
         expected_success=True,
     ),
     Project(
@@ -1189,11 +1227,13 @@ PROJECTS = [
     Project(
         location="https://github.com/samuelcolvin/pydantic.git",
         mypy_cmd="{mypy} pydantic",
+        pip_cmd="{pip} install types-toml",
         expected_success=True,
     ),
     Project(
         location="https://github.com/encode/starlette.git",
         mypy_cmd="{mypy} starlette tests",
+        pip_cmd="{pip} install types-requests types-PyYAML",
         expected_success=True,
     ),
     Project(
@@ -1204,11 +1244,13 @@ PROJECTS = [
     Project(
         location="https://github.com/alerta/alerta.git",
         mypy_cmd="{mypy} alerta tests",
+        pip_cmd="{pip} install types-PyYAML types-setuptools types-requests types-pytz",
         expected_success=True,
     ),
     Project(
         location="https://github.com/nolar/kopf.git",
         mypy_cmd="{mypy} kopf",
+        pip_cmd="{pip} install types-setuptools types-PyYAML",
         expected_success=True,
     ),
     Project(
@@ -1240,33 +1282,24 @@ PROJECTS = [
     Project(
         location="https://github.com/jpadilla/pyjwt.git",
         mypy_cmd="{mypy} jwt",
+        pip_cmd="{pip} install cryptography",
         expected_success=True,
     ),
     Project(
         location="https://github.com/apache/spark.git",
         mypy_cmd="{mypy} --config python/mypy.ini python/pyspark",
+        pip_cmd="{pip} install numpy",
         expected_success=True,
     ),
     Project(
         location="https://github.com/laowantong/paroxython.git",
         mypy_cmd="{mypy} paroxython",
+        pip_cmd="{pip} install types-typed-ast types-setuptools",
         expected_success=True,
     ),
     Project(
         location="https://github.com/Akuli/porcupine.git",
         mypy_cmd="{mypy} porcupine more_plugins",
-        expected_success=True,
-    ),
-    Project(
-        location="https://github.com/common-workflow-language/schema_salad.git",
-        mypy_cmd="MYPYPATH=$MYPYPATH:typeshed {mypy} schema_salad",
-        pip_cmd="{pip} install -r mypy-requirements.txt",
-        expected_success=True,
-    ),
-    Project(
-        location="https://github.com/common-workflow-language/cwltool.git",
-        mypy_cmd="MYPYPATH=$MYPYPATH:typeshed {mypy} cwltool/*.py tests/*.py",
-        pip_cmd="{pip} install -r mypy-requirements.txt",
         expected_success=True,
     ),
     Project(
@@ -1300,6 +1333,20 @@ PROJECTS = [
         mypy_cmd="{mypy} .",
         pip_cmd="{pip} install types-freezegun types-mock",
         expected_success=True,
+    ),
+    Project(
+        location="https://github.com/python-poetry/poetry.git",
+        mypy_cmd="{mypy}",
+        pip_cmd="{pip} install types-requests",
+        expected_success=True,
+    ),
+    Project(
+        location="https://github.com/awslabs/sockeye.git",
+        mypy_cmd=(
+            "{mypy} --ignore-missing-imports --follow-imports=silent"
+            " @typechecked-files --no-strict-optional"
+        ),
+        pip_cmd="{pip} install types-PyYAML",
     ),
     *(
         [
@@ -1346,6 +1393,7 @@ PROJECTS = [
     Project(
         location="https://github.com/tornadoweb/tornado.git",
         mypy_cmd="{mypy} tornado",
+        pip_cmd="{pip} install types-contextvars types-pycurl",
     ),
     Project(
         location="https://github.com/sympy/sympy.git",
@@ -1354,25 +1402,19 @@ PROJECTS = [
     Project(
         location="https://github.com/scipy/scipy.git",
         mypy_cmd="{mypy} scipy",
-        pip_cmd="{pip} install git+git://github.com/numpy/numpy-stubs.git@master",
-    ),
-    Project(
-        location="https://github.com/python-poetry/poetry.git",
-        mypy_cmd="{mypy}",
+        pip_cmd="{pip} install numpy",
     ),
     Project(
         location="https://github.com/pycqa/flake8.git",
-        mypy_cmd="{mypy} src",
+        mypy_cmd="{mypy} src tests",
+        pip_cmd="{pip} install pytest",
     ),
     Project(
         location="https://github.com/home-assistant/core.git",
         mypy_cmd="{mypy} homeassistant",
-    ),
-    Project(
-        location="https://github.com/awslabs/sockeye.git",
-        mypy_cmd=(
-            "{mypy} --ignore-missing-imports --follow-imports=silent"
-            " @typechecked-files --no-strict-optional"
+        pip_cmd=(
+            "{pip} install types-setuptools types-atomicwrites types-certifi types-croniter "
+            "types-PyYAML types-requests types-attrs types-python-slugify types-backports"
         ),
     ),
     Project(
@@ -1382,24 +1424,30 @@ PROJECTS = [
     Project(
         location="https://github.com/ibis-project/ibis.git",
         mypy_cmd="{mypy} --ignore-missing-imports ibis",
+        pip_cmd="{pip} install types-setuptools types-requests types-python-dateutil types-pytz",
     ),
     Project(
         location="https://github.com/streamlit/streamlit.git",
         mypy_cmd="{mypy} --config-file=lib/mypy.ini lib scripts",
-        pip_cmd="{pip} install tornado packaging",
+        pip_cmd=(
+            "{pip} install tornado packaging types-toml types-python-dateutil types-attrs "
+            "types-setuptools types-protobuf types-pytz types-requests click pytest"
+        ),
     ),
     Project(
         location="https://github.com/dragonchain/dragonchain.git",
         mypy_cmd="{mypy} dragonchain --error-summary",
+        pip_cmd="{pip} install types-redis types-requests",
     ),
     Project(
         location="https://github.com/mikeshardmind/SinbadCogs.git",
         mypy_cmd="{mypy} .",
+        pip_cmd="{pip} install types-pytz types-python-dateutil types-PyYAML types-attrs",
     ),
     Project(
         location="https://github.com/rotki/rotki",
         mypy_cmd="{mypy} rotkehlchen/ tools/data_faker",
-        pip_cmd="{pip} install types-requests",
+        pip_cmd="{pip} install eth-typing types-requests types-setuptools",
     ),
     Project(
         location="https://github.com/arviz-devs/arviz.git",
@@ -1409,6 +1457,16 @@ PROJECTS = [
     Project(
         location="https://github.com/urllib3/urllib3",
         mypy_cmd="{mypy} . --exclude setup.py",
+        pip_cmd="{pip} install -r mypy-requirements.txt",
+    ),
+    Project(
+        location="https://github.com/common-workflow-language/schema_salad.git",
+        mypy_cmd="MYPYPATH=$MYPYPATH:typeshed {mypy} schema_salad",
+        pip_cmd="{pip} install -r mypy-requirements.txt pytest ruamel.yaml",
+    ),
+    Project(
+        location="https://github.com/common-workflow-language/cwltool.git",
+        mypy_cmd="MYPYPATH=$MYPYPATH:typeshed {mypy} cwltool/*.py tests/*.py",
         pip_cmd="{pip} install -r mypy-requirements.txt",
     ),
 ]
