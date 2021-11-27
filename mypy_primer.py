@@ -1047,7 +1047,7 @@ PROJECTS = [
     Project(
         location="https://github.com/zulip/zulip.git",
         mypy_cmd=(
-            "{mypy} zerver zilencer zproject zthumbor tools analytics corporate scripts"
+            "{mypy} zerver zilencer zproject tools analytics corporate scripts"
             " --platform=linux"
         ),
         expected_success=True,
