@@ -111,6 +111,8 @@ async def run(
 
 
 def line_count(path: Path) -> int:
+    if path.is_dir():
+        return 0
     buf_size = 1024 * 1024
     with open(path, "rb") as f:
         buf_iter = iter(lambda: f.raw.read(buf_size), b"")  # type: ignore
@@ -684,18 +686,24 @@ async def coverage() -> None:
     projects = list(select_projects())
     mypy_python = mypy_exe.parent / "python"
     assert mypy_python.exists()
-    all_paths = [
-        path
-        for paths in asyncio.as_completed(
-            [project.source_paths(str(mypy_python)) for project in projects]
-        )
-        for path in (await paths)
-    ]
-    num_lines = sum(map(line_count, all_paths))
+
+    all_paths = await asyncio.gather(
+        *[project.source_paths(str(mypy_python)) for project in projects]
+    )
+
+    project_to_paths = {}
+    project_to_lines = {}
+    for project, paths in zip(projects, all_paths):
+        project_to_paths[project.location] = len(paths)
+        project_to_lines[project.location] = sum(map(line_count, paths))
+
+    # for project in sorted(projects, key=lambda p: project_to_lines[p.location], reverse=True):
+    #     p = project.location
+    #     print(p, project_to_lines[p], project_to_paths[p])
 
     print(f"Checking {len(projects)} projects...")
-    print(f"Containing {len(all_paths)} files...")
-    print(f"Totalling to {num_lines} lines...")
+    print(f"Containing {sum(project_to_paths.values())} files...")
+    print(f"Totalling to {sum(project_to_lines.values())} lines...")
 
 
 async def primer() -> int:
