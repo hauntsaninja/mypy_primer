@@ -1455,11 +1455,12 @@ PROJECTS = [
         mypy_cmd="{mypy} rotkehlchen/ tools/data_faker",
         pip_cmd="{pip} install eth-typing types-requests types-setuptools",
     ),
-    Project(
-        location="https://github.com/arviz-devs/arviz",
-        mypy_cmd="{mypy} .",
-        pip_cmd="{pip} install pytest types-setuptools types-ujson numpy xarray",
-    ),
+    # TODO: uncomment once typeshed uses mypy 0.920
+    # Project(
+    #     location="https://github.com/arviz-devs/arviz",
+    #     mypy_cmd="{mypy} .",
+    #     pip_cmd="{pip} install pytest types-setuptools types-ujson numpy xarray",
+    # ),
     Project(
         location="https://github.com/urllib3/urllib3",
         mypy_cmd="{mypy} . --exclude setup.py",
