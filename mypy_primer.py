@@ -1458,7 +1458,7 @@ PROJECTS = [
     Project(
         location="https://github.com/arviz-devs/arviz",
         mypy_cmd="{mypy} .",
-        pip_cmd="{pip} install -r requirements.txt",
+        pip_cmd="{pip} install pytest types-setuptools types-ujson numpy xarray",
     ),
     Project(
         location="https://github.com/urllib3/urllib3",
