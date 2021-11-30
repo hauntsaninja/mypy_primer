@@ -364,6 +364,7 @@ class Project:
         if ARGS.output == "concise":
             mypy_cmd += "  --no-pretty --no-error-summary"
         mypy_cmd += " --no-incremental --cache-dir=/dev/null --show-traceback"
+        mypy_cmd += " --soft-error-limit ' -1'"
         mypy_cmd = mypy_cmd.format(mypy=mypy)
         return mypy_cmd
 
@@ -1041,7 +1042,7 @@ PROJECTS = [
     Project(
         location="https://github.com/pallets/werkzeug",
         mypy_cmd="{mypy} src/werkzeug tests",
-        pip_cmd="{pip} install types-setuptools",
+        pip_cmd="{pip} install types-setuptools pytest",
         expected_success=True,
     ),
     Project(
