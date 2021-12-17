@@ -570,7 +570,7 @@ def select_projects() -> Iterator[Project]:
 # hidden entrypoint logic
 # ==============================
 
-RECENT_MYPYS = ["0.910"]
+RECENT_MYPYS = ["0.920", "0.910"]
 
 
 async def validate_expected_success() -> None:
@@ -1465,12 +1465,11 @@ PROJECTS = [
         mypy_cmd="{mypy} rotkehlchen/ tools/data_faker",
         pip_cmd="{pip} install eth-typing types-requests types-setuptools",
     ),
-    # TODO: uncomment once typeshed uses mypy 0.920
-    # Project(
-    #     location="https://github.com/arviz-devs/arviz",
-    #     mypy_cmd="{mypy} .",
-    #     pip_cmd="{pip} install pytest types-setuptools types-ujson numpy xarray",
-    # ),
+    Project(
+        location="https://github.com/arviz-devs/arviz",
+        mypy_cmd="{mypy} .",
+        pip_cmd="{pip} install pytest types-setuptools types-ujson numpy xarray",
+    ),
     Project(
         location="https://github.com/urllib3/urllib3",
         mypy_cmd="{mypy} . --exclude setup.py",
