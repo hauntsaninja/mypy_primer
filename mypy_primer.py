@@ -463,8 +463,17 @@ class PrimerResult:
 
     def _get_diff(self) -> str:
         d = difflib.Differ()
-        old_lines = self.old_result.output.splitlines()
-        new_lines = self.new_result.output.splitlines()
+
+        old_output = self.old_result.output
+        new_output = self.new_result.output
+
+        if "error: INTERNAL ERROR" in old_output:
+            old_output = re.sub('File ".*/mypy', 'File "', old_output)
+        if "error: INTERNAL ERROR" in new_output:
+            new_output = re.sub('File ".*/mypy', 'File "', new_output)
+
+        old_lines = old_output.splitlines()
+        new_lines = new_output.splitlines()
         # Hide "note" lines which contain ARGS.base_dir... this hides differences between
         # file paths, e.g., when mypy points to a stub definition.
         old_lines = [line for line in old_lines if not re.search(f"{ARGS.base_dir}.*: note:", line)]
