@@ -227,7 +227,7 @@ async def setup_mypy(mypy_dir: Path, revision_like: RevisionLike, editable: bool
     if (
         isinstance(revision_like, str)
         and not editable
-        and ARGS.repo == "https://github.com/python/mypy.git"
+        and ARGS.repo == "https://github.com/python/mypy"
     ):
         # optimistically attempt to install the revision of mypy we want from pypi
         try:
