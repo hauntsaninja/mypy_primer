@@ -1512,6 +1512,11 @@ PROJECTS = [
         location="https://github.com/yurijmikhalevich/rclip",
         mypy_cmd="{mypy} rclip",
     ),
+    Project(
+        location="https://github.com/psycopg/psycopg",
+        mypy_cmd="{mypy}",
+        pip_cmd="{pip} install pytest pproxy",
+    ),
 ]
 assert len(PROJECTS) == len({p.name for p in PROJECTS})
 
