@@ -1478,7 +1478,7 @@ PROJECTS = [
     Project(
         location="https://github.com/common-workflow-language/schema_salad",
         mypy_cmd="MYPYPATH=$MYPYPATH:typeshed {mypy} schema_salad",
-        pip_cmd="{pip} install -r mypy-requirements.txt pytest ruamel.yaml",
+        pip_cmd="{pip} install types-pkg_resources types-requests pytest ruamel.yaml",
     ),
     Project(
         location="https://github.com/common-workflow-language/cwltool",
