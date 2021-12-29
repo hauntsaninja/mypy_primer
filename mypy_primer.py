@@ -1022,7 +1022,6 @@ PROJECTS = [
     Project(
         location="https://github.com/quora/asynq",
         mypy_cmd="{mypy} asynq",
-        pip_cmd="{pip} install -r requirements.txt",
         expected_success=True,
     ),
     Project(
@@ -1473,7 +1472,10 @@ PROJECTS = [
     Project(
         location="https://github.com/urllib3/urllib3",
         mypy_cmd="{mypy} . --exclude setup.py",
-        pip_cmd="{pip} install -r mypy-requirements.txt",
+        pip_cmd=(
+            "{pip} install idna>=2.0.0 cryptography>=1.3.4 tornado>=6.1 pytest "
+            "trustme==0.9.0 types-backports types-requests"
+        ),
     ),
     Project(
         location="https://github.com/common-workflow-language/schema_salad",
@@ -1483,7 +1485,7 @@ PROJECTS = [
     Project(
         location="https://github.com/common-workflow-language/cwltool",
         mypy_cmd="MYPYPATH=$MYPYPATH:typeshed {mypy} cwltool/*.py tests/*.py",
-        pip_cmd="{pip} install -r mypy-requirements.txt",
+        pip_cmd="{pip} install types-requests types-setuptools types-psutil",
     ),
     Project(
         location="https://github.com/FasterSpeeding/Tanjun",
