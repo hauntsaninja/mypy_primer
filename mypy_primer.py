@@ -1520,7 +1520,7 @@ PROJECTS = [
         pip_cmd="{pip} install pytest pproxy",
     ),
     Project(
-        locaion="https://gitlab.com/dkg/python-sop",
+        location="https://gitlab.com/dkg/python-sop",
         mypy_cmd="{mypy} --strict sop",
     ),
 ]
