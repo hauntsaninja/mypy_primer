@@ -1519,6 +1519,10 @@ PROJECTS = [
         mypy_cmd="{mypy}",
         pip_cmd="{pip} install pytest pproxy",
     ),
+    Project(
+        location="https://gitlab.com/dkg/python-sop",
+        mypy_cmd="{mypy} --strict sop",
+    ),
 ]
 assert len(PROJECTS) == len({p.name for p in PROJECTS})
 
