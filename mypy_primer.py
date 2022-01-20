@@ -1523,6 +1523,11 @@ PROJECTS = [
         location="https://gitlab.com/dkg/python-sop",
         mypy_cmd="{mypy} --strict sop",
     ),
+    Project(
+        location="https://github.com/typeddjango/django-stubs",
+        mypy_cmd="{mypy} django-stubs mypy_django_plugin",
+        pip_cmd="{pip} install django django-stubs-ext tomli typing-extensions types-pytz types-PyYAML",
+    ),
 ]
 assert len(PROJECTS) == len({p.name for p in PROJECTS})
 
