@@ -115,8 +115,8 @@ def line_count(path: Path) -> int:
         return 0
     buf_size = 1024 * 1024
     with open(path, "rb") as f:
-        buf_iter = iter(lambda: f.raw.read(buf_size), b"")  # type: ignore
-        return sum(buf.count(b"\n") for buf in buf_iter)
+        buf_iter = iter(lambda: f.raw.read(buf_size), b"")
+        return sum(buf.count(b"\n") for buf in buf_iter)  # type: ignore
 
 
 # ==============================
@@ -548,7 +548,7 @@ class PrimerResult:
 def select_projects() -> Iterator[Project]:
     if ARGS.local_project:
         return iter([Project.from_location(ARGS.local_project)])
-    project_iter = iter(p for p in PROJECTS)
+    project_iter: Iterator[Project] = iter(p for p in PROJECTS)
     if ARGS.project_selector:
         projects = [
             p for p in project_iter if re.search(ARGS.project_selector, p.location, flags=re.I)
