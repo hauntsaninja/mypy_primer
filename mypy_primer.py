@@ -252,6 +252,7 @@ async def setup_mypy(mypy_dir: Path, revision_like: RevisionLike, editable: bool
         if editable:
             install_cmd.append("--editable")
         install_cmd.append(str(repo_dir))
+        install_cmd.append("tomli")
         await run(install_cmd)
 
     mypy_exe = venv_dir / "bin" / "mypy"
@@ -364,7 +365,7 @@ class Project:
         if ARGS.output == "concise":
             mypy_cmd += "  --no-pretty --no-error-summary"
         mypy_cmd += " --no-incremental --cache-dir=/dev/null --show-traceback"
-        mypy_cmd += " --soft-error-limit ' -1'"
+        # mypy_cmd += " --soft-error-limit ' -1'"
         mypy_cmd = mypy_cmd.format(mypy=mypy)
         return mypy_cmd
 
@@ -655,10 +656,10 @@ async def bisect() -> None:
         debug_print(format(Style.RESET))
 
     # Note git bisect start will clean up old bisection state
-    await run(["git", "bisect", "start"], cwd=repo_dir)
-    await run(["git", "bisect", "good"], cwd=repo_dir)
+    await run(["git", "bisect", "start"], cwd=repo_dir, output=True)
+    await run(["git", "bisect", "good"], cwd=repo_dir, output=True)
     new_revision = await get_revision_for_revision_or_date(ARGS.new or "origin/HEAD", repo_dir)
-    await run(["git", "bisect", "bad", new_revision], cwd=repo_dir)
+    await run(["git", "bisect", "bad", new_revision], cwd=repo_dir, output=True)
 
     def are_results_good(results: Dict[str, MypyResult]) -> bool:
         if ARGS.bisect_output:
@@ -1311,20 +1312,20 @@ PROJECTS = [
         mypy_cmd="{mypy} porcupine more_plugins",
         expected_success=True,
     ),
-    Project(
-        location="https://github.com/edgedb/edgedb",
-        mypy_cmd="{mypy} edb",
-        # weeeee, extract the deps by noping out setuptools.setup and reading them
-        # from the setup.py
-        pip_cmd=(
-            "{pip} install "
-            '$(python3 -c "import setuptools; setuptools.setup=dict; '
-            "from edb import buildmeta; buildmeta.get_version_from_scm = lambda *a: 1; "
-            "import setup; "
-            "print(' '.join(setup.TEST_DEPS+setup.DOCS_DEPS+setup.RUNTIME_DEPS))\")"
-        ),
-        expected_success=True,
-    ),
+    # Project(
+    #     location="https://github.com/edgedb/edgedb",
+    #     mypy_cmd="{mypy} edb",
+    #     # weeeee, extract the deps by noping out setuptools.setup and reading them
+    #     # from the setup.py
+    #     pip_cmd=(
+    #         "{pip} install "
+    #         '$(python3 -c "import setuptools; setuptools.setup=dict; '
+    #         "from edb import buildmeta; buildmeta.get_version_from_scm = lambda *a: 1; "
+    #         "import setup; "
+    #         "print(' '.join(setup.TEST_DEPS+setup.DOCS_DEPS+setup.RUNTIME_DEPS))\")"
+    #     ),
+    #     expected_success=True,
+    # ),
     Project(
         location="https://github.com/dropbox/mypy-protobuf",
         mypy_cmd="{mypy} mypy_protobuf/",
