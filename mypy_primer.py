@@ -1405,7 +1405,7 @@ PROJECTS = [
     #     mypy_cmd="{mypy} src",
     # ),
     # Other repos with plugins:
-    # dry-python/returns, strawberry-graphql/strawberry, r-spacex/submanager
+    # dry-python/returns, strawberry-graphql/strawberry, r-spacex/submanager, NeilGirdhar/efax
     Project(
         location="https://github.com/tornadoweb/tornado",
         mypy_cmd="{mypy} tornado",
