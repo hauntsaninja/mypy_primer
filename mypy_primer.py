@@ -1055,6 +1055,12 @@ PROJECTS = [
         expected_success=True,
     ),
     Project(
+        location="https://github.com/pallets/jinja",
+        mypy_cmd="{mypy}",
+        pip_cmd="{pip} install markupsafe",
+        expected_success=True,
+    ),
+    Project(
         location="https://github.com/bokeh/bokeh",
         mypy_cmd="{mypy} bokeh release",
         pip_cmd="{pip} install types-boto tornado",
