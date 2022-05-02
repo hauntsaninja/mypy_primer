@@ -1365,6 +1365,12 @@ PROJECTS = [
         pip_cmd="{pip} install types-PyYAML",
     ),
     Project(
+        location="https://github.com/wntrblm/nox",
+        mypy_cmd="{mypy} nox",
+        pip_cmd="{pip} install jinja2 packaging importlib_metadata",
+        expected_success=True,
+    ),
+    Project(
         location="https://github.com/pandera-dev/pandera",
         mypy_cmd="{mypy} pandera tests",
         pip_cmd="{pip} install types-click types-PyYAML types-setuptools",
