@@ -369,11 +369,7 @@ class Project:
         mypy_cmd = mypy_cmd.format(mypy=mypy)
         return mypy_cmd
 
-    async def run_mypy(
-        self,
-        mypy: Union[str, Path],
-        typeshed_dir: Path | None
-    ) -> MypyResult:
+    async def run_mypy(self, mypy: Union[str, Path], typeshed_dir: Optional[Path]) -> MypyResult:
         additional_flags = []
         env = os.environ.copy()
         env["MYPY_FORCE_COLOR"] = "1"
@@ -399,8 +395,8 @@ class Project:
         self,
         new_mypy: str,
         old_mypy: str,
-        new_typeshed: Path | None,
-        old_typeshed: Path | None,
+        new_typeshed: Optional[Path],
+        old_typeshed: Optional[Path],
     ) -> PrimerResult:
         await self.setup()
         new_result, old_result = await asyncio.gather(
