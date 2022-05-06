@@ -370,11 +370,20 @@ class Project:
         return mypy_cmd
 
     async def run_mypy(
-        self, mypy: Union[str, Path], additional_flags: Sequence[str] = ()
+        self,
+        mypy: Union[str, Path],
+        typeshed_dir: Path | None,
+        additional_flags: Sequence[str] = (),
     ) -> MypyResult:
         mypy_cmd = self.get_mypy_cmd(mypy, additional_flags)
         env = os.environ.copy()
         env["MYPY_FORCE_COLOR"] = "1"
+
+        # If using custom typeshed dir, we can tell mypy to use its third-party stubs
+        # Mypy doesn't include third-party stubs by default.
+        if typeshed_dir is not None:
+            env["MYPYPATH"] = ":".join(map(str, typeshed_dir.glob("stubs/*")))
+
         proc = await run(
             mypy_cmd,
             shell=True,
@@ -391,13 +400,15 @@ class Project:
         self,
         new_mypy: str,
         old_mypy: str,
+        new_typeshed: Path | None,
+        old_typeshed: Path | None,
         new_additional_flags: Sequence[str] = (),
         old_additional_flags: Sequence[str] = (),
     ) -> PrimerResult:
         await self.setup()
         new_result, old_result = await asyncio.gather(
-            self.run_mypy(new_mypy, new_additional_flags),
-            self.run_mypy(old_mypy, old_additional_flags),
+            self.run_mypy(new_mypy, new_typeshed, new_additional_flags),
+            self.run_mypy(old_mypy, old_typeshed, old_additional_flags),
         )
         return PrimerResult(self, new_result, old_result)
 
@@ -587,7 +598,7 @@ async def validate_expected_success() -> None:
         await project.setup()
         success = None
         for mypy_exe in recent_mypy_exes:
-            mypy_result = await project.run_mypy(mypy_exe)
+            mypy_result = await project.run_mypy(mypy_exe, typeshed_dir=None)
             if ARGS.debug:
                 debug_print(format(Style.BLUE))
                 debug_print(mypy_result)
@@ -617,7 +628,7 @@ async def measure_project_runtimes() -> None:
     async def inner(project: Project) -> Tuple[float, Project]:
         await project.setup()
         start = time.time()
-        await project.run_mypy(mypy_exe)
+        await project.run_mypy(mypy_exe, typeshed_dir=None)
         end = time.time()
         return (end - start, project)
 
@@ -633,6 +644,7 @@ async def measure_project_runtimes() -> None:
 # ==============================
 
 
+# TODO: can't bisect issues with third-party stubs yet
 async def bisect() -> None:
     assert not ARGS.new_typeshed
     assert not ARGS.old_typeshed
@@ -647,7 +659,7 @@ async def bisect() -> None:
     await asyncio.wait([project.setup() for project in projects])
 
     async def run_wrapper(project: Project) -> Tuple[str, MypyResult]:
-        return project.name, (await project.run_mypy(str(mypy_exe)))
+        return project.name, (await project.run_mypy(str(mypy_exe), typeshed_dir=None))
 
     results_fut = await asyncio.gather(*(run_wrapper(project) for project in projects))
     old_results: Dict[str, MypyResult] = dict(results_fut)
@@ -734,7 +746,12 @@ async def primer() -> int:
 
     results = [
         project.primer_result(
-            str(new_mypy), str(old_mypy), new_additional_flags, old_additional_flags
+            str(new_mypy),
+            str(old_mypy),
+            new_typeshed_dir,
+            old_typeshed_dir,
+            new_additional_flags,
+            old_additional_flags,
         )
         for project in projects
     ]
