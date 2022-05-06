@@ -372,18 +372,17 @@ class Project:
     async def run_mypy(
         self,
         mypy: Union[str, Path],
-        typeshed_dir: Path | None,
-        additional_flags: Sequence[str] = (),
+        typeshed_dir: Path | None
     ) -> MypyResult:
-        mypy_cmd = self.get_mypy_cmd(mypy, additional_flags)
+        additional_flags = []
         env = os.environ.copy()
         env["MYPY_FORCE_COLOR"] = "1"
 
-        # If using custom typeshed dir, we can tell mypy to use its third-party stubs
-        # Mypy doesn't include third-party stubs by default.
         if typeshed_dir is not None:
+            additional_flags.append(f"--custom-typeshed-dir={typeshed_dir}")
             env["MYPYPATH"] = ":".join(map(str, typeshed_dir.glob("stubs/*")))
 
+        mypy_cmd = self.get_mypy_cmd(mypy, additional_flags)
         proc = await run(
             mypy_cmd,
             shell=True,
@@ -402,13 +401,11 @@ class Project:
         old_mypy: str,
         new_typeshed: Path | None,
         old_typeshed: Path | None,
-        new_additional_flags: Sequence[str] = (),
-        old_additional_flags: Sequence[str] = (),
     ) -> PrimerResult:
         await self.setup()
         new_result, old_result = await asyncio.gather(
-            self.run_mypy(new_mypy, new_typeshed, new_additional_flags),
-            self.run_mypy(old_mypy, old_typeshed, old_additional_flags),
+            self.run_mypy(new_mypy, new_typeshed),
+            self.run_mypy(old_mypy, old_typeshed),
         )
         return PrimerResult(self, new_result, old_result)
 
@@ -737,12 +734,6 @@ async def primer() -> int:
     new_typeshed_dir, old_typeshed_dir = await setup_new_and_old_typeshed(
         ARGS.new_typeshed, ARGS.old_typeshed
     )
-    new_additional_flags = []
-    if new_typeshed_dir:
-        new_additional_flags += [f"--custom-typeshed-dir={new_typeshed_dir}"]
-    old_additional_flags = []
-    if old_typeshed_dir:
-        old_additional_flags += [f"--custom-typeshed-dir={old_typeshed_dir}"]
 
     results = [
         project.primer_result(
@@ -750,8 +741,6 @@ async def primer() -> int:
             str(old_mypy),
             new_typeshed_dir,
             old_typeshed_dir,
-            new_additional_flags,
-            old_additional_flags,
         )
         for project in projects
     ]
