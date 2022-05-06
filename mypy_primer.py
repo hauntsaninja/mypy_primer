@@ -740,12 +740,7 @@ async def primer() -> int:
     )
 
     results = [
-        project.primer_result(
-            str(new_mypy),
-            str(old_mypy),
-            new_typeshed_dir,
-            old_typeshed_dir,
-        )
+        project.primer_result(str(new_mypy), str(old_mypy), new_typeshed_dir, old_typeshed_dir)
         for project in projects
     ]
     retcode = 0
