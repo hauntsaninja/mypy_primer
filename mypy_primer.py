@@ -387,8 +387,12 @@ class Project:
             cwd=ARGS.projects_dir / self.name,
             env=env,
         )
+
+        output = proc.stderr + proc.stdout
+        if typeshed_dir is not None:
+            output = output.replace(str(typeshed_dir), "<typeshed>")
         return MypyResult(
-            mypy_cmd, proc.stderr + proc.stdout, not bool(proc.returncode), self.expected_success
+            mypy_cmd, output, not bool(proc.returncode), self.expected_success
         )
 
     async def primer_result(
