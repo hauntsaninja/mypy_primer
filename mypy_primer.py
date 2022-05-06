@@ -645,7 +645,7 @@ async def measure_project_runtimes() -> None:
 # ==============================
 
 
-# TODO: can't bisect issues with third-party stubs yet
+# TODO: can't bisect over typeshed commits yet
 async def bisect() -> None:
     assert not ARGS.new_typeshed
     assert not ARGS.old_typeshed
