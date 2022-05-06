@@ -390,10 +390,14 @@ class Project:
 
         output = proc.stderr + proc.stdout
         if typeshed_dir is not None:
-            output = output.replace(str(typeshed_dir), "<typeshed>")
-        return MypyResult(
-            mypy_cmd, output, not bool(proc.returncode), self.expected_success
-        )
+            # Differing line numbers and typeshed paths create noisy diffs.
+            # Not a problem for stdlib because mypy silences errors from --custom-typeshed-dir.
+            output = "".join(
+                line
+                for line in output.splitlines(keepends=True)
+                if not line.startswith(str(typeshed_dir / "stubs"))
+            )
+        return MypyResult(mypy_cmd, output, not bool(proc.returncode), self.expected_success)
 
     async def primer_result(
         self,
