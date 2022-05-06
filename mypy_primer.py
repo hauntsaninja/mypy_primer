@@ -376,7 +376,11 @@ class Project:
 
         if typeshed_dir is not None:
             additional_flags.append(f"--custom-typeshed-dir={typeshed_dir}")
-            env["MYPYPATH"] = ":".join(map(str, typeshed_dir.glob("stubs/*")))
+            add_to_mypypath = ":".join(map(str, typeshed_dir.glob("stubs/*")))
+            if "MYPYPATH" in env:
+                env["MYPYPATH"] += ":" + add_to_mypypath
+            else:
+                env["MYPYPATH"] = add_to_mypypath
 
         mypy_cmd = self.get_mypy_cmd(mypy, additional_flags)
         proc = await run(
