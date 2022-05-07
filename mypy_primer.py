@@ -369,12 +369,20 @@ class Project:
         mypy_cmd = mypy_cmd.format(mypy=mypy)
         return mypy_cmd
 
-    async def run_mypy(
-        self, mypy: Union[str, Path], additional_flags: Sequence[str] = ()
-    ) -> MypyResult:
-        mypy_cmd = self.get_mypy_cmd(mypy, additional_flags)
+    async def run_mypy(self, mypy: Union[str, Path], typeshed_dir: Optional[Path]) -> MypyResult:
+        additional_flags = []
         env = os.environ.copy()
         env["MYPY_FORCE_COLOR"] = "1"
+
+        if typeshed_dir is not None:
+            additional_flags.append(f"--custom-typeshed-dir={typeshed_dir}")
+            add_to_mypypath = ":".join(map(str, typeshed_dir.glob("stubs/*")))
+            if "MYPYPATH" in env:
+                env["MYPYPATH"] += ":" + add_to_mypypath
+            else:
+                env["MYPYPATH"] = add_to_mypypath
+
+        mypy_cmd = self.get_mypy_cmd(mypy, additional_flags)
         proc = await run(
             mypy_cmd,
             shell=True,
@@ -383,21 +391,29 @@ class Project:
             cwd=ARGS.projects_dir / self.name,
             env=env,
         )
-        return MypyResult(
-            mypy_cmd, proc.stderr + proc.stdout, not bool(proc.returncode), self.expected_success
-        )
+
+        output = proc.stderr + proc.stdout
+        if typeshed_dir is not None:
+            # Differing line numbers and typeshed paths create noisy diffs.
+            # Not a problem for stdlib because mypy silences errors from --custom-typeshed-dir.
+            output = "".join(
+                line
+                for line in output.splitlines(keepends=True)
+                if not line.startswith(str(typeshed_dir / "stubs"))
+            )
+        return MypyResult(mypy_cmd, output, not bool(proc.returncode), self.expected_success)
 
     async def primer_result(
         self,
         new_mypy: str,
         old_mypy: str,
-        new_additional_flags: Sequence[str] = (),
-        old_additional_flags: Sequence[str] = (),
+        new_typeshed: Optional[Path],
+        old_typeshed: Optional[Path],
     ) -> PrimerResult:
         await self.setup()
         new_result, old_result = await asyncio.gather(
-            self.run_mypy(new_mypy, new_additional_flags),
-            self.run_mypy(old_mypy, old_additional_flags),
+            self.run_mypy(new_mypy, new_typeshed),
+            self.run_mypy(old_mypy, old_typeshed),
         )
         return PrimerResult(self, new_result, old_result)
 
@@ -587,7 +603,7 @@ async def validate_expected_success() -> None:
         await project.setup()
         success = None
         for mypy_exe in recent_mypy_exes:
-            mypy_result = await project.run_mypy(mypy_exe)
+            mypy_result = await project.run_mypy(mypy_exe, typeshed_dir=None)
             if ARGS.debug:
                 debug_print(format(Style.BLUE))
                 debug_print(mypy_result)
@@ -617,7 +633,7 @@ async def measure_project_runtimes() -> None:
     async def inner(project: Project) -> Tuple[float, Project]:
         await project.setup()
         start = time.time()
-        await project.run_mypy(mypy_exe)
+        await project.run_mypy(mypy_exe, typeshed_dir=None)
         end = time.time()
         return (end - start, project)
 
@@ -633,6 +649,7 @@ async def measure_project_runtimes() -> None:
 # ==============================
 
 
+# TODO: can't bisect over typeshed commits yet
 async def bisect() -> None:
     assert not ARGS.new_typeshed
     assert not ARGS.old_typeshed
@@ -647,7 +664,7 @@ async def bisect() -> None:
     await asyncio.wait([project.setup() for project in projects])
 
     async def run_wrapper(project: Project) -> Tuple[str, MypyResult]:
-        return project.name, (await project.run_mypy(str(mypy_exe)))
+        return project.name, (await project.run_mypy(str(mypy_exe), typeshed_dir=None))
 
     results_fut = await asyncio.gather(*(run_wrapper(project) for project in projects))
     old_results: Dict[str, MypyResult] = dict(results_fut)
@@ -725,17 +742,9 @@ async def primer() -> int:
     new_typeshed_dir, old_typeshed_dir = await setup_new_and_old_typeshed(
         ARGS.new_typeshed, ARGS.old_typeshed
     )
-    new_additional_flags = []
-    if new_typeshed_dir:
-        new_additional_flags += [f"--custom-typeshed-dir={new_typeshed_dir}"]
-    old_additional_flags = []
-    if old_typeshed_dir:
-        old_additional_flags += [f"--custom-typeshed-dir={old_typeshed_dir}"]
 
     results = [
-        project.primer_result(
-            str(new_mypy), str(old_mypy), new_additional_flags, old_additional_flags
-        )
+        project.primer_result(str(new_mypy), str(old_mypy), new_typeshed_dir, old_typeshed_dir)
         for project in projects
     ]
     retcode = 0
