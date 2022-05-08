@@ -1385,6 +1385,12 @@ PROJECTS = [
         pip_cmd="{pip} install types-click types-PyYAML types-setuptools",
         expected_success=True,
     ),
+    Project(
+        location="https://github.com/pyodide/pyodide",
+        mypy_cmd="{mypy}",
+        pip_cmd="{pip} install packaging types-docutils types-pyyaml types-setuptools numpy",
+        expected_success=True,
+    ),
     *(
         [
             Project(
