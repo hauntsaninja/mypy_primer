@@ -1391,6 +1391,12 @@ PROJECTS = [
         pip_cmd="{pip} install packaging types-docutils types-pyyaml types-setuptools numpy",
         expected_success=True,
     ),
+    Project(
+        location="https://gitlab.com/cki-project/cki-lib",
+        mypy_cmd="{mypy} --strict",
+        pip_cmd="{pip} install types-PyYAML types-requests",
+        expected_success=True,
+    ),
     *(
         [
             Project(
