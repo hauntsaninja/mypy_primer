@@ -1557,6 +1557,11 @@ PROJECTS = [
         location="https://gitlab.com/dkg/python-sop",
         mypy_cmd="{mypy} --strict sop",
     ),
+    Project(
+        location="https://github.com/Rapptz/discord.py",
+        mypy_cmd="{mypy} discord",
+        pip_cmd="{pip} install types-requests types-setuptools aiohttp",
+    ),
 ]
 assert len(PROJECTS) == len({p.name for p in PROJECTS})
 
