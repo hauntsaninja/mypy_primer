@@ -1567,6 +1567,13 @@ PROJECTS = [
         mypy_cmd="{mypy} src",
         pip_cmd="{pip} install types-jsonschema types-requests",
     ),
+    Project(
+        location="https://github.com/matrix-org/synapse",
+        mypy_cmd="{mypy} synapse",
+        pip_cmd="{pip} install types-bleach types-commonmark types-jsonschema "
+        "types-opentracing types-Pillow types-psycopg2 types-pyOpenSSL types-PyYAML "
+        "types-requests types-setuptools"
+    )
 ]
 assert len(PROJECTS) == len({p.name for p in PROJECTS})
 
