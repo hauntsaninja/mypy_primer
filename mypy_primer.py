@@ -1562,6 +1562,11 @@ PROJECTS = [
         mypy_cmd="{mypy} discord",
         pip_cmd="{pip} install types-requests types-setuptools aiohttp",
     ),
+    Project(
+        location="https://github.com/python-jsonschema/check-jsonschema",
+        mypy_cmd="{mypy} src",
+        pip_cmd="{pip} install types-jsonschema types-requests",
+    ),
 ]
 assert len(PROJECTS) == len({p.name for p in PROJECTS})
 
