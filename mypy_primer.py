@@ -365,7 +365,7 @@ class Project:
         if ARGS.output == "concise":
             mypy_cmd += "  --no-pretty --no-error-summary"
         mypy_cmd += " --no-incremental --cache-dir=/dev/null --show-traceback"
-        # mypy_cmd += " --soft-error-limit ' -1'"
+        mypy_cmd += " --soft-error-limit ' -1'"
         mypy_cmd = mypy_cmd.format(mypy=mypy)
         return mypy_cmd
 
