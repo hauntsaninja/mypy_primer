@@ -1372,6 +1372,7 @@ PROJECTS = [
             " @typechecked-files --no-strict-optional"
         ),
         pip_cmd="{pip} install types-PyYAML",
+        expected_success=True,
     ),
     Project(
         location="https://github.com/wntrblm/nox",
@@ -1395,6 +1396,12 @@ PROJECTS = [
         location="https://gitlab.com/cki-project/cki-lib",
         mypy_cmd="{mypy} --strict",
         pip_cmd="{pip} install types-PyYAML types-requests",
+        expected_success=True,
+    ),
+    Project(
+        location="https://github.com/python-jsonschema/check-jsonschema",
+        mypy_cmd="{mypy} src",
+        pip_cmd="{pip} install types-jsonschema types-requests",
         expected_success=True,
     ),
     *(
