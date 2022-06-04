@@ -155,6 +155,11 @@ If you need it to do something different, it should be pretty easy to modify.
 
 An easy thing to do is add more projects.
 
+If you add a project, you can test it with
+```
+mypy_primer -k new_project --debug
+```
+
 Some other things that could be done are:
 - allow additional mypy flags
 - add support for mypy plugins
