@@ -952,7 +952,7 @@ PROJECTS = [
     Project(
         location="https://github.com/python/mypy",
         mypy_cmd="{mypy} --config-file mypy_self_check.ini -p mypy -p mypyc",
-        pip_cmd="{pip} install pytest types-typed-ast",
+        pip_cmd="{pip} install pytest types-typed-ast filelock",
         expected_success=True,
     ),
     Project(
