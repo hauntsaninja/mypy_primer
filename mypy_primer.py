@@ -1568,6 +1568,13 @@ PROJECTS = [
         mypy_cmd="{mypy} discord",
         pip_cmd="{pip} install types-requests types-setuptools aiohttp",
     ),
+    Project(
+        location="https://github.com/canonical/cloud-init",
+        mypy_cmd="{mypy} cloudinit/ tests/ tools/",
+        pip_cmd="{pip} install jinja2 pytest "
+        "types-jsonschema types-oauthlib "
+        "types-pyyaml types-requests types-setuptools",
+    ),
 ]
 assert len(PROJECTS) == len({p.name for p in PROJECTS})
 
