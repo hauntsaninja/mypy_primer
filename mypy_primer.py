@@ -429,7 +429,7 @@ class Project:
         old_typeshed: Optional[Path],
     ) -> PrimerResult:
         await self.setup()
-        if self.mypyc_cmd:
+        if self.mypyc_cmd and not ARGS.skip_mypyc_check:
             await setup_mypy_into_venv(
                 ARGS.base_dir / "new_mypy", self.venv_dir, new_mypy_revision, editable=False
             )
@@ -938,6 +938,9 @@ def parse_options(argv: List[str]) -> argparse.Namespace:
     )
     modes_group.add_argument(
         "--measure-project-runtimes", action="store_true", help=argparse.SUPPRESS
+    )
+    modes_group.add_argument(
+        "--skip-mypyc-check", action="store_true", help="Don't run time-consuming mypyc checks"
     )
 
     primer_group = parser.add_argument_group("primer")
