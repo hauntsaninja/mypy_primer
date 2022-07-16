@@ -575,11 +575,9 @@ class PrimerResult:
         return mypyc_result
 
     def format_concise(self) -> str:
-        if self.diff:
-            return (
-                f"{self.project.name} ({self.project.location}) {self.mypyc_result()}"
-                f"\n{self.diff}"
-            )
+        mypyc_result = self.mypyc_result(verbose=False)
+        if self.diff or mypyc_result:
+            return f"{self.project.name} ({self.project.location}) {mypyc_result}\n{self.diff}"
         return ""
 
     def format_diff_only(self) -> str:
@@ -801,12 +799,12 @@ async def primer() -> int:
 
     results = [
         project.primer_result(
-            str(new_mypy),
-            new_mypy_revision,
-            str(old_mypy),
-            old_mypy_revision,
-            new_typeshed_dir,
-            old_typeshed_dir,
+            new_mypy=str(new_mypy),
+            new_mypy_revision=new_mypy_revision,
+            old_mypy=str(old_mypy),
+            old_mypy_revision=old_mypy_revision,
+            new_typeshed=new_typeshed_dir,
+            old_typeshed=old_typeshed_dir,
         )
         for project in projects
     ]
@@ -826,8 +824,6 @@ async def primer() -> int:
             if concise:
                 print(concise)
                 print()
-        if result.old_mypyc_result.success and not result.new_mypyc_result.success:
-            print("mypyc")
         if not retcode and result.diff:
             retcode = 1
     return retcode
