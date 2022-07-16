@@ -549,6 +549,10 @@ class PrimerResult:
 
         return "\n".join(output_lines)
 
+    @property
+    def has_mypyc_failed(self) -> bool:
+        return self.new_mypyc_result and not self.new_mypyc_result.success
+
     def header(self) -> str:
         ret = f"\n{Style.BOLD}{self.project.name}{Style.RESET}\n"
         ret += self.project.location + "\n"
@@ -576,7 +580,7 @@ class PrimerResult:
 
     def format_concise(self) -> str:
         mypyc_result = self.mypyc_result(verbose=False)
-        if self.diff or mypyc_result:
+        if self.diff or self.has_mypyc_failed:
             return f"{self.project.name} ({self.project.location}) {mypyc_result}\n{self.diff}"
         return ""
 
