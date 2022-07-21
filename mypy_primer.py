@@ -1208,7 +1208,7 @@ PROJECTS = [
         expected_success=True,
     ),
     Project(
-        location="https://github.com/willmcgugan/rich",
+        location="https://github.com/Textualize/rich",
         mypy_cmd="{mypy} -p rich --ignore-missing-imports --warn-unreachable",
         pip_cmd="{pip} install types-attrs",
         expected_success=True,
