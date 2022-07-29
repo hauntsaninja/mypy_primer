@@ -1035,11 +1035,7 @@ PROJECTS = [
         location="https://github.com/psf/black",
         mypy_cmd="{mypy} src",
         pip_cmd="{pip} install types-dataclasses types-typed-ast",
-        mypyc_cmd=(
-            "{python} setup.py --use-mypyc install "
-            "&& {python} -m pip install pytest"
-            "&& {python} -m pytest -k 'not incompatible_with_mypyc' tests/test_black.py"
-        ),
+        mypyc_cmd=("{python} setup.py --use-mypyc install && {python} -m black --check ."),
         expected_success=True,
     ),
     Project(
