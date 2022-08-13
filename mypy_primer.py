@@ -165,7 +165,7 @@ async def ensure_repo_at_revision(repo_url: str, cwd: Path, revision_like: Revis
         await refresh(repo_dir)
     else:
         await clone(repo_url, cwd, shallow=revision_like is None)
-    assert repo_dir.is_dir()
+    assert repo_dir.is_dir(), f"{repo_dir} is not a directory"
 
     if revision_like is None:
         return repo_dir
@@ -1574,6 +1574,11 @@ PROJECTS = [
         pip_cmd="{pip} install jinja2 pytest "
         "types-jsonschema types-oauthlib "
         "types-pyyaml types-requests types-setuptools",
+    ),
+    Project(
+        location="https://github.com/mongodb/mongo-python-driver",
+        mypy_cmd="{mypy} bson gridfs tools pymongo",
+        pip_cmd="{pip} install types-requests types-pyOpenSSL cryptography",
     ),
 ]
 assert len(PROJECTS) == len({p.name for p in PROJECTS})
