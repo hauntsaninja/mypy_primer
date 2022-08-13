@@ -1611,6 +1611,11 @@ PROJECTS = [
         mypy_cmd="{mypy} ops",
         pip_cmd="{pip} install types-PyYAML",
     ),
+    Project(
+        "https://github.com/astropenguin/xarray-dataclasses",
+        mypy_cmd="{mypy} xarray_dataclasses",
+        pip_cmd="{pip} install numpy xarray",
+    ),
 ]
 assert len(PROJECTS) == len({p.name for p in PROJECTS})
 
