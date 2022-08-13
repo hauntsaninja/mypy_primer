@@ -1595,6 +1595,11 @@ PROJECTS = [
             "types-PyYAML types-protobuf"
         ),
     ),
+    Project(
+        location="https://github.com/MaterializeInc/materialize",
+        mypy_cmd="MYPYPATH=$MYPYPATH:misc/python {mypy} ci misc/python",
+        pip_cmd="{pip} install -r ci/builder/requirements.txt"
+    ),
 ]
 assert len(PROJECTS) == len({p.name for p in PROJECTS})
 
