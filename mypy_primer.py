@@ -1580,6 +1580,11 @@ PROJECTS = [
         mypy_cmd="{mypy} bson gridfs tools pymongo",
         pip_cmd="{pip} install types-requests types-pyOpenSSL cryptography",
     ),
+    Project(
+        location="https://github.com/artigraph/artigraph",
+        mypy_cmd="{mypy}",
+        pip_cmd="{pip} install pydantic numpy pytest",
+    ),
 ]
 assert len(PROJECTS) == len({p.name for p in PROJECTS})
 
