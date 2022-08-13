@@ -587,7 +587,7 @@ def select_projects() -> Iterator[Project]:
 # hidden entrypoint logic
 # ==============================
 
-RECENT_MYPYS = ["0.920", "0.910"]
+RECENT_MYPYS = ["0.971", "0.961"]
 
 
 async def validate_expected_success() -> None:
@@ -1571,9 +1571,11 @@ PROJECTS = [
     Project(
         location="https://github.com/canonical/cloud-init",
         mypy_cmd="{mypy} cloudinit/ tests/ tools/",
-        pip_cmd="{pip} install jinja2 pytest "
-        "types-jsonschema types-oauthlib "
-        "types-pyyaml types-requests types-setuptools",
+        pip_cmd=(
+            "{pip} install jinja2 pytest "
+            "types-jsonschema types-oauthlib "
+            "types-pyyaml types-requests types-setuptools"
+        ),
     ),
     Project(
         location="https://github.com/mongodb/mongo-python-driver",
@@ -1584,6 +1586,14 @@ PROJECTS = [
         location="https://github.com/artigraph/artigraph",
         mypy_cmd="{mypy}",
         pip_cmd="{pip} install pydantic numpy pytest",
+    ),
+    Project(
+        location="https://github.com/DataDog/dd-trace-py",
+        mypy_cmd="{mypy}",
+        pip_cmd=(
+            "{pip} install types-attrs types-six types-setuptools types-docutils "
+            "types-PyYAML types-protobuf"
+        ),
     ),
 ]
 assert len(PROJECTS) == len({p.name for p in PROJECTS})
