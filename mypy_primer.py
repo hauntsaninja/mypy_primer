@@ -1410,6 +1410,12 @@ PROJECTS = [
         pip_cmd="{pip} install nox rich",
         expected_success=True,
     ),
+    Project(
+        "https://github.com/rpdelaney/downforeveryone",
+        mypy_cmd="{mypy} .",
+        pip_cmd="{pip} install types-requests types-requests",
+        expected_success=True,
+    ),
     *(
         [
             Project(
