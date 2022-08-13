@@ -1404,6 +1404,12 @@ PROJECTS = [
         pip_cmd="{pip} install types-jsonschema types-requests",
         expected_success=True,
     ),
+    Project(
+        location="https://github.com/pybind/pybind11",
+        mypy_cmd="{mypy} --exclude '^(tests|docs)/' .",
+        pip_cmd="{pip} install nox rich",
+        expected_success=True,
+    ),
     *(
         [
             Project(
