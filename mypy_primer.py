@@ -61,7 +61,8 @@ def debug_print(obj: Any) -> None:
 
 
 def stable_hash(p: Project) -> int:
-    return int(hashlib.md5(p.location.encode("utf-8")).hexdigest(), 16)
+    salt = b"try-a-different-shuffle-"
+    return int(hashlib.md5(salt + p.location.encode("utf-8")).hexdigest(), 16)
 
 
 _semaphore: Optional[asyncio.Semaphore] = None
