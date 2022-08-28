@@ -1623,6 +1623,14 @@ PROJECTS = [
         mypy_cmd="{mypy} xarray_dataclasses",
         pip_cmd="{pip} install numpy xarray",
     ),
+    Project(
+        "https://github.com/caronc/apprise",
+        mypy_cmd="{mypy} .",
+        pip_cmd=(
+            "{pip} install types-six types-mock cryptography types-requests "
+            "types-PyYAML types-Markdown pytest"
+        ),
+    ),
 ]
 assert len(PROJECTS) == len({p.name for p in PROJECTS})
 
