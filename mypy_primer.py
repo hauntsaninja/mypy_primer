@@ -1640,6 +1640,11 @@ PROJECTS = [
         mypy_cmd="{mypy} .",
         pip_cmd="{pip} install pytest",
     ),
+    Project(
+        "https://github.com/cognitedata/Expression",
+        mypy_cmd="{mypy} .",
+        pip_cmd="{pip} install pytest",
+    ),
 ]
 assert len(PROJECTS) == len({p.name for p in PROJECTS})
 
