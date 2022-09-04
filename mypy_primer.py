@@ -1635,6 +1635,11 @@ PROJECTS = [
         "https://github.com/daveleroy/sublime_debugger",
         mypy_cmd="{mypy} modules --namespace-packages",
     ),
+    Project(
+        "https://github.com/Finistere/antidote",
+        mypy_cmd="{mypy} .",
+        pip_cmd="{pip} install pytest",
+    ),
 ]
 assert len(PROJECTS) == len({p.name for p in PROJECTS})
 
