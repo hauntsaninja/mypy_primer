@@ -219,6 +219,12 @@ async def setup_mypy(mypy_dir: Path, revision_like: RevisionLike, editable: bool
     mypy_dir.mkdir(exist_ok=True)
     venv_dir = mypy_dir / "venv"
     venv.create(venv_dir, with_pip=True, clear=True)
+    return await setup_mypy_into_venv(mypy_dir, venv_dir, revision_like, editable)
+
+
+async def setup_mypy_into_venv(
+    mypy_dir: Path, venv_dir: Path, revision_like: RevisionLike, editable: bool
+) -> Path:
     pip_exe = str(venv_dir / "bin" / "pip")
 
     if ARGS.mypyc_compile_level is not None:
@@ -319,6 +325,7 @@ class Project:
     pip_cmd: Optional[str] = None
     # if expected_success, there is a recent version of mypy which passes cleanly
     expected_success: bool = False
+    mypyc_cmd: Optional[str] = None
 
     @property
     def name(self) -> str:
@@ -404,19 +411,43 @@ class Project:
             )
         return MypyResult(mypy_cmd, output, not bool(proc.returncode), self.expected_success)
 
+    async def run_mypyc(self, python: str) -> MypyResult:
+        assert "{python}" in self.mypyc_cmd
+        mypyc_cmd = self.mypyc_cmd.format(python=python)
+        proc = await run(
+            mypyc_cmd, shell=True, output=True, check=False, cwd=ARGS.projects_dir / self.name
+        )
+        output = proc.stderr + proc.stdout
+        return MypyResult(mypyc_cmd, output, not bool(proc.returncode), self.expected_success)
+
     async def primer_result(
         self,
         new_mypy: str,
+        new_mypy_revision: RevisionLike,
         old_mypy: str,
+        old_mypy_revision: RevisionLike,
         new_typeshed: Optional[Path],
         old_typeshed: Optional[Path],
     ) -> PrimerResult:
         await self.setup()
+        if self.mypyc_cmd and not ARGS.skip_mypyc_check:
+            await setup_mypy_into_venv(
+                ARGS.base_dir / "new_mypy", self.venv_dir, new_mypy_revision, editable=False
+            )
+            new_mypyc_result = await self.run_mypyc(python=self.venv_dir / "bin" / "python")
+            await self.setup()
+            await setup_mypy_into_venv(
+                ARGS.base_dir / "old_mypy", self.venv_dir, old_mypy_revision, editable=False
+            )
+            old_mypyc_result = await self.run_mypyc(python=self.venv_dir / "bin" / "python")
+        else:
+            new_mypyc_result, old_mypyc_result = None, None
+
         new_result, old_result = await asyncio.gather(
             self.run_mypy(new_mypy, new_typeshed),
             self.run_mypy(old_mypy, old_typeshed),
         )
-        return PrimerResult(self, new_result, old_result)
+        return PrimerResult(self, new_result, new_mypyc_result, old_result, old_mypyc_result)
 
     async def source_paths(self, mypy_python: str) -> List[Path]:
         await self.setup()
@@ -473,7 +504,9 @@ class MypyResult:
 class PrimerResult:
     project: Project
     new_result: MypyResult
+    new_mypyc_result: Optional[MypyResult]
     old_result: MypyResult
+    old_mypyc_result: Optional[MypyResult]
     diff: str = field(init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
@@ -517,14 +550,42 @@ class PrimerResult:
 
         return "\n".join(output_lines)
 
+    @property
+    def is_mypyc_interesting(self) -> bool:
+        if not self.new_mypyc_result or not self.old_mypyc_result:
+            return False
+
+        return not self.new_mypyc_result.success or not self.old_mypyc_result.success
+
     def header(self) -> str:
         ret = f"\n{Style.BOLD}{self.project.name}{Style.RESET}\n"
         ret += self.project.location + "\n"
+        if self.is_mypyc_interesting:
+            mypyc_result = self.mypyc_result(verbose=True)
+            ret += f"{mypyc_result}\n"
         return ret
 
+    def mypyc_result(self, *, verbose: bool = False) -> str:
+        mypyc_result = ""
+        if self.old_mypyc_result and self.new_mypyc_result:
+            mypyc_result = "[mypyc "
+            if not self.new_mypyc_result.success:
+                if self.old_mypyc_result.success:
+                    mypyc_result += f"🔥{Style.RED}{Style.BOLD}BROKE{Style.RESET}]"
+                    if verbose:
+                        mypyc_result += f"\n{self.new_mypyc_result.output}"
+                else:
+                    mypyc_result += "❌]"
+                    if verbose:
+                        mypyc_result += f"\n{self.new_mypyc_result.output}"
+            else:
+                mypyc_result += "✅]"
+        return mypyc_result
+
     def format_concise(self) -> str:
-        if self.diff:
-            return f"{self.project.name} ({self.project.location})\n{self.diff}"
+        if self.diff or self.is_mypyc_interesting:
+            mypyc_result = self.mypyc_result(verbose=False)
+            return f"{self.project.name} ({self.project.location}) {mypyc_result}\n{self.diff}"
         return ""
 
     def format_diff_only(self) -> str:
@@ -737,15 +798,22 @@ async def coverage() -> None:
 
 async def primer() -> int:
     projects = select_projects()
-    new_mypy, old_mypy = await setup_new_and_old_mypy(
-        new_mypy_revision=ARGS.new, old_mypy_revision=revision_or_recent_tag_fn(ARGS.old)
-    )
+    new_mypy_revision = ARGS.new
+    old_mypy_revision = revision_or_recent_tag_fn(ARGS.old)
+    new_mypy, old_mypy = await setup_new_and_old_mypy(new_mypy_revision, old_mypy_revision)
     new_typeshed_dir, old_typeshed_dir = await setup_new_and_old_typeshed(
         ARGS.new_typeshed, ARGS.old_typeshed
     )
 
     results = [
-        project.primer_result(str(new_mypy), str(old_mypy), new_typeshed_dir, old_typeshed_dir)
+        project.primer_result(
+            new_mypy=str(new_mypy),
+            new_mypy_revision=new_mypy_revision,
+            old_mypy=str(old_mypy),
+            old_mypy_revision=old_mypy_revision,
+            new_typeshed=new_typeshed_dir,
+            old_typeshed=old_typeshed_dir,
+        )
         for project in projects
     ]
     retcode = 0
@@ -879,6 +947,9 @@ def parse_options(argv: List[str]) -> argparse.Namespace:
     modes_group.add_argument(
         "--measure-project-runtimes", action="store_true", help=argparse.SUPPRESS
     )
+    modes_group.add_argument(
+        "--skip-mypyc-check", action="store_true", help="Don't run time-consuming mypyc checks"
+    )
 
     primer_group = parser.add_argument_group("primer")
     primer_group.add_argument(
@@ -965,6 +1036,7 @@ PROJECTS = [
         location="https://github.com/psf/black",
         mypy_cmd="{mypy} src",
         pip_cmd="{pip} install types-dataclasses types-typed-ast",
+        mypyc_cmd=("{python} setup.py --use-mypyc install && {python} -m black --check ."),
         expected_success=True,
     ),
     Project(
