@@ -1071,12 +1071,6 @@ PROJECTS = [
         expected_success=True,
     ),
     Project(
-        location="https://github.com/bokeh/bokeh",
-        mypy_cmd="{mypy} bokeh release",
-        pip_cmd="{pip} install types-boto tornado",
-        expected_success=True,
-    ),
-    Project(
         location="https://github.com/mystor/git-revise",
         mypy_cmd="{mypy} gitrevise",
         expected_success=True,
@@ -1643,6 +1637,11 @@ PROJECTS = [
         location="https://github.com/pyodide/pyodide",
         mypy_cmd="{mypy} src pyodide-build --exclude 'setup.py|^src/tests|conftest.py'",
         pip_cmd="{pip} install packaging types-docutils types-pyyaml types-setuptools numpy",
+    ),
+    Project(
+        location="https://github.com/bokeh/bokeh",
+        mypy_cmd="{mypy} src release",
+        pip_cmd="{pip} install types-boto tornado numpy jinja2",
     ),
 ]
 assert len(PROJECTS) == len({p.name for p in PROJECTS})
