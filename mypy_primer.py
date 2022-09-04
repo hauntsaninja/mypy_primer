@@ -1062,7 +1062,7 @@ PROJECTS = [
     Project(
         location="https://github.com/pallets/werkzeug",
         mypy_cmd="{mypy} src/werkzeug tests",
-        pip_cmd="{pip} install types-setuptools pytest",
+        pip_cmd="{pip} install types-setuptools pytest markupsafe",
         expected_success=True,
     ),
     Project(
