@@ -1380,7 +1380,7 @@ PROJECTS = [
     Project(
         location="https://github.com/pandera-dev/pandera",
         mypy_cmd="{mypy} pandera tests",
-        pip_cmd="{pip} install types-click types-PyYAML types-setuptools",
+        pip_cmd="{pip} install types-click types-PyYAML types-setuptools types-requests",
         expected_success=True,
     ),
     Project(
