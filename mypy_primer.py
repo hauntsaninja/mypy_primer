@@ -964,7 +964,7 @@ PROJECTS = [
     Project(
         location="https://github.com/psf/black",
         mypy_cmd="{mypy} src",
-        pip_cmd="{pip} install types-dataclasses types-typed-ast",
+        pip_cmd="{pip} install types-dataclasses types-typed-ast aiohttp click tomli platformdirs",
         expected_success=True,
     ),
     Project(
