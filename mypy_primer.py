@@ -1388,12 +1388,6 @@ PROJECTS = [
         expected_success=True,
     ),
     Project(
-        location="https://github.com/pyodide/pyodide",
-        mypy_cmd="{mypy}",
-        pip_cmd="{pip} install packaging types-docutils types-pyyaml types-setuptools numpy",
-        expected_success=True,
-    ),
-    Project(
         location="https://gitlab.com/cki-project/cki-lib",
         mypy_cmd="{mypy} --strict",
         pip_cmd="{pip} install types-PyYAML types-requests",
@@ -1644,6 +1638,11 @@ PROJECTS = [
         "https://github.com/cognitedata/Expression",
         mypy_cmd="{mypy} .",
         pip_cmd="{pip} install pytest",
+    ),
+    Project(
+        location="https://github.com/pyodide/pyodide",
+        mypy_cmd="{mypy} src pyodide-build --exclude 'setup.py|^src/tests|conftest.py'",
+        pip_cmd="{pip} install packaging types-docutils types-pyyaml types-setuptools numpy",
     ),
 ]
 assert len(PROJECTS) == len({p.name for p in PROJECTS})
