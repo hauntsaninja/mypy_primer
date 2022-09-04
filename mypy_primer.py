@@ -1406,6 +1406,26 @@ PROJECTS = [
         pip_cmd="{pip} install types-requests types-requests",
         expected_success=True,
     ),
+    Project(
+        location="https://github.com/DataDog/dd-trace-py",
+        mypy_cmd="{mypy}",
+        pip_cmd=(
+            "{pip} install types-attrs types-six types-setuptools types-docutils "
+            "types-PyYAML types-protobuf"
+        ),
+        expected_success=True,
+    ),
+    Project(
+        location="https://github.com/systemd/mkosi",
+        mypy_cmd="{mypy} mkosi",
+        pip_cmd="{pip} install cryptography",
+        expected_success=True,
+    ),
+    Project(
+        location="https://github.com/sympy/sympy",
+        mypy_cmd="{mypy} sympy",
+        expected_success=True,
+    ),
     *(
         [
             Project(
@@ -1451,10 +1471,6 @@ PROJECTS = [
         location="https://github.com/tornadoweb/tornado",
         mypy_cmd="{mypy} tornado",
         pip_cmd="{pip} install types-contextvars types-pycurl",
-    ),
-    Project(
-        location="https://github.com/sympy/sympy",
-        mypy_cmd="{mypy} sympy",
     ),
     Project(
         location="https://github.com/scipy/scipy",
@@ -1539,11 +1555,6 @@ PROJECTS = [
         mypy_cmd="{mypy} pyinstrument",
     ),
     Project(
-        location="https://github.com/systemd/mkosi",
-        mypy_cmd="{mypy} mkosi",
-        pip_cmd="{pip} install cryptography",
-    ),
-    Project(
         location="https://github.com/Gobot1234/steam.py",
         mypy_cmd="{mypy}",
         pip_cmd="{pip} install cryptography",
@@ -1588,14 +1599,6 @@ PROJECTS = [
         location="https://github.com/artigraph/artigraph",
         mypy_cmd="{mypy}",
         pip_cmd="{pip} install pydantic numpy pytest",
-    ),
-    Project(
-        location="https://github.com/DataDog/dd-trace-py",
-        mypy_cmd="{mypy}",
-        pip_cmd=(
-            "{pip} install types-attrs types-six types-setuptools types-docutils "
-            "types-PyYAML types-protobuf"
-        ),
     ),
     Project(
         location="https://github.com/MaterializeInc/materialize",
