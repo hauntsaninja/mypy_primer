@@ -1631,6 +1631,10 @@ PROJECTS = [
             "types-PyYAML types-Markdown pytest"
         ),
     ),
+    Project(
+        "https://github.com/daveleroy/sublime_debugger",
+        mypy_cmd="{mypy} modules --namespace-packages",
+    ),
 ]
 assert len(PROJECTS) == len({p.name for p in PROJECTS})
 
