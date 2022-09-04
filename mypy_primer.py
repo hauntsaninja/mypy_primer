@@ -1034,6 +1034,7 @@ PROJECTS = [
     Project(
         location="https://github.com/quora/asynq",
         mypy_cmd="{mypy} asynq",
+        pip_cmd="{pip} install qcore",
         expected_success=True,
     ),
     Project(
