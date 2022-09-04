@@ -1028,6 +1028,7 @@ PROJECTS = [
     Project(
         location="https://github.com/hauntsaninja/boostedblob",
         mypy_cmd="{mypy} boostedblob",
+        pip_cmd="{pip} install aiohttp uvloop pycryptodome",
         expected_success=True,
     ),
     Project(
