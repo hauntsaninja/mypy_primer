@@ -16,10 +16,14 @@ Here's what mypy_primer does:
 
 mypy_primer contains a hardcoded list of open source projects and their respective mypy setups (to
 which contributions are gladly accepted). The list is visible at the bottom of `mypy_primer.py` and
-many of them should be recognisable names. I used https://grep.app to help me; a mypy.ini or "mypy"
-in a tox.ini / setup.cfg / .travis.yml / etc is a pretty strong signal. This hardcoded list is in
-theory susceptible to bitrot, but if you pass e.g. the flag `--project-date 2020-09-25` to
-mypy_primer, it'll check out projects as they were today and things should work!
+many of them should be recognisable names.
+
+I used https://grep.app / https://cs.github.com / issue reports to help me build this. For example,
+a mypy.ini or "mypy" in a tox.ini / setup.cfg / .travis.yml / etc is a pretty strong signal that
+type checking the project will have good signal.
+
+The hardcoded list is in theory susceptible to bitrot, but if you pass e.g. the flag
+`--project-date 2022-09-01` to mypy_primer, it'll check out projects as they were on that day.
 
 ## Usage
 
@@ -123,7 +127,7 @@ Figure out what commit is causing a specific error in the project you care about
 mypy_primer -k pandas --bisect-error 'Incompatible types in assignment'
 ```
 
-Or on a local file / directory:
+Or bisect a difference on a local file / directory:
 ```
 mypy_primer -p test.py --bisect --old v0.770
 ```
