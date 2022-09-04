@@ -1079,7 +1079,7 @@ PROJECTS = [
     Project(
         location="https://github.com/PyGithub/PyGithub",
         mypy_cmd="{mypy} github tests",
-        pip_cmd="{pip} install types-requests",
+        pip_cmd="{pip} install types-requests pyjwt",
         expected_success=True,
     ),
     Project(
