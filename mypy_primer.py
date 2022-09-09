@@ -1432,6 +1432,7 @@ PROJECTS = [
             Project(
                 location="https://github.com/sco1/pylox",
                 mypy_cmd="{mypy} .",
+                pip_cmd="{pip} install attrs",
                 expected_success=True,
             ),
             Project(
