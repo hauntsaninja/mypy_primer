@@ -1506,7 +1506,7 @@ PROJECTS = [
         mypy_cmd="{mypy} --config-file=lib/mypy.ini lib scripts",
         pip_cmd=(
             "{pip} install tornado packaging types-toml types-python-dateutil types-attrs "
-            "types-setuptools types-protobuf types-pytz types-requests click pytest"
+            "types-setuptools types-protobuf types-pytz types-requests types-cffi click pytest"
         ),
     ),
     Project(
