@@ -1647,7 +1647,7 @@ PROJECTS = [
     Project(
         location="https://github.com/bokeh/bokeh",
         mypy_cmd="{mypy} src release",
-        pip_cmd="{pip} install types-boto tornado numpy jinja2",
+        pip_cmd="{pip} install types-boto tornado numpy jinja2 selenium",
     ),
 ]
 assert len(PROJECTS) == len({p.name for p in PROJECTS})
