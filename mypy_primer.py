@@ -20,19 +20,7 @@ from dataclasses import dataclass, field, replace
 from datetime import date
 from enum import Enum
 from pathlib import Path
-from typing import (
-    Any,
-    Awaitable,
-    Callable,
-    Dict,
-    Iterator,
-    List,
-    Optional,
-    Sequence,
-    Tuple,
-    TypeVar,
-    Union,
-)
+from typing import Any, Awaitable, Callable, Iterator, Sequence, TypeVar, Union
 
 T = TypeVar("T")
 RevisionLike = Union[str, None, Callable[[Path], Awaitable[str]]]
@@ -65,11 +53,11 @@ def stable_hash(p: Project) -> int:
     return int(hashlib.md5(salt + p.location.encode("utf-8")).hexdigest(), 16)
 
 
-_semaphore: Optional[asyncio.Semaphore] = None
+_semaphore: asyncio.Semaphore | None = None
 
 
 async def run(
-    cmd: Union[str, List[str]],
+    cmd: str | list[str],
     *,
     shell: bool = False,
     output: bool = False,
@@ -206,7 +194,7 @@ async def get_recent_tag(repo_dir: Path) -> str:
     return proc.stdout.strip()
 
 
-def revision_or_recent_tag_fn(revision: Optional[str]) -> RevisionLike:
+def revision_or_recent_tag_fn(revision: str | None) -> RevisionLike:
     return revision if revision is not None else get_recent_tag
 
 
@@ -263,7 +251,7 @@ async def setup_mypy(mypy_dir: Path, revision_like: RevisionLike, editable: bool
 
 async def setup_new_and_old_mypy(
     new_mypy_revision: RevisionLike, old_mypy_revision: RevisionLike
-) -> Tuple[Path, Path]:
+) -> tuple[Path, Path]:
     new_mypy, old_mypy = await asyncio.gather(
         setup_mypy(ARGS.base_dir / "new_mypy", new_mypy_revision),
         setup_mypy(ARGS.base_dir / "old_mypy", old_mypy_revision),
@@ -282,7 +270,7 @@ async def setup_new_and_old_mypy(
 
 async def setup_new_and_old_typeshed(
     new_typeshed_revision: RevisionLike, old_typeshed_revision: RevisionLike
-) -> Tuple[Optional[Path], Optional[Path]]:
+) -> tuple[Path | None, Path | None]:
     typeshed_repo = ARGS.custom_typeshed_repo
 
     new_typeshed_dir = None
@@ -315,8 +303,8 @@ async def setup_new_and_old_typeshed(
 class Project:
     location: str
     mypy_cmd: str
-    revision: Optional[str] = None
-    pip_cmd: Optional[str] = None
+    revision: str | None = None
+    pip_cmd: str | None = None
     # if expected_success, there is a recent version of mypy which passes cleanly
     expected_success: bool = False
 
@@ -355,7 +343,7 @@ class Project:
                 cwd=repo_dir,
             )
 
-    def get_mypy_cmd(self, mypy: Union[str, Path], additional_flags: Sequence[str] = ()) -> str:
+    def get_mypy_cmd(self, mypy: str | Path, additional_flags: Sequence[str] = ()) -> str:
         mypy_cmd = self.mypy_cmd
         assert "{mypy}" in self.mypy_cmd
         if self.pip_cmd:
@@ -370,7 +358,7 @@ class Project:
         mypy_cmd = mypy_cmd.format(mypy=mypy)
         return mypy_cmd
 
-    async def run_mypy(self, mypy: Union[str, Path], typeshed_dir: Optional[Path]) -> MypyResult:
+    async def run_mypy(self, mypy: str | Path, typeshed_dir: Path | None) -> MypyResult:
         additional_flags = []
         env = os.environ.copy()
         env["MYPY_FORCE_COLOR"] = "1"
@@ -408,8 +396,8 @@ class Project:
         self,
         new_mypy: str,
         old_mypy: str,
-        new_typeshed: Optional[Path],
-        old_typeshed: Optional[Path],
+        new_typeshed: Path | None,
+        old_typeshed: Path | None,
     ) -> PrimerResult:
         await self.setup()
         new_result, old_result = await asyncio.gather(
@@ -418,7 +406,7 @@ class Project:
         )
         return PrimerResult(self, new_result, old_result)
 
-    async def source_paths(self, mypy_python: str) -> List[Path]:
+    async def source_paths(self, mypy_python: str) -> list[Path]:
         await self.setup()
         mypy_cmd = self.get_mypy_cmd(mypy="mypyprimersentinel")
         mypy_cmd = mypy_cmd.split("mypyprimersentinel", maxsplit=1)[1]
@@ -502,7 +490,7 @@ class PrimerResult:
         # mypy's output appears to be nondeterministic for some same line errors, e.g. on pypa/pip
         # Work around that by ignoring identical removal and addition pairs, e.g.
         # "- a.py:1: error xyz" and "+ a.py:1: error xyz"
-        net_change: Dict[str, int] = defaultdict(int)
+        net_change: dict[str, int] = defaultdict(int)
         for line in diff_lines:
             net_change[line[2:]] += 1 if line[0] == "+" else -1
 
@@ -600,7 +588,7 @@ async def validate_expected_success() -> None:
         ]
     )
 
-    async def inner(project: Project) -> Optional[str]:
+    async def inner(project: Project) -> str | None:
         await project.setup()
         success = None
         for mypy_exe in recent_mypy_exes:
@@ -631,7 +619,7 @@ async def measure_project_runtimes() -> None:
     """Check mypy's runtime over each project."""
     mypy_exe = await setup_mypy(ARGS.base_dir / "timer_mypy", RECENT_MYPYS[0])
 
-    async def inner(project: Project) -> Tuple[float, Project]:
+    async def inner(project: Project) -> tuple[float, Project]:
         await project.setup()
         start = time.time()
         await project.run_mypy(mypy_exe, typeshed_dir=None)
@@ -664,11 +652,11 @@ async def bisect() -> None:
     projects = list(select_projects())
     await asyncio.wait([project.setup() for project in projects])
 
-    async def run_wrapper(project: Project) -> Tuple[str, MypyResult]:
+    async def run_wrapper(project: Project) -> tuple[str, MypyResult]:
         return project.name, (await project.run_mypy(str(mypy_exe), typeshed_dir=None))
 
     results_fut = await asyncio.gather(*(run_wrapper(project) for project in projects))
-    old_results: Dict[str, MypyResult] = dict(results_fut)
+    old_results: dict[str, MypyResult] = dict(results_fut)
     if ARGS.debug:
         debug_print("\n".join(str(result) for result in old_results.values()))
         debug_print(format(Style.RESET))
@@ -679,7 +667,7 @@ async def bisect() -> None:
     new_revision = await get_revision_for_revision_or_date(ARGS.new or "origin/HEAD", repo_dir)
     await run(["git", "bisect", "bad", new_revision], cwd=repo_dir, output=True)
 
-    def are_results_good(results: Dict[str, MypyResult]) -> bool:
+    def are_results_good(results: dict[str, MypyResult]) -> bool:
         if ARGS.bisect_output:
             return not any(
                 re.search(ARGS.bisect_output, strip_colour_code(results[project.name].output))
@@ -694,7 +682,7 @@ async def bisect() -> None:
     while True:
         await run(["git", "submodule", "update", "--init"], cwd=repo_dir)
         results_fut = await asyncio.gather(*(run_wrapper(project) for project in projects))
-        results: Dict[str, MypyResult] = dict(results_fut)
+        results: dict[str, MypyResult] = dict(results_fut)
 
         state = "good" if are_results_good(results) else "bad"
         proc = await run(["git", "bisect", state], output=True, cwd=repo_dir)
@@ -769,7 +757,7 @@ async def primer() -> int:
     return retcode
 
 
-def parse_options(argv: List[str]) -> argparse.Namespace:
+def parse_options(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser()
 
     mypy_group = parser.add_argument_group("mypy")
@@ -907,7 +895,7 @@ ARGS: argparse.Namespace
 
 
 def main() -> None:
-    def inner() -> Optional[int]:
+    def inner() -> int | None:
         global ARGS
         ARGS = parse_options(sys.argv[1:])
 
@@ -917,7 +905,7 @@ def main() -> None:
         ARGS.projects_dir = ARGS.base_dir / "projects"
         ARGS.projects_dir.mkdir(exist_ok=True)
 
-        coro: Awaitable[Optional[int]]
+        coro: Awaitable[int | None]
         if ARGS.coverage:
             coro = coverage()
         elif ARGS.bisect or ARGS.bisect_output:
