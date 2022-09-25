@@ -913,6 +913,7 @@ def main() -> None:
 
         if ARGS.base_dir.exists() and ARGS.clear:
             shutil.rmtree(ARGS.base_dir)
+        ARGS.base_dir = ARGS.base_dir.absolute()
         ARGS.base_dir.mkdir(exist_ok=True)
         ARGS.projects_dir = ARGS.base_dir / "projects"
         ARGS.projects_dir.mkdir(exist_ok=True)
