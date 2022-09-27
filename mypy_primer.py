@@ -1638,6 +1638,10 @@ PROJECTS = [
         mypy_cmd="{mypy} src release",
         pip_cmd="{pip} install types-boto tornado numpy jinja2 selenium",
     ),
+    Project(
+        location="https://github.com/pandas-dev/pandas-stubs",
+        mypy_cmd="{mypy} pandas-stubs tests",
+    ),
 ]
 assert len(PROJECTS) == len({p.name for p in PROJECTS})
 
