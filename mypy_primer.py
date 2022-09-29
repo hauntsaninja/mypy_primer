@@ -1642,6 +1642,10 @@ PROJECTS = [
         location="https://github.com/pandas-dev/pandas-stubs",
         mypy_cmd="{mypy} pandas-stubs tests",
     ),
+    Project(
+        location="https://github.com/nion-software/nionutils",
+        mypy_cmd="{mypy} --namespace-packages --strict -p nion.utils",
+    ),
 ]
 assert len(PROJECTS) == len({p.name for p in PROJECTS})
 
