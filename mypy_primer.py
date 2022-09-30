@@ -1416,6 +1416,11 @@ PROJECTS = [
         mypy_cmd="{mypy} sympy",
         expected_success=True,
     ),
+    Project(
+        location="https://github.com/nion-software/nionutils",
+        mypy_cmd="{mypy} --namespace-packages --strict -p nion.utils",
+        expected_success=True,
+    ),
     *(
         [
             Project(
@@ -1643,8 +1648,9 @@ PROJECTS = [
         mypy_cmd="{mypy} pandas-stubs tests",
     ),
     Project(
-        location="https://github.com/nion-software/nionutils",
-        mypy_cmd="{mypy} --namespace-packages --strict -p nion.utils",
+        location="https://github.com/enthought/comtypes",
+        mypy_cmd="{mypy} comtypes --platform win32",
+        pip_cmd="{pip} install numpy",
     ),
 ]
 assert len(PROJECTS) == len({p.name for p in PROJECTS})
