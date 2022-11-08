@@ -1428,6 +1428,12 @@ PROJECTS = [
         mypy_cmd="{mypy} --namespace-packages --strict -p nion.utils",
         expected_success=True,
     ),
+    Project(
+        location="https://github.com/PyCQA/flake8-pyi",
+        mypy_cmd="{mypy} pyi.py",
+        pip_cmd="{pip} install types-pyflakes",
+        expected_success=True,
+    ),
     *(
         [
             Project(
