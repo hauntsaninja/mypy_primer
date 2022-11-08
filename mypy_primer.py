@@ -359,7 +359,7 @@ class Project:
         return mypy_cmd
 
     async def run_mypy(self, mypy: str | Path, typeshed_dir: Path | None) -> MypyResult:
-        additional_flags = []
+        additional_flags = list(ARGS.additional_flags)
         env = os.environ.copy()
         env["MYPY_FORCE_COLOR"] = "1"
 
@@ -801,6 +801,12 @@ def parse_options(argv: list[str]) -> argparse.Namespace:
     mypy_group.add_argument(
         "--old-typeshed",
         help="old typeshed version, defaults to mypy's (anything commit-ish, or isoformatted date)",
+    )
+    mypy_group.add_argument(
+        "--additional-flags",
+        help="additional flags to pass to mypy",
+        nargs="*",
+        default=[],
     )
 
     proj_group = parser.add_argument_group("project selection")

@@ -32,13 +32,14 @@ The hardcoded list is in theory susceptible to bitrot, but if you pass e.g. the 
 usage: mypy_primer [-h] [--new NEW] [--old OLD] [--repo REPO]
                    [--mypyc-compile-level MYPYC_COMPILE_LEVEL]
                    [--custom-typeshed-repo CUSTOM_TYPESHED_REPO] [--new-typeshed NEW_TYPESHED]
-                   [--old-typeshed OLD_TYPESHED] [-k PROJECT_SELECTOR] [-p LOCAL_PROJECT]
-                   [--expected-success] [--project-date PROJECT_DATE] [--num-shards NUM_SHARDS]
+                   [--old-typeshed OLD_TYPESHED] [--additional-flags [ADDITIONAL_FLAGS ...]]
+                   [-k PROJECT_SELECTOR] [-p LOCAL_PROJECT] [--expected-success]
+                   [--project-date PROJECT_DATE] [--num-shards NUM_SHARDS]
                    [--shard-index SHARD_INDEX] [-o {full,diff,concise}] [--old-success]
                    [--coverage] [--bisect] [--bisect-output BISECT_OUTPUT] [-j CONCURRENCY]
                    [--debug] [--base-dir BASE_DIR] [--clear]
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
 
 mypy:
@@ -58,6 +59,8 @@ mypy:
   --old-typeshed OLD_TYPESHED
                         old typeshed version, defaults to mypy's (anything commit-ish, or
                         isoformatted date)
+  --additional-flags [ADDITIONAL_FLAGS ...]
+                        additional flags to pass to mypy
 
 project selection:
   -k PROJECT_SELECTOR, --project-selector PROJECT_SELECTOR
