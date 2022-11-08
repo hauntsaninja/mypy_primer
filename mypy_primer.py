@@ -38,6 +38,13 @@ class Style(str, Enum):
     DIM = "\033[2m"
     RESET = "\033[0m"
 
+    # In Python 3.11, Enum.__format__ by default returns "Style.RED",
+    # while previously it returned the value of the enum member. Once
+    # we support only 3.11, we can inherit from enum.StrEnum and remove
+    # this method.
+    def __format__(self, format_spec: str) -> str:
+        return self.value
+
 
 def strip_colour_code(text: str) -> str:
     return re.sub("\\x1b.*?m", "", text)
