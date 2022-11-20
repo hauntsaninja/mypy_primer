@@ -1594,9 +1594,7 @@ PROJECTS = [
         mypy_cmd="{mypy} --strict sop",
     ),
     Project(
-        # TODO: replace once https://github.com/Rapptz/discord.py is back
-        # (this is some random fork that looks like it's up to date)
-        location="https://github.com/HitSyr/discord.py",
+        location="https://github.com/Rapptz/discord.py",
         mypy_cmd="{mypy} discord",
         pip_cmd="{pip} install types-requests types-setuptools aiohttp",
     ),
