@@ -977,7 +977,7 @@ PROJECTS = [
     Project(
         location="https://github.com/pytest-dev/pytest",
         mypy_cmd="{mypy} src testing",
-        pip_cmd="{pip} install py types-attrs types-setuptools",
+        pip_cmd="{pip} install attrs py types-setuptools",
         expected_success=True,
     ),
     Project(
@@ -1042,7 +1042,7 @@ PROJECTS = [
     Project(
         location="https://github.com/scrapy/scrapy",
         mypy_cmd="{mypy} scrapy tests",
-        pip_cmd="{pip} install types-attrs types-pyOpenSSL types-setuptools",
+        pip_cmd="{pip} install attrs types-pyOpenSSL types-setuptools",
         expected_success=True,
     ),
     Project(
@@ -1209,7 +1209,7 @@ PROJECTS = [
     Project(
         location="https://github.com/Textualize/rich",
         mypy_cmd="{mypy} -p rich --ignore-missing-imports --warn-unreachable",
-        pip_cmd="{pip} install types-attrs",
+        pip_cmd="{pip} install attrs",
         expected_success=True,
     ),
     Project(
@@ -1220,7 +1220,7 @@ PROJECTS = [
     Project(
         location="https://github.com/schemathesis/schemathesis",
         mypy_cmd="{mypy} src/schemathesis",
-        pip_cmd="{pip} install types-attrs types-requests types-PyYAML",
+        pip_cmd="{pip} install attrs types-requests types-PyYAML",
         expected_success=True,
     ),
     Project(
@@ -1413,7 +1413,7 @@ PROJECTS = [
         location="https://github.com/DataDog/dd-trace-py",
         mypy_cmd="{mypy}",
         pip_cmd=(
-            "{pip} install types-attrs types-six types-setuptools types-docutils "
+            "{pip} install attrs types-six types-setuptools types-docutils "
             "types-PyYAML types-protobuf"
         ),
         expected_success=True,
@@ -1501,8 +1501,8 @@ PROJECTS = [
         location="https://github.com/home-assistant/core",
         mypy_cmd="{mypy} homeassistant",
         pip_cmd=(
-            "{pip} install types-setuptools types-atomicwrites types-certifi types-croniter "
-            "types-PyYAML types-requests types-attrs types-python-slugify types-backports"
+            "{pip} install attrs types-setuptools types-atomicwrites types-certifi types-croniter "
+            "types-PyYAML types-requests types-python-slugify types-backports"
         ),
     ),
     Project(
@@ -1518,7 +1518,7 @@ PROJECTS = [
         location="https://github.com/streamlit/streamlit",
         mypy_cmd="{mypy} --config-file=lib/mypy.ini lib scripts",
         pip_cmd=(
-            "{pip} install tornado packaging types-toml types-python-dateutil types-attrs "
+            "{pip} install attrs tornado packaging types-toml types-python-dateutil "
             "types-setuptools types-protobuf types-pytz types-requests types-cffi click pytest"
         ),
     ),
@@ -1530,7 +1530,7 @@ PROJECTS = [
     Project(
         location="https://github.com/mikeshardmind/SinbadCogs",
         mypy_cmd="{mypy} .",
-        pip_cmd="{pip} install types-pytz types-python-dateutil types-PyYAML types-attrs",
+        pip_cmd="{pip} install attrs types-pytz types-python-dateutil types-PyYAML",
     ),
     Project(
         location="https://github.com/rotki/rotki",
