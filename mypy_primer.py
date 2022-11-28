@@ -70,7 +70,7 @@ async def run(
     output: bool = False,
     check: bool = True,
     **kwargs: Any,
-) -> subprocess.CompletedProcess[str]:
+) -> tuple[subprocess.CompletedProcess[str], float]:
     if output:
         kwargs["stdout"] = subprocess.PIPE
         kwargs["stderr"] = subprocess.PIPE
@@ -96,14 +96,16 @@ async def run(
         else:
             assert isinstance(cmd, list)
             proc = await asyncio.create_subprocess_exec(*cmd, **kwargs)
+        start_t = time.perf_counter()
         stdout_b, stderr_b = await proc.communicate()
+        end_t = time.perf_counter()
 
     stdout = stdout_b.decode("utf-8") if stdout_b is not None else None
     stderr = stderr_b.decode("utf-8") if stderr_b is not None else None
     assert proc.returncode is not None
     if check and proc.returncode:
         raise subprocess.CalledProcessError(proc.returncode, cmd, output=stdout, stderr=stderr)
-    return subprocess.CompletedProcess(cmd, proc.returncode, stdout, stderr)
+    return subprocess.CompletedProcess(cmd, proc.returncode, stdout, stderr), end_t - start_t
 
 
 def line_count(path: Path) -> int:
@@ -140,7 +142,7 @@ async def checkout(revision: str, repo_dir: Path) -> None:
 
 
 async def get_revision_for_date(dt: date, repo_dir: Path) -> str:
-    proc = await run(
+    proc, _ = await run(
         ["git", "rev-list", "-1", "--before", dt.isoformat(), "HEAD"], output=True, cwd=repo_dir
     )
     return proc.stdout.strip()
@@ -196,8 +198,10 @@ async def ensure_repo_at_revision(repo_url: str, cwd: Path, revision_like: Revis
 
 
 async def get_recent_tag(repo_dir: Path) -> str:
-    proc = await run(["git", "rev-list", "--tags", "-1"], output=True, cwd=repo_dir)
-    proc = await run(["git", "describe", "--tags", proc.stdout.strip()], output=True, cwd=repo_dir)
+    proc, _ = await run(["git", "rev-list", "--tags", "-1"], output=True, cwd=repo_dir)
+    proc, _ = await run(
+        ["git", "describe", "--tags", proc.stdout.strip()], output=True, cwd=repo_dir
+    )
     return proc.stdout.strip()
 
 
@@ -252,6 +256,9 @@ async def setup_mypy(mypy_dir: Path, revision_like: RevisionLike, editable: bool
         await run(install_cmd)
 
     mypy_exe = venv_dir / "bin" / "mypy"
+    if sys.platform == "darwin":
+        # warm up mypy on macos to avoid the first run being slow
+        await run([str(mypy_exe), "--version"])
     assert mypy_exe.exists()
     return mypy_exe
 
@@ -265,7 +272,7 @@ async def setup_new_and_old_mypy(
     )
 
     if ARGS.debug:
-        new_version, old_version = await asyncio.gather(
+        (new_version, _), (old_version, _) = await asyncio.gather(
             run([str(new_mypy), "--version"], output=True),
             run([str(old_mypy), "--version"], output=True),
         )
@@ -379,7 +386,7 @@ class Project:
                 env["MYPYPATH"] = add_to_mypypath
 
         mypy_cmd = self.get_mypy_cmd(mypy, additional_flags)
-        proc = await run(
+        proc, runtime = await run(
             mypy_cmd,
             shell=True,
             output=True,
@@ -397,19 +404,16 @@ class Project:
                 for line in output.splitlines(keepends=True)
                 if not line.startswith(str(typeshed_dir / "stubs"))
             )
-        return MypyResult(mypy_cmd, output, not bool(proc.returncode), self.expected_success)
+        return MypyResult(
+            mypy_cmd, output, not bool(proc.returncode), self.expected_success, runtime
+        )
 
     async def primer_result(
-        self,
-        new_mypy: str,
-        old_mypy: str,
-        new_typeshed: Path | None,
-        old_typeshed: Path | None,
+        self, new_mypy: str, old_mypy: str, new_typeshed: Path | None, old_typeshed: Path | None
     ) -> PrimerResult:
         await self.setup()
         new_result, old_result = await asyncio.gather(
-            self.run_mypy(new_mypy, new_typeshed),
-            self.run_mypy(old_mypy, old_typeshed),
+            self.run_mypy(new_mypy, new_typeshed), self.run_mypy(old_mypy, old_typeshed)
         )
         return PrimerResult(self, new_result, old_result)
 
@@ -427,7 +431,7 @@ for source in sources:
         print(source.path)
 """
         # the extra shell stuff here makes sure we expand globs in mypy_cmd
-        proc = await run(
+        proc, _ = await run(
             f"{mypy_python} -c {shlex.quote(program)} {mypy_cmd}",
             output=True,
             cwd=ARGS.projects_dir / self.name,
@@ -443,10 +447,7 @@ for source in sources:
                 header = f.readline().strip()
                 if header.startswith("# flags:"):
                     additional_flags = header[len("# flags:") :]
-        return Project(
-            location=location,
-            mypy_cmd=f"{{mypy}} {location} {additional_flags}",
-        )
+        return Project(location=location, mypy_cmd=f"{{mypy}} {location} {additional_flags}")
 
 
 @dataclass(frozen=True)
@@ -455,9 +456,10 @@ class MypyResult:
     output: str
     success: bool
     expected_success: bool
+    runtime: float
 
     def __str__(self) -> str:
-        ret = "> " + self.command + "\n"
+        ret = "> " + self.command + f" ({self.runtime:0.1f}s)\n"
         if self.expected_success and not self.success:
             ret += f"{Style.RED}{Style.BOLD}UNEXPECTED FAILURE{Style.RESET}\n"
         ret += textwrap.indent(self.output, "\t")
@@ -628,10 +630,8 @@ async def measure_project_runtimes() -> None:
 
     async def inner(project: Project) -> tuple[float, Project]:
         await project.setup()
-        start = time.time()
-        await project.run_mypy(mypy_exe, typeshed_dir=None)
-        end = time.time()
-        return (end - start, project)
+        result = await project.run_mypy(mypy_exe, typeshed_dir=None)
+        return (result.runtime, project)
 
     results = sorted(
         (await asyncio.gather(*[inner(project) for project in select_projects()])), reverse=True
@@ -692,7 +692,7 @@ async def bisect() -> None:
         results: dict[str, MypyResult] = dict(results_fut)
 
         state = "good" if are_results_good(results) else "bad"
-        proc = await run(["git", "bisect", state], output=True, cwd=repo_dir)
+        proc, _ = await run(["git", "bisect", state], output=True, cwd=repo_dir)
 
         if "first bad commit" in proc.stdout:
             print(proc.stdout)
