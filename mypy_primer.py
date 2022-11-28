@@ -585,7 +585,7 @@ def select_projects() -> Iterator[Project]:
 # hidden entrypoint logic
 # ==============================
 
-RECENT_MYPYS = ["0.971", "0.961"]
+RECENT_MYPYS = ["0.991", "0.982", "0.971", "0.961"]
 
 
 async def validate_expected_success() -> None:
