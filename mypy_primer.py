@@ -446,7 +446,7 @@ for source in sources:
             with open(location) as f:
                 header = f.readline().strip()
                 if header.startswith("# flags:"):
-                    additional_flags = header[len("# flags:"):]
+                    additional_flags = header[len("# flags:") :]
         return Project(location=location, mypy_cmd=f"{{mypy}} {location} {additional_flags}")
 
 

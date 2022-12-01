@@ -40,3 +40,6 @@ htmlcov
 
 # Editor temp files
 .*.swp
+
+# Wrkspace settings
+.vscode
