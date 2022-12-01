@@ -1678,6 +1678,11 @@ PROJECTS = [
         mypy_cmd="{mypy} comtypes --platform win32",
         pip_cmd="{pip} install numpy",
     ),
+    Project(
+        location="https://github.com/mit-ll-responsible-ai/hydra-zen",
+        mypy_cmd="{mypy} src",
+        pip_cmd="{pip} install pydantic beartype hydra-core",
+    ),
 ]
 assert len(PROJECTS) == len({p.name for p in PROJECTS})
 
