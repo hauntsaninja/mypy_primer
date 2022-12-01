@@ -936,7 +936,7 @@ class Args:
     repo: str
     shard_index: int | None
     validate_expected_success: bool
-    projects_dir: Path = None  # type: ignore[assignment]  # Initialized later
+    projects_dir: Path = field(init=False)
 
 
 ARGS: Args
