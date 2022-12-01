@@ -41,5 +41,5 @@ htmlcov
 # Editor temp files
 .*.swp
 
-# Wrkspace settings
+# Workspace configurations
 .vscode
