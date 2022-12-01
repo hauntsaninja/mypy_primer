@@ -11,6 +11,7 @@ import shlex
 import shutil
 import subprocess
 import sys
+import tempfile
 import textwrap
 import time
 import traceback
@@ -24,7 +25,7 @@ from typing import Any, Awaitable, Callable, Iterator, Sequence, TypeVar, Union
 
 T = TypeVar("T")
 RevisionLike = Union[str, None, Callable[[Path], Awaitable[str]]]
-
+BIN_DIR = "scripts" if sys.platform == "win32" else "bin"
 
 # ==============================
 # utils
@@ -218,7 +219,7 @@ async def setup_mypy(mypy_dir: Path, revision_like: RevisionLike, editable: bool
     mypy_dir.mkdir(exist_ok=True)
     venv_dir = mypy_dir / "venv"
     venv.create(venv_dir, with_pip=True, clear=True)
-    pip_exe = str(venv_dir / "bin" / "pip")
+    pip_exe = str(venv_dir / BIN_DIR / "pip")
 
     if ARGS.mypyc_compile_level is not None:
         editable = True
@@ -241,7 +242,7 @@ async def setup_mypy(mypy_dir: Path, revision_like: RevisionLike, editable: bool
         if ARGS.mypyc_compile_level is not None:
             env = os.environ.copy()
             env["MYPYC_OPT_LEVEL"] = str(ARGS.mypyc_compile_level)
-            python_exe = str(venv_dir / "bin" / "python")
+            python_exe = str(venv_dir / BIN_DIR / "python")
             await run([pip_exe, "install", "typing_extensions", "mypy_extensions"])
             await run(
                 [python_exe, "setup.py", "--use-mypyc", "build_ext", "--inplace"],
@@ -255,7 +256,8 @@ async def setup_mypy(mypy_dir: Path, revision_like: RevisionLike, editable: bool
         install_cmd.append("tomli")
         await run(install_cmd)
 
-    mypy_exe = venv_dir / "bin" / "mypy"
+    mypy_exe_name = "mypy.exe" if sys.platform == "win32" else "mypy"
+    mypy_exe = venv_dir / BIN_DIR / mypy_exe_name
     if sys.platform == "darwin":
         # warm up mypy on macos to avoid the first run being slow
         await run([str(mypy_exe), "--version"])
@@ -352,7 +354,7 @@ class Project:
             assert "{pip}" in self.pip_cmd
             venv.create(self.venv_dir, with_pip=True, clear=True)
             await run(
-                self.pip_cmd.format(pip=str(self.venv_dir / "bin" / "pip")),
+                self.pip_cmd.format(pip=str(self.venv_dir / BIN_DIR / "pip")),
                 shell=True,
                 cwd=repo_dir,
             )
@@ -361,14 +363,13 @@ class Project:
         mypy_cmd = self.mypy_cmd
         assert "{mypy}" in self.mypy_cmd
         if self.pip_cmd:
-            python_exe = self.venv_dir / "bin" / "python"
+            python_exe = self.venv_dir / BIN_DIR / "python"
             mypy_cmd += f" --python-executable={python_exe}"
         if additional_flags:
             mypy_cmd += " " + " ".join(additional_flags)
         if ARGS.output == "concise":
             mypy_cmd += "  --no-pretty --no-error-summary"
-        mypy_cmd += " --no-incremental --cache-dir=/dev/null --show-traceback"
-        mypy_cmd += " --soft-error-limit ' -1'"
+        mypy_cmd += " --no-incremental --cache-dir=/dev/null --show-traceback --soft-error-limit=-1"
         mypy_cmd = mypy_cmd.format(mypy=mypy)
         return mypy_cmd
 
@@ -443,7 +444,7 @@ for source in sources:
     def from_location(cls, location: str) -> Project:
         additional_flags = ""
         if Path(location).is_file():
-            with open(location) as f:
+            with open(location, encoding="UTF-8") as f:
                 header = f.readline().strip()
                 if header.startswith("# flags:"):
                     additional_flags = header[len("# flags:") :]
@@ -491,8 +492,9 @@ class PrimerResult:
         new_lines = new_output.splitlines()
         # Hide "note" lines which contain ARGS.base_dir... this hides differences between
         # file paths, e.g., when mypy points to a stub definition.
-        old_lines = [line for line in old_lines if not re.search(f"{ARGS.base_dir}.*: note:", line)]
-        new_lines = [line for line in new_lines if not re.search(f"{ARGS.base_dir}.*: note:", line)]
+        base_dir_re = re.compile(f"{re.escape(ARGS.base_dir)}.*: note:")
+        old_lines = [line for line in old_lines if not re.search(base_dir_re, line)]
+        new_lines = [line for line in new_lines if not re.search(base_dir_re, line)]
         diff = d.compare(old_lines, new_lines)
         diff_lines = [line for line in diff if line[0] in ("+", "-")]
 
@@ -503,7 +505,7 @@ class PrimerResult:
         for line in diff_lines:
             net_change[line[2:]] += 1 if line[0] == "+" else -1
 
-        output_lines = []
+        output_lines: list[str] = []
         for line in diff_lines:
             if line[0] == "+" and net_change[line[2:]] > 0:
                 output_lines.append(line)
@@ -715,8 +717,8 @@ async def coverage() -> None:
         *[project.source_paths(str(mypy_python)) for project in projects]
     )
 
-    project_to_paths = {}
-    project_to_lines = {}
+    project_to_paths: dict[str, int] = {}
+    project_to_lines: dict[str, int] = {}
     for project, paths in zip(projects, all_paths):
         project_to_paths[project.location] = len(paths)
         project_to_lines[project.location] = sum(map(line_count, paths))
@@ -892,7 +894,7 @@ def parse_options(argv: list[str]) -> argparse.Namespace:
     primer_group.add_argument("--debug", action="store_true", help="print commands as they run")
     primer_group.add_argument(
         "--base-dir",
-        default=Path("/tmp/mypy_primer"),
+        default=Path(tempfile.gettempdir() if sys.platform == "win32" else "/tmp") / "mypy_primer",
         type=Path,
         help="dir to store repos and venvs",
     )
