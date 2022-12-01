@@ -492,12 +492,7 @@ class PrimerResult:
         new_lines = new_output.splitlines()
         # Hide "note" lines which contain ARGS.base_dir... this hides differences between
         # file paths, e.g., when mypy points to a stub definition.
-
-        if sys.platform == "win32":
-            base_dir = str(ARGS.base_dir).replace("\\", r"\\")
-        else:
-            base_dir = ARGS.base_dir
-        base_dir_re = re.compile(f"{base_dir}.*: note:")
+        base_dir_re = re.compile(f"{re.escape(ARGS.base_dir)}.*: note:")
         old_lines = [line for line in old_lines if not re.search(base_dir_re, line)]
         new_lines = [line for line in new_lines if not re.search(base_dir_re, line)]
         diff = d.compare(old_lines, new_lines)
@@ -764,7 +759,8 @@ async def primer() -> int:
             # - always pass in --no-pretty and --no-error-summary
             concise = result.format_concise()
             if concise:
-                print(concise, "\n")
+                print(concise)
+                print()
         if not retcode and result.diff:
             retcode = 1
     return retcode
