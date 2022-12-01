@@ -1575,7 +1575,7 @@ PROJECTS = [
     ),
     Project(
         location="https://github.com/Gobot1234/steam.py",
-        mypy_cmd="{mypy}",
+        mypy_cmd="{mypy} steam",
         pip_cmd="{pip} install cryptography",
     ),
     Project(
