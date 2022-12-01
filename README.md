@@ -1,7 +1,7 @@
 # mypy_primer
 
-mypy_primer makes it easy to run [mypy](https://github.com/python/mypy/) over a few million lines of
-open source projects for the purpose of finding regressions or evaluating changes.
+mypy_primer makes it easy to run [mypy](https://github.com/python/mypy/) over several million lines
+of open source projects for the purpose of finding regressions or evaluating changes.
 
 ## Explanation
 
@@ -148,9 +148,9 @@ mypy_primer --coverage -k pypa
 For the record, the total is currently:
 ```
 λ mypy_primer --coverage
-Checking 114 projects...
-Containing 23261 files...
-Totalling to 6685755 lines...
+Checking 120 projects...
+Containing 24729 files...
+Totalling to 6953563 lines...
 ```
 (We use mypy internals to calculate this, so it's pretty accurate, if fragile)
 
