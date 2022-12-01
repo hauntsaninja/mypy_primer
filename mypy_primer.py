@@ -113,9 +113,12 @@ def line_count(path: Path) -> int:
     if path.is_dir():
         return 0
     buf_size = 1024 * 1024
-    with open(path, "rb") as f:
-        buf_iter = iter(lambda: f.raw.read(buf_size), b"")
-        return sum(buf.count(b"\n") for buf in buf_iter)  # type: ignore
+    try:
+        with open(path, "rb") as f:
+            buf_iter = iter(lambda: f.raw.read(buf_size), b"")
+            return sum(buf.count(b"\n") for buf in buf_iter)  # type: ignore
+    except FileNotFoundError:
+        return 0
 
 
 # ==============================
