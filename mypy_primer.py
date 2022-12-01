@@ -446,7 +446,7 @@ for source in sources:
             with open(location) as f:
                 header = f.readline().strip()
                 if header.startswith("# flags:"):
-                    additional_flags = header[len("# flags:") :]
+                    additional_flags = header[len("# flags:"):]
         return Project(location=location, mypy_cmd=f"{{mypy}} {location} {additional_flags}")
 
 
@@ -503,7 +503,7 @@ class PrimerResult:
         for line in diff_lines:
             net_change[line[2:]] += 1 if line[0] == "+" else -1
 
-        output_lines = []
+        output_lines: list[str] = []
         for line in diff_lines:
             if line[0] == "+" and net_change[line[2:]] > 0:
                 output_lines.append(line)
@@ -715,8 +715,8 @@ async def coverage() -> None:
         *[project.source_paths(str(mypy_python)) for project in projects]
     )
 
-    project_to_paths = {}
-    project_to_lines = {}
+    project_to_paths: dict[str, int] = {}
+    project_to_lines: dict[str, int] = {}
     for project, paths in zip(projects, all_paths):
         project_to_paths[project.location] = len(paths)
         project_to_lines[project.location] = sum(map(line_count, paths))
@@ -764,7 +764,7 @@ async def primer() -> int:
     return retcode
 
 
-def parse_options(argv: list[str]) -> argparse.Namespace:
+def parse_options(argv: list[str]) -> Args:
     parser = argparse.ArgumentParser()
 
     mypy_group = parser.add_argument_group("mypy")
@@ -898,13 +898,30 @@ def parse_options(argv: list[str]) -> argparse.Namespace:
     )
     primer_group.add_argument("--clear", action="store_true", help="delete repos and venvs")
 
-    ret = parser.parse_args(argv)
+    ret = parser.parse_args(argv, namespace=Args())
     if (ret.num_shards is not None) != (ret.shard_index is not None):
         parser.error("--shard-index and --num-shards must be used together")
     return ret
 
 
-ARGS: argparse.Namespace
+class Args(argparse.Namespace):
+    base_dir: Path
+    projects_dir: Path
+    num_shards: int | None
+    shard_index: int | None
+    coverage: bool
+    bisect: bool
+    bisect_output: str
+    validate_expected_success: bool
+    measure_project_runtimes: bool
+    clear: bool
+    old_success: bool
+    new_typeshed: str
+    old_typeshed: str
+    output: str
+
+
+ARGS: Args
 
 
 def main() -> None:
