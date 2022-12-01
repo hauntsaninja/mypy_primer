@@ -328,7 +328,7 @@ class Project:
 
     @property
     def venv_dir(self) -> Path:
-        return ARGS.projects_dir / f"_{self.name}_venv"  # type: ignore[no-any-return]
+        return ARGS.projects_dir / f"_{self.name}_venv"
 
     async def setup(self) -> None:
         if Path(self.location).exists():
