@@ -495,7 +495,7 @@ class PrimerResult:
         new_lines = new_output.splitlines()
         # Hide "note" lines which contain ARGS.base_dir... this hides differences between
         # file paths, e.g., when mypy points to a stub definition.
-        base_dir_re = re.compile(f"{re.escape(ARGS.base_dir)}.*: note:")
+        base_dir_re = re.compile(f"{re.escape(str(ARGS.base_dir))}.*: note:")
         old_lines = [line for line in old_lines if not re.search(base_dir_re, line)]
         new_lines = [line for line in new_lines if not re.search(base_dir_re, line)]
         diff = d.compare(old_lines, new_lines)
