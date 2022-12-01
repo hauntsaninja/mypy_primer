@@ -377,7 +377,7 @@ class Project:
         return mypy_cmd
 
     async def run_mypy(self, mypy: str | Path, typeshed_dir: Path | None) -> MypyResult:
-        additional_flags = list(ARGS.additional_flags)
+        additional_flags = ARGS.additional_flags.copy()
         env = os.environ.copy()
         env["MYPY_FORCE_COLOR"] = "1"
 
@@ -903,27 +903,40 @@ def parse_options(argv: list[str]) -> Args:
     )
     primer_group.add_argument("--clear", action="store_true", help="delete repos and venvs")
 
-    ret = parser.parse_args(argv, namespace=Args())
+    ret = Args(**vars(parser.parse_args(argv)))
     if (ret.num_shards is not None) != (ret.shard_index is not None):
         parser.error("--shard-index and --num-shards must be used together")
     return ret
 
 
-class Args(argparse.Namespace):
+@dataclass
+class Args:
+    additional_flags: list[str]
     base_dir: Path
-    projects_dir: Path
-    num_shards: int | None
-    shard_index: int | None
-    coverage: bool
     bisect: bool
-    bisect_output: str
-    validate_expected_success: bool
-    measure_project_runtimes: bool
+    bisect_output: str | None
     clear: bool
+    concurrency: int
+    coverage: bool
+    custom_typeshed_repo: str
+    debug: bool
+    expected_success: bool
+    local_project: str | None
+    measure_project_runtimes: bool
+    mypyc_compile_level: int | None
+    new: str | None
+    new_typeshed: str | None
+    num_shards: int | None
+    old: str | None
     old_success: bool
-    new_typeshed: str
-    old_typeshed: str
+    old_typeshed: str | None
     output: str
+    project_date: str | None
+    project_selector: str | None
+    repo: str
+    shard_index: int | None
+    validate_expected_success: bool
+    projects_dir: Path = None  # type: ignore[assignment]  # Initialized later
 
 
 ARGS: Args
