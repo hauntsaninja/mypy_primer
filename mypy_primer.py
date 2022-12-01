@@ -898,7 +898,7 @@ def parse_options(argv: list[str]) -> argparse.Namespace:
     primer_group.add_argument("--debug", action="store_true", help="print commands as they run")
     primer_group.add_argument(
         "--base-dir",
-        default=Path(tempfile.gettempdir()) / "mypy_primer",
+        default=Path(tempfile.gettempdir() if sys.platform == "win32" else "/tmp") / "mypy_primer",
         type=Path,
         help="dir to store repos and venvs",
     )
