@@ -723,9 +723,9 @@ async def coverage() -> None:
         project_to_paths[project.location] = len(paths)
         project_to_lines[project.location] = sum(map(line_count, paths))
 
-    # for project in sorted(projects, key=lambda p: project_to_lines[p.location], reverse=True):
-    #     p = project.location
-    #     print(p, project_to_lines[p], project_to_paths[p])
+    for project in sorted(projects, key=lambda p: project_to_lines[p.location], reverse=True):
+        p = project.location
+        print(p, project_to_lines[p], project_to_paths[p])
 
     print(f"Checking {len(projects)} projects...")
     print(f"Containing {sum(project_to_paths.values())} files...")
