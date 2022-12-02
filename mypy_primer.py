@@ -333,7 +333,7 @@ class Project:
 
     @property
     def venv_dir(self) -> Path:
-        return ARGS.projects_dir / f"_{self.name}_venv"  # type: ignore[no-any-return]
+        return ARGS.projects_dir / f"_{self.name}_venv"
 
     async def setup(self) -> None:
         if Path(self.location).exists():
@@ -377,7 +377,7 @@ class Project:
         return mypy_cmd
 
     async def run_mypy(self, mypy: str | Path, typeshed_dir: Path | None) -> MypyResult:
-        additional_flags = list(ARGS.additional_flags)
+        additional_flags = ARGS.additional_flags.copy()
         env = os.environ.copy()
         env["MYPY_FORCE_COLOR"] = "1"
 
@@ -769,7 +769,7 @@ async def primer() -> int:
     return retcode
 
 
-def parse_options(argv: list[str]) -> argparse.Namespace:
+def parse_options(argv: list[str]) -> Args:
     parser = argparse.ArgumentParser()
 
     mypy_group = parser.add_argument_group("mypy")
@@ -903,13 +903,43 @@ def parse_options(argv: list[str]) -> argparse.Namespace:
     )
     primer_group.add_argument("--clear", action="store_true", help="delete repos and venvs")
 
-    ret = parser.parse_args(argv)
+    ret = Args(**vars(parser.parse_args(argv)))
     if (ret.num_shards is not None) != (ret.shard_index is not None):
         parser.error("--shard-index and --num-shards must be used together")
     return ret
 
 
-ARGS: argparse.Namespace
+@dataclass
+class Args:
+    additional_flags: list[str]
+    base_dir: Path
+    bisect: bool
+    bisect_output: str | None
+    clear: bool
+    concurrency: int
+    coverage: bool
+    custom_typeshed_repo: str
+    debug: bool
+    expected_success: bool
+    local_project: str | None
+    measure_project_runtimes: bool
+    mypyc_compile_level: int | None
+    new: str | None
+    new_typeshed: str | None
+    num_shards: int | None
+    old: str | None
+    old_success: bool
+    old_typeshed: str | None
+    output: str
+    project_date: str | None
+    project_selector: str | None
+    repo: str
+    shard_index: int | None
+    validate_expected_success: bool
+    projects_dir: Path = field(init=False)
+
+
+ARGS: Args
 
 
 def main() -> None:
