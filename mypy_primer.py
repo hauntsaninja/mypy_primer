@@ -321,7 +321,7 @@ class Project:
     # if expected_success, there is a recent version of mypy which passes cleanly
     expected_success: bool = False
     # cost is vaguely proportional to type check time
-    cost: float = 3
+    cost: int = 3
 
     @property
     def name(self) -> str:
@@ -580,7 +580,7 @@ def select_projects() -> list[Project]:
 
     if ARGS.num_shards:
         shard_costs = [0] * ARGS.num_shards
-        shard_projects = [[] for _ in range(ARGS.num_shards)]
+        shard_projects: list[list[Project]] = [[] for _ in range(ARGS.num_shards)]
         for p in sorted(projects, key=lambda p: (p.cost, p.location), reverse=True):
             min_shard = min(range(ARGS.num_shards), key=lambda i: shard_costs[i])
             shard_costs[min_shard] += p.cost
