@@ -11,7 +11,6 @@ import shlex
 import shutil
 import subprocess
 import sys
-import tempfile
 import textwrap
 import time
 import traceback
@@ -25,7 +24,18 @@ from typing import Any, Awaitable, Callable, Iterator, Sequence, TypeVar, Union
 
 T = TypeVar("T")
 RevisionLike = Union[str, None, Callable[[Path], Awaitable[str]]]
-BIN_DIR = "scripts" if sys.platform == "win32" else "bin"
+
+if sys.platform == "win32":
+    import tempfile
+
+    BIN_DIR = "scripts"
+    MYPY_EXE_NAME = "mypy.exe"
+    TEMP_DIR = tempfile.gettempdir()
+else:
+    BIN_DIR = "bin"
+    MYPY_EXE_NAME = "mypy"
+    TEMP_DIR = "/tmp"
+
 
 # ==============================
 # utils
@@ -48,7 +58,7 @@ class Style(str, Enum):
 
 
 def strip_colour_code(text: str) -> str:
-    return re.sub("\\x1b.*?m", "", text)
+    return re.sub(r"\\033\[\d+?m", "", text)
 
 
 def debug_print(obj: Any) -> None:
@@ -259,8 +269,7 @@ async def setup_mypy(mypy_dir: Path, revision_like: RevisionLike, editable: bool
         install_cmd.append("tomli")
         await run(install_cmd)
 
-    mypy_exe_name = "mypy.exe" if sys.platform == "win32" else "mypy"
-    mypy_exe = venv_dir / BIN_DIR / mypy_exe_name
+    mypy_exe = venv_dir / BIN_DIR / MYPY_EXE_NAME
     if sys.platform == "darwin":
         # warm up mypy on macos to avoid the first run being slow
         await run([str(mypy_exe), "--version"])
@@ -897,7 +906,7 @@ def parse_options(argv: list[str]) -> Args:
     primer_group.add_argument("--debug", action="store_true", help="print commands as they run")
     primer_group.add_argument(
         "--base-dir",
-        default=Path(tempfile.gettempdir() if sys.platform == "win32" else "/tmp") / "mypy_primer",
+        default=Path(TEMP_DIR) / "mypy_primer",
         type=Path,
         help="dir to store repos and venvs",
     )
@@ -943,6 +952,10 @@ ARGS: Args
 
 
 def main() -> None:
+    if sys.platform == "win32":
+        # Enables ANSI escape characters in terminal without resorting to ctypes or colorama
+        os.system("")
+
     def inner() -> int | None:
         global ARGS
         ARGS = parse_options(sys.argv[1:])
