@@ -3,7 +3,6 @@ from __future__ import annotations
 import argparse
 import asyncio
 import difflib
-import hashlib
 import multiprocessing
 import os
 import re
@@ -54,11 +53,6 @@ def strip_colour_code(text: str) -> str:
 def debug_print(obj: Any) -> None:
     assert ARGS.debug
     print(obj, file=sys.stderr)
-
-
-def stable_hash(p: Project) -> int:
-    salt = b"try-a-different-shuffle-"
-    return int(hashlib.md5(salt + p.location.encode("utf-8")).hexdigest(), 16)
 
 
 _semaphore: asyncio.Semaphore | None = None
@@ -326,6 +320,8 @@ class Project:
     pip_cmd: str | None = None
     # if expected_success, there is a recent version of mypy which passes cleanly
     expected_success: bool = False
+    # cost is vaguely proportional to type check time
+    cost: int = 3
 
     @property
     def name(self) -> str:
@@ -564,26 +560,33 @@ class PrimerResult:
 # ==============================
 
 
-def select_projects() -> Iterator[Project]:
+def select_projects() -> list[Project]:
     if ARGS.local_project:
-        return iter([Project.from_location(ARGS.local_project)])
+        return [Project.from_location(ARGS.local_project)]
+
     project_iter: Iterator[Project] = iter(p for p in PROJECTS)
     if ARGS.project_selector:
-        projects = [
+        project_iter = iter(
             p for p in project_iter if re.search(ARGS.project_selector, p.location, flags=re.I)
-        ]
-        if projects == []:
-            raise Exception(f"No projects were selected by -k {ARGS.project_selector}")
-        project_iter = iter(projects)
+        )
     if ARGS.expected_success:
         project_iter = (p for p in project_iter if p.expected_success)
     if ARGS.project_date:
         project_iter = (replace(p, revision=ARGS.project_date) for p in project_iter)
-    if ARGS.num_shards:
-        project_iter = (
-            p for p in project_iter if stable_hash(p) % ARGS.num_shards == ARGS.shard_index
-        )
-    return project_iter
+
+    projects = list(project_iter)
+    if projects == []:
+        raise ValueError("No projects selected!")
+
+    if ARGS.num_shards and ARGS.shard_index:
+        shard_costs = [0] * ARGS.num_shards
+        shard_projects: list[list[Project]] = [[] for _ in range(ARGS.num_shards)]
+        for p in sorted(projects, key=lambda p: (p.cost, p.location), reverse=True):
+            min_shard = min(range(ARGS.num_shards), key=lambda i: shard_costs[i])
+            shard_costs[min_shard] += p.cost
+            shard_projects[min_shard].append(p)
+        return shard_projects[ARGS.shard_index]
+    return projects
 
 
 # ==============================
@@ -631,7 +634,7 @@ async def validate_expected_success() -> None:
 
 async def measure_project_runtimes() -> None:
     """Check mypy's runtime over each project."""
-    mypy_exe = await setup_mypy(ARGS.base_dir / "timer_mypy", RECENT_MYPYS[0])
+    mypy_exe = await setup_mypy(ARGS.base_dir / "timer_mypy", ARGS.new or RECENT_MYPYS[0])
 
     async def inner(project: Project) -> tuple[float, Project]:
         await project.setup()
@@ -661,7 +664,7 @@ async def bisect() -> None:
     repo_dir = ARGS.base_dir / "bisect_mypy" / "mypy"
     assert repo_dir.is_dir()
 
-    projects = list(select_projects())
+    projects = select_projects()
     await asyncio.wait([project.setup() for project in projects])
 
     async def run_wrapper(project: Project) -> tuple[str, MypyResult]:
@@ -712,7 +715,7 @@ async def bisect() -> None:
 async def coverage() -> None:
     mypy_exe = await setup_mypy(ARGS.base_dir / "new_mypy", ARGS.new)
 
-    projects = list(select_projects())
+    projects = select_projects()
     mypy_python = mypy_exe.parent / "python"
     assert mypy_python.exists()
 
@@ -992,6 +995,7 @@ PROJECTS = [
         mypy_cmd="{mypy} --config-file mypy_self_check.ini -p mypy -p mypyc",
         pip_cmd="{pip} install pytest types-typed-ast filelock",
         expected_success=True,
+        cost=20,
     ),
     Project(
         location="https://github.com/hauntsaninja/mypy_primer",
@@ -1023,6 +1027,7 @@ PROJECTS = [
             "types-setuptools pytest"
         ),
         expected_success=True,
+        cost=120,
     ),
     Project(
         location="https://github.com/pycqa/pylint",
@@ -1262,6 +1267,7 @@ PROJECTS = [
         location="https://github.com/graphql-python/graphql-core",
         mypy_cmd="{mypy} src tests",
         expected_success=True,
+        cost=70,
     ),
     Project(
         location="https://github.com/Legrandin/pycryptodome",
@@ -1349,6 +1355,7 @@ PROJECTS = [
         mypy_cmd="{mypy} --config python/mypy.ini python/pyspark",
         pip_cmd="{pip} install numpy",
         expected_success=True,
+        cost=20,
     ),
     Project(
         location="https://github.com/laowantong/paroxython",
@@ -1463,6 +1470,7 @@ PROJECTS = [
         location="https://github.com/sympy/sympy",
         mypy_cmd="{mypy} sympy",
         expected_success=True,
+        cost=70,
     ),
     Project(
         location="https://github.com/nion-software/nionutils",
@@ -1539,6 +1547,7 @@ PROJECTS = [
             "{pip} install attrs types-setuptools types-atomicwrites types-certifi types-croniter "
             "types-PyYAML types-requests types-python-slugify types-backports"
         ),
+        cost=70,
     ),
     Project(
         location="https://github.com/kornia/kornia",
@@ -1576,6 +1585,7 @@ PROJECTS = [
         location="https://github.com/arviz-devs/arviz",
         mypy_cmd="{mypy} .",
         pip_cmd="{pip} install pytest types-setuptools types-ujson numpy xarray",
+        cost=20,
     ),
     Project(
         location="https://github.com/urllib3/urllib3",
@@ -1596,6 +1606,7 @@ PROJECTS = [
         mypy_cmd="MYPYPATH=$MYPYPATH:mypy-stubs {mypy} cwltool/*.py tests/*.py",
         pip_cmd="{pip} install types-requests types-setuptools types-psutil "
         "types-mock cwl-utils schema-salad ruamel-yaml pytest pytest-httpserver",
+        cost=20,
     ),
     Project(
         location="https://github.com/FasterSpeeding/Tanjun",
@@ -1632,6 +1643,7 @@ PROJECTS = [
         location="https://github.com/Rapptz/discord.py",
         mypy_cmd="{mypy} discord",
         pip_cmd="{pip} install types-requests types-setuptools aiohttp",
+        cost=20,
     ),
     Project(
         location="https://github.com/canonical/cloud-init",
@@ -1641,6 +1653,7 @@ PROJECTS = [
             "types-jsonschema types-oauthlib "
             "types-pyyaml types-requests types-setuptools"
         ),
+        cost=20,
     ),
     Project(
         location="https://github.com/mongodb/mongo-python-driver",
@@ -1656,6 +1669,7 @@ PROJECTS = [
         location="https://github.com/MaterializeInc/materialize",
         mypy_cmd="MYPYPATH=$MYPYPATH:misc/python {mypy} ci misc/python",
         pip_cmd="{pip} install -r ci/builder/requirements.txt",
+        cost=30,
     ),
     Project(
         "https://github.com/canonical/operator",
@@ -1702,6 +1716,7 @@ PROJECTS = [
     Project(
         location="https://github.com/pandas-dev/pandas-stubs",
         mypy_cmd="{mypy} pandas-stubs tests",
+        cost=20,
     ),
     Project(
         location="https://github.com/enthought/comtypes",
@@ -1712,6 +1727,7 @@ PROJECTS = [
         location="https://github.com/mit-ll-responsible-ai/hydra-zen",
         mypy_cmd="{mypy} src",
         pip_cmd="{pip} install pydantic beartype hydra-core",
+        cost=30,
     ),
 ]
 assert len(PROJECTS) == len({p.name for p in PROJECTS})
