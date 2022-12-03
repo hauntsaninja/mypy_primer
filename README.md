@@ -112,7 +112,7 @@ mypy_primer --repo https://github.com/hauntsaninja/mypy.git --new my_risky_chang
 
 See the impact of your risky typeshed change with:
 ```
-mypy_primer --custom-typeshed-repo ~/dev/typeshed --new-typeshed my_risky_change --old-typeshed master --new v0.782 --old v0.782 -o concise
+mypy_primer --custom-typeshed-repo ~/dev/typeshed --new-typeshed my_risky_change --old-typeshed main --new v0.782 --old v0.782 -o concise
 ```
 
 Filter to projects you care about:
