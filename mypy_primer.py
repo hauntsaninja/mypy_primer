@@ -1611,7 +1611,7 @@ PROJECTS = [
     Project(
         location="https://github.com/FasterSpeeding/Tanjun",
         mypy_cmd="{mypy} tanjun",
-        pip_cmd="{pip} install hikari",
+        pip_cmd="{pip} install hikari alluka",
     ),
     Project(
         location="https://github.com/joerick/pyinstrument",
