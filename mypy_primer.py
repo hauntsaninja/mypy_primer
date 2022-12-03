@@ -1726,37 +1726,6 @@ PROJECTS = [
         mypy_cmd="{mypy} src",
         pip_cmd="{pip} install pydantic beartype hydra-core",
     ),
-    Project(
-        location="https://github.com/certbot/certbot",
-        mypy_cmd="{mypy} .",
-        pip_cmd="{pip} install .",
-    ),
-    Project(
-        location="https://github.com/ankitects/anki",
-        mypy_cmd="{mypy} .",
-        pip_cmd="{pip} install types-pywin32",
-    ),
-    Project(
-        location="https://github.com/guardicore/monkey",
-        mypy_cmd="{mypy} .",
-        pip_cmd="{pip} install types-pywin32",
-    ),
-    Project(
-        location="https://github.com/twisted/twisted",
-        mypy_cmd="{mypy} .",
-        pip_cmd="{pip} install types-pywin32",
-    ),
-    Project(
-        location="https://github.com/Flexget/Flexget",
-        mypy_cmd="{mypy} .",
-        pip_cmd="{pip} install types-pywin32",
-    ),
-    Project(
-        location="https://github.com/mhammond/pywin32",
-        mypy_cmd="{mypy} com/win32com com/win32comext win32/Lib isapi --python-version=3.7"
-        " --explicit-package-bases",
-        pip_cmd="{pip} install pyopengl Pyro4 types-pywin32",
-    ),
 ]
 assert len(PROJECTS) == len({p.name for p in PROJECTS})
 

@@ -107,7 +107,7 @@ mypy_primer -o diff
 
 See the impact of your risky change with:
 ```
-mypy_primer --repo https://github.com/hauntsaninja/mypy.git --new my_risky_change --old main
+mypy_primer --repo https://github.com/hauntsaninja/mypy.git --new my_risky_change --old master
 ```
 
 See the impact of your risky typeshed change with:
