@@ -403,6 +403,8 @@ class Project:
             cwd=ARGS.projects_dir / self.name,
             env=env,
         )
+        if ARGS.debug:
+            debug_print(f"{Style.BLUE}{mypy} on {self.name} took {runtime:.2f}s{Style.RESET}")
 
         output = proc.stderr + proc.stdout
         if typeshed_dir is not None:
