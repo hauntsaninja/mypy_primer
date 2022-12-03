@@ -578,7 +578,7 @@ def select_projects() -> list[Project]:
     if projects == []:
         raise ValueError("No projects selected!")
 
-    if ARGS.num_shards:
+    if ARGS.num_shards and ARGS.shard_index:
         shard_costs = [0] * ARGS.num_shards
         shard_projects: list[list[Project]] = [[] for _ in range(ARGS.num_shards)]
         for p in sorted(projects, key=lambda p: (p.cost, p.location), reverse=True):
