@@ -3,7 +3,6 @@ from __future__ import annotations
 import argparse
 import asyncio
 import difflib
-import hashlib
 import multiprocessing
 import os
 import re
@@ -577,7 +576,7 @@ def select_projects() -> list[Project]:
 
     projects = list(project_iter)
     if projects == []:
-        raise ValueError(f"No projects selected!")
+        raise ValueError("No projects selected!")
 
     if ARGS.num_shards:
         shard_costs = [0] * ARGS.num_shards
