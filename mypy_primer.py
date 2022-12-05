@@ -1499,6 +1499,18 @@ PROJECTS = [
         pip_cmd="{pip} install types-pyflakes",
         expected_success=True,
     ),
+    Project(
+        location="https://github.com/JohannesBuchner/imagehash",
+        mypy_cmd="{mypy} imagehash",
+        pip_cmd="{pip} install -r requirements-conda.txt types-Pillow",
+        expected_success=True,
+    ),
+    Project(
+        location="https://github.com/Kalmat/PyWinCtl",
+        mypy_cmd="{mypy} src/pywinctl",
+        pip_cmd="{pip} install -r docs/requirements.txt",
+        expected_success=True,
+    ),
     *(
         [
             Project(
@@ -1744,6 +1756,19 @@ PROJECTS = [
         mypy_cmd="{mypy} src",
         pip_cmd="{pip} install pydantic beartype hydra-core",
         cost=30,
+    ),
+    Project(
+        location="https://github.com/Avasam/Auto-Split",
+        mypy_cmd="{mypy} src",
+        pip_cmd="{pip} install -r scripts/requirements.txt types-d3dshot types-keyboard"
+        " types-Pillow types-psutil types-PyAutoGUI types-pyinstaller types-pywin32 types-requests"
+        " types-toml",
+    ),
+    Project(
+        location="https://github.com/Avasam/speedrun.com_global_scoreboard_webapp",
+        mypy_cmd="{mypy} backend",
+        pip_cmd="{pip} install -r scripts/requirements.txt types-Flask types-Flask-SQLAlchemy"
+        " types-httplib2 types-requests",
     ),
 ]
 assert len(PROJECTS) == len({p.name for p in PROJECTS})
