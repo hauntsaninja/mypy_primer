@@ -361,11 +361,14 @@ class Project:
         if self.pip_cmd:
             assert "{pip}" in self.pip_cmd
             venv.create(self.venv_dir, with_pip=True, clear=True)
-            await run(
-                self.pip_cmd.format(pip=str(self.venv_dir / BIN_DIR / "pip")),
-                shell=True,
-                cwd=repo_dir,
-            )
+            try:
+                await run(
+                    self.pip_cmd.format(pip=str(self.venv_dir / BIN_DIR / "pip")),
+                    shell=True,
+                    cwd=repo_dir,
+                )
+            except subprocess.CalledProcessError as e:
+                raise RuntimeError(f"pip install failed for {self.location}") from e
 
     def get_mypy_cmd(self, mypy: str | Path, additional_flags: Sequence[str] = ()) -> str:
         mypy_cmd = self.mypy_cmd
@@ -395,14 +398,17 @@ class Project:
                 env["MYPYPATH"] = add_to_mypypath
 
         mypy_cmd = self.get_mypy_cmd(mypy, additional_flags)
-        proc, runtime = await run(
-            mypy_cmd,
-            shell=True,
-            output=True,
-            check=False,
-            cwd=ARGS.projects_dir / self.name,
-            env=env,
-        )
+        try:
+            proc, runtime = await run(
+                mypy_cmd,
+                shell=True,
+                output=True,
+                check=False,
+                cwd=ARGS.projects_dir / self.name,
+                env=env,
+            )
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(f"mypy failed for {self.location}") from e
         if ARGS.debug:
             debug_print(f"{Style.BLUE}{mypy} on {self.name} took {runtime:.2f}s{Style.RESET}")
 
