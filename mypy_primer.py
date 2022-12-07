@@ -1674,7 +1674,7 @@ PROJECTS = [
     Project(
         location="https://github.com/mongodb/mongo-python-driver",
         mypy_cmd="{mypy} bson gridfs tools pymongo",
-        pip_cmd="{pip} install types-requests types-pyOpenSSL cryptography",
+        pip_cmd="{pip} install types-requests types-pyOpenSSL cryptography certifi",
     ),
     Project(
         location="https://github.com/artigraph/artigraph",
@@ -1702,12 +1702,13 @@ PROJECTS = [
         mypy_cmd="{mypy} .",
         pip_cmd=(
             "{pip} install types-six types-mock cryptography types-requests "
-            "types-PyYAML types-Markdown pytest"
+            "types-PyYAML types-Markdown pytest certifi"
         ),
     ),
     Project(
         "https://github.com/daveleroy/sublime_debugger",
         mypy_cmd="{mypy} modules --namespace-packages",
+        pip_cmd="{pip} install certifi",
     ),
     Project(
         "https://github.com/Finistere/antidote",
