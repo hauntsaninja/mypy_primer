@@ -1767,8 +1767,8 @@ PROJECTS = [
     Project(
         location="https://github.com/Avasam/speedrun.com_global_scoreboard_webapp",
         mypy_cmd="{mypy} backend",
-        pip_cmd="{pip} install -r scripts/requirements.txt types-Flask types-Flask-SQLAlchemy"
-        " types-httplib2 types-requests",
+        pip_cmd="{pip} install -r scripts/requirements.txt"
+        " types-Flask-SQLAlchemy types-httplib2 types-requests",
     ),
 ]
 assert len(PROJECTS) == len({p.name for p in PROJECTS})
