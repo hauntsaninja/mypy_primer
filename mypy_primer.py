@@ -366,8 +366,13 @@ class Project:
                     self.pip_cmd.format(pip=str(self.venv_dir / BIN_DIR / "pip")),
                     shell=True,
                     cwd=repo_dir,
+                    output=True,
                 )
             except subprocess.CalledProcessError as e:
+                if e.output:
+                    print(e.output)
+                if e.stderr:
+                    print(e.stderr)
                 raise RuntimeError(f"pip install failed for {self.location}") from e
 
     def get_mypy_cmd(self, mypy: str | Path, additional_flags: Sequence[str] = ()) -> str:
@@ -398,17 +403,14 @@ class Project:
                 env["MYPYPATH"] = add_to_mypypath
 
         mypy_cmd = self.get_mypy_cmd(mypy, additional_flags)
-        try:
-            proc, runtime = await run(
-                mypy_cmd,
-                shell=True,
-                output=True,
-                check=False,
-                cwd=ARGS.projects_dir / self.name,
-                env=env,
-            )
-        except subprocess.CalledProcessError as e:
-            raise RuntimeError(f"mypy failed for {self.location}") from e
+        proc, runtime = await run(
+            mypy_cmd,
+            shell=True,
+            output=True,
+            check=False,
+            cwd=ARGS.projects_dir / self.name,
+            env=env,
+        )
         if ARGS.debug:
             debug_print(f"{Style.BLUE}{mypy} on {self.name} took {runtime:.2f}s{Style.RESET}")
 
