@@ -361,11 +361,19 @@ class Project:
         if self.pip_cmd:
             assert "{pip}" in self.pip_cmd
             venv.create(self.venv_dir, with_pip=True, clear=True)
-            await run(
-                self.pip_cmd.format(pip=str(self.venv_dir / BIN_DIR / "pip")),
-                shell=True,
-                cwd=repo_dir,
-            )
+            try:
+                await run(
+                    self.pip_cmd.format(pip=str(self.venv_dir / BIN_DIR / "pip")),
+                    shell=True,
+                    cwd=repo_dir,
+                    output=True,
+                )
+            except subprocess.CalledProcessError as e:
+                if e.output:
+                    print(e.output)
+                if e.stderr:
+                    print(e.stderr)
+                raise RuntimeError(f"pip install failed for {self.location}") from e
 
     def get_mypy_cmd(self, mypy: str | Path, additional_flags: Sequence[str] = ()) -> str:
         mypy_cmd = self.mypy_cmd
