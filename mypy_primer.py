@@ -1507,6 +1507,15 @@ PROJECTS = [
         pip_cmd="{pip} install types-pyflakes",
         expected_success=True,
     ),
+    Project(
+        location="https://github.com/internetarchive/openlibrary",
+        mypy_cmd="{mypy} openlibrary",
+        pip_cmd=(
+            "{pip} install types-PyYAML types-python-dateutil types-requests "
+            "types-simplejson types-Deprecated"
+        ),
+        expected_success=True,
+    ),
     *(
         [
             Project(
