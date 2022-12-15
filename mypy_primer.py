@@ -1785,7 +1785,7 @@ PROJECTS = [
     Project(
         location="https://github.com/Avasam/speedrun.com_global_scoreboard_webapp",
         mypy_cmd="{mypy} backend",
-        pip_cmd="{pip} install Flask PyJWT requests-cache sqlalchemy"
+        pip_cmd="{pip} install Flask PyJWT requests-cache"
         " types-Flask-SQLAlchemy types-httplib2 types-requests",
     ),
 ]
