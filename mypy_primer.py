@@ -361,11 +361,19 @@ class Project:
         if self.pip_cmd:
             assert "{pip}" in self.pip_cmd
             venv.create(self.venv_dir, with_pip=True, clear=True)
-            await run(
-                self.pip_cmd.format(pip=str(self.venv_dir / BIN_DIR / "pip")),
-                shell=True,
-                cwd=repo_dir,
-            )
+            try:
+                await run(
+                    self.pip_cmd.format(pip=str(self.venv_dir / BIN_DIR / "pip")),
+                    shell=True,
+                    cwd=repo_dir,
+                    output=True,
+                )
+            except subprocess.CalledProcessError as e:
+                if e.output:
+                    print(e.output)
+                if e.stderr:
+                    print(e.stderr)
+                raise RuntimeError(f"pip install failed for {self.location}") from e
 
     def get_mypy_cmd(self, mypy: str | Path, additional_flags: Sequence[str] = ()) -> str:
         mypy_cmd = self.mypy_cmd
@@ -1500,6 +1508,15 @@ PROJECTS = [
         expected_success=True,
     ),
     Project(
+        location="https://github.com/internetarchive/openlibrary",
+        mypy_cmd="{mypy} openlibrary",
+        pip_cmd=(
+            "{pip} install types-PyYAML types-python-dateutil types-requests "
+            "types-simplejson types-Deprecated"
+        ),
+        expected_success=True,
+    ),
+    Project(
         location="https://github.com/JohannesBuchner/imagehash",
         mypy_cmd="{mypy} imagehash",
         pip_cmd="{pip} install -r requirements-conda.txt types-Pillow",
@@ -1686,7 +1703,7 @@ PROJECTS = [
     Project(
         location="https://github.com/mongodb/mongo-python-driver",
         mypy_cmd="{mypy} bson gridfs tools pymongo",
-        pip_cmd="{pip} install types-requests types-pyOpenSSL cryptography",
+        pip_cmd="{pip} install types-requests types-pyOpenSSL cryptography certifi",
     ),
     Project(
         location="https://github.com/artigraph/artigraph",
@@ -1714,12 +1731,13 @@ PROJECTS = [
         mypy_cmd="{mypy} .",
         pip_cmd=(
             "{pip} install types-six types-mock cryptography types-requests "
-            "types-PyYAML types-Markdown pytest"
+            "types-PyYAML types-Markdown pytest certifi"
         ),
     ),
     Project(
         "https://github.com/daveleroy/sublime_debugger",
         mypy_cmd="{mypy} modules --namespace-packages",
+        pip_cmd="{pip} install certifi",
     ),
     Project(
         "https://github.com/Finistere/antidote",
