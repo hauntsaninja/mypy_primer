@@ -1778,15 +1778,20 @@ PROJECTS = [
     Project(
         location="https://github.com/Avasam/Auto-Split",
         mypy_cmd="{mypy} src",
-        pip_cmd="{pip} install certifi ImageHash numpy packaging PyQt6"
-        " types-d3dshot types-keyboard types-Pillow types-psutil types-PyAutoGUI types-pyinstaller"
-        " types-pywin32 types-requests types-toml",
+        pip_cmd=(
+            "{pip} install certifi ImageHash numpy packaging PyQt6 "
+            "types-d3dshot types-keyboard types-Pillow types-psutil types-PyAutoGUI "
+            "types-pyinstaller types-pywin32 types-requests types-toml"
+        ),
     ),
     Project(
         location="https://github.com/Avasam/speedrun.com_global_scoreboard_webapp",
         mypy_cmd="{mypy} backend",
-        pip_cmd="{pip} install Flask PyJWT requests-cache"
-        " types-Flask-SQLAlchemy types-httplib2 types-requests",
+        pip_cmd=(
+            "{pip} install Flask PyJWT requests-cache types-Flask-SQLAlchemy "
+            "types-httplib2 types-requests"
+        ),
+        cost=30,
     ),
 ]
 assert len(PROJECTS) == len({p.name for p in PROJECTS})
