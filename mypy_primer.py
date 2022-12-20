@@ -1516,6 +1516,18 @@ PROJECTS = [
         ),
         expected_success=True,
     ),
+    Project(
+        location="https://github.com/JohannesBuchner/imagehash",
+        mypy_cmd="{mypy} imagehash",
+        pip_cmd="{pip} install numpy types-Pillow",
+        expected_success=True,
+    ),
+    Project(
+        location="https://github.com/Kalmat/PyWinCtl",
+        mypy_cmd="{mypy} src/pywinctl",
+        pip_cmd="{pip} install types-setuptools types-pywin32 types-python-xlib",
+        expected_success=True,
+    ),
     *(
         [
             Project(
@@ -1761,6 +1773,24 @@ PROJECTS = [
         location="https://github.com/mit-ll-responsible-ai/hydra-zen",
         mypy_cmd="{mypy} src",
         pip_cmd="{pip} install pydantic beartype hydra-core",
+        cost=30,
+    ),
+    Project(
+        location="https://github.com/Avasam/Auto-Split",
+        mypy_cmd="{mypy} src",
+        pip_cmd=(
+            "{pip} install certifi ImageHash numpy packaging PyQt6 "
+            "types-d3dshot types-keyboard types-Pillow types-psutil types-PyAutoGUI "
+            "types-pyinstaller types-pywin32 types-requests types-toml"
+        ),
+    ),
+    Project(
+        location="https://github.com/Avasam/speedrun.com_global_scoreboard_webapp",
+        mypy_cmd="{mypy} backend",
+        pip_cmd=(
+            "{pip} install Flask PyJWT requests-cache types-Flask-SQLAlchemy "
+            "types-httplib2 types-requests"
+        ),
         cost=30,
     ),
 ]
