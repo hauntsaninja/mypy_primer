@@ -1797,7 +1797,7 @@ PROJECTS = [
         location="https://github.com/pwndbg/pwndbg",
         mypy_cmd="{mypy} pwndbg",
         pip_cmd="{pip} install types-gdb"
-    )
+    ),
 ]
 assert len(PROJECTS) == len({p.name for p in PROJECTS})
 
