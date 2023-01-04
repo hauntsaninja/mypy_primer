@@ -1185,7 +1185,7 @@ PROJECTS = [
         mypy_cmd="{mypy} src",
         pip_cmd=(
             "{pip} install types-python-dateutil types-requests types-simplejson types-toml "
-            "types-croniter types-PyYAML types-python-slugify types-pytz"
+            "types-croniter types-PyYAML types-python-slugify types-pytz cryptography"
         ),
         expected_success=True,
     ),
@@ -1268,6 +1268,7 @@ PROJECTS = [
     Project(
         location="https://github.com/aiortc/aiortc",
         mypy_cmd="{mypy} src",
+        pip_cmd="{pip} install cryptography",
         expected_success=True,
     ),
     Project(
