@@ -404,7 +404,6 @@ class Project:
         if "MYPYPATH" in env:
             mypy_path = env["MYPYPATH"].split(os.pathsep) + mypy_path
         env["MYPYPATH"] = os.pathsep.join(mypy_path)
-        print(env["MYPYPATH"])
 
         mypy_cmd = self.get_mypy_cmd(mypy, additional_flags)
         proc, runtime = await run(
