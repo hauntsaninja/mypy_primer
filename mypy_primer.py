@@ -389,18 +389,22 @@ class Project:
         mypy_cmd = mypy_cmd.format(mypy=mypy)
         return mypy_cmd
 
-    async def run_mypy(self, mypy: str | Path, typeshed_dir: Path | None) -> MypyResult:
+    async def run_mypy(
+        self, mypy: str | Path, typeshed_dir: Path | None, mypy_path: list[str]
+    ) -> MypyResult:
         additional_flags = ARGS.additional_flags.copy()
         env = os.environ.copy()
         env["MYPY_FORCE_COLOR"] = "1"
 
+        mypy_path = mypy_path.copy()
         if typeshed_dir is not None:
             additional_flags.append(f"--custom-typeshed-dir={typeshed_dir}")
-            add_to_mypypath = os.pathsep.join(map(str, typeshed_dir.glob("stubs/*")))
-            if "MYPYPATH" in env:
-                env["MYPYPATH"] += os.pathsep + add_to_mypypath
-            else:
-                env["MYPYPATH"] = add_to_mypypath
+            mypy_path += list(map(str, typeshed_dir.glob("stubs/*")))
+
+        if "MYPYPATH" in env:
+            mypy_path = env["MYPYPATH"].split(os.pathsep) + mypy_path
+        env["MYPYPATH"] = os.pathsep.join(mypy_path)
+        print(env["MYPYPATH"])
 
         mypy_cmd = self.get_mypy_cmd(mypy, additional_flags)
         proc, runtime = await run(
@@ -428,11 +432,18 @@ class Project:
         )
 
     async def primer_result(
-        self, new_mypy: str, old_mypy: str, new_typeshed: Path | None, old_typeshed: Path | None
+        self,
+        new_mypy: str,
+        old_mypy: str,
+        new_typeshed: Path | None,
+        old_typeshed: Path | None,
+        new_mypypath: list[str],
+        old_mypypath: list[str],
     ) -> PrimerResult:
         await self.setup()
         new_result, old_result = await asyncio.gather(
-            self.run_mypy(new_mypy, new_typeshed), self.run_mypy(old_mypy, old_typeshed)
+            self.run_mypy(new_mypy, new_typeshed, new_mypypath),
+            self.run_mypy(old_mypy, old_typeshed, old_mypypath),
         )
         return PrimerResult(self, new_result, old_result)
 
@@ -629,7 +640,7 @@ async def validate_expected_success() -> None:
         await project.setup()
         success = None
         for mypy_exe in recent_mypy_exes:
-            mypy_result = await project.run_mypy(mypy_exe, typeshed_dir=None)
+            mypy_result = await project.run_mypy(mypy_exe, typeshed_dir=None, mypy_path=[])
             if ARGS.debug:
                 debug_print(format(Style.BLUE))
                 debug_print(mypy_result)
@@ -654,11 +665,11 @@ async def validate_expected_success() -> None:
 
 async def measure_project_runtimes() -> None:
     """Check mypy's runtime over each project."""
-    mypy_exe = await setup_mypy(ARGS.base_dir / "timer_mypy", ARGS.new or RECENT_MYPYS[0])
+    mypy_exe = await setup_mypy(ARGS.base_dir / "timer_mypy", ARGS.new_mypy or RECENT_MYPYS[0])
 
     async def inner(project: Project) -> tuple[float, Project]:
         await project.setup()
-        result = await project.run_mypy(mypy_exe, typeshed_dir=None)
+        result = await project.run_mypy(mypy_exe, typeshed_dir=None, mypy_path=[])
         return (result.runtime, project)
 
     results = sorted(
@@ -679,7 +690,7 @@ async def bisect() -> None:
     assert not ARGS.old_typeshed
 
     mypy_exe = await setup_mypy(
-        ARGS.base_dir / "bisect_mypy", revision_or_recent_tag_fn(ARGS.old), editable=True
+        ARGS.base_dir / "bisect_mypy", revision_or_recent_tag_fn(ARGS.old_mypy), editable=True
     )
     repo_dir = ARGS.base_dir / "bisect_mypy" / "mypy"
     assert repo_dir.is_dir()
@@ -688,7 +699,9 @@ async def bisect() -> None:
     await asyncio.wait([project.setup() for project in projects])
 
     async def run_wrapper(project: Project) -> tuple[str, MypyResult]:
-        return project.name, (await project.run_mypy(str(mypy_exe), typeshed_dir=None))
+        return project.name, (
+            await project.run_mypy(str(mypy_exe), typeshed_dir=None, mypy_path=[])
+        )
 
     results_fut = await asyncio.gather(*(run_wrapper(project) for project in projects))
     old_results: dict[str, MypyResult] = dict(results_fut)
@@ -699,7 +712,7 @@ async def bisect() -> None:
     # Note git bisect start will clean up old bisection state
     await run(["git", "bisect", "start"], cwd=repo_dir, output=True)
     await run(["git", "bisect", "good"], cwd=repo_dir, output=True)
-    new_revision = await get_revision_for_revision_or_date(ARGS.new or "origin/HEAD", repo_dir)
+    new_revision = await get_revision_for_revision_or_date(ARGS.new_mypy or "origin/HEAD", repo_dir)
     await run(["git", "bisect", "bad", new_revision], cwd=repo_dir, output=True)
 
     def are_results_good(results: dict[str, MypyResult]) -> bool:
@@ -733,7 +746,7 @@ async def bisect() -> None:
 
 
 async def coverage() -> None:
-    mypy_exe = await setup_mypy(ARGS.base_dir / "new_mypy", ARGS.new)
+    mypy_exe = await setup_mypy(ARGS.base_dir / "new_mypy", ARGS.new_mypy)
 
     projects = select_projects()
     mypy_python = mypy_exe.parent / "python"
@@ -761,14 +774,21 @@ async def coverage() -> None:
 async def primer() -> int:
     projects = select_projects()
     new_mypy, old_mypy = await setup_new_and_old_mypy(
-        new_mypy_revision=ARGS.new, old_mypy_revision=revision_or_recent_tag_fn(ARGS.old)
+        new_mypy_revision=ARGS.new_mypy, old_mypy_revision=revision_or_recent_tag_fn(ARGS.old_mypy)
     )
     new_typeshed_dir, old_typeshed_dir = await setup_new_and_old_typeshed(
         ARGS.new_typeshed, ARGS.old_typeshed
     )
 
     results = [
-        project.primer_result(str(new_mypy), str(old_mypy), new_typeshed_dir, old_typeshed_dir)
+        project.primer_result(
+            new_mypy=str(new_mypy),
+            old_mypy=str(old_mypy),
+            new_typeshed=new_typeshed_dir,
+            old_typeshed=old_typeshed_dir,
+            new_mypypath=ARGS.new_mypypath,
+            old_mypypath=ARGS.old_mypypath,
+        )
         for project in projects
     ]
     retcode = 0
@@ -798,6 +818,7 @@ def parse_options(argv: list[str]) -> Args:
     mypy_group = parser.add_argument_group("mypy")
     mypy_group.add_argument(
         "--new",
+        dest="new_mypy",
         help=(
             "new mypy version, defaults to HEAD "
             "(pypi version, anything commit-ish, or isoformatted date)"
@@ -805,6 +826,7 @@ def parse_options(argv: list[str]) -> Args:
     )
     mypy_group.add_argument(
         "--old",
+        dest="old_mypy",
         help=(
             "old mypy version, defaults to latest tag "
             "(pypi version, anything commit-ish, or isoformatted date)"
@@ -824,6 +846,7 @@ def parse_options(argv: list[str]) -> Args:
         type=int,
         help="Compile mypy with the given mypyc optimisation level",
     )
+
     mypy_group.add_argument(
         "--custom-typeshed-repo",
         default="https://github.com/python/typeshed",
@@ -836,6 +859,19 @@ def parse_options(argv: list[str]) -> Args:
     mypy_group.add_argument(
         "--old-typeshed",
         help="old typeshed version, defaults to mypy's (anything commit-ish, or isoformatted date)",
+    )
+
+    mypy_group.add_argument(
+        "--new-mypypath",
+        help="mypypath to use for new mypy",
+        type=lambda s: s.split(os.pathsep),
+        default=[],
+    )
+    mypy_group.add_argument(
+        "--old-mypypath",
+        help="mypypath to use for old mypy",
+        type=lambda s: s.split(os.pathsep),
+        default=[],
     )
     mypy_group.add_argument(
         "--additional-flags",
@@ -934,31 +970,46 @@ def parse_options(argv: list[str]) -> Args:
 
 @dataclass
 class Args:
+    # mypy group
+    new_mypy: str | None
+    old_mypy: str | None
+    repo: str
+    mypyc_compile_level: int | None
+
+    custom_typeshed_repo: str
+    new_typeshed: str | None
+    old_typeshed: str | None
+
+    new_mypypath: list[str]
+    old_mypypath: list[str]
     additional_flags: list[str]
-    base_dir: Path
+
+    # project group
+    project_selector: str | None
+    local_project: str | None
+    expected_success: bool
+    project_date: str | None
+
+    shard_index: int | None
+    num_shards: int | None
+
+    # output group
+    output: str
+    old_success: bool
+
+    # modes group
+    coverage: bool
     bisect: bool
     bisect_output: str | None
-    clear: bool
-    concurrency: int
-    coverage: bool
-    custom_typeshed_repo: str
-    debug: bool
-    expected_success: bool
-    local_project: str | None
-    measure_project_runtimes: bool
-    mypyc_compile_level: int | None
-    new: str | None
-    new_typeshed: str | None
-    num_shards: int | None
-    old: str | None
-    old_success: bool
-    old_typeshed: str | None
-    output: str
-    project_date: str | None
-    project_selector: str | None
-    repo: str
-    shard_index: int | None
     validate_expected_success: bool
+    measure_project_runtimes: bool
+
+    # primer group
+    concurrency: int
+    base_dir: Path
+    debug: bool
+    clear: bool
+
     projects_dir: Path = field(init=False)
 
 
