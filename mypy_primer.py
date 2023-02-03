@@ -1849,6 +1849,17 @@ PROJECTS = [
         mypy_cmd="{mypy} pwndbg",
         pip_cmd="{pip} install types-gdb",
     ),
+    Project(
+        location="https://github.com/keithasaurus/koda-validate",
+        mypy_cmd="{mypy} koda_validate --check-untyped-defs --disallow-any-generics "
+                 "--disallow-incomplete-defs --disallow-subclassing-any "
+                 "--disallow-untyped-calls --disallow-untyped-decorators "
+                 "--disallow-untyped-defs --no-implicit-optional --no-implicit-reexport "
+                 "--strict-optional --strict-equality --warn-no-return "
+                 "--warn-redundant-casts --warn-return-any --warn-unused-configs "
+                 "--warn-unused-ignores --warn-unreachable",
+        pip_cmd="{pip} install koda"
+    )
 ]
 assert len(PROJECTS) == len({p.name for p in PROJECTS})
 
