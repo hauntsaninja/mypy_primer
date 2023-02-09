@@ -1640,7 +1640,8 @@ PROJECTS = [
         location="https://github.com/home-assistant/core",
         mypy_cmd="{mypy} homeassistant",
         pip_cmd=(
-            "{pip} install attrs types-setuptools types-atomicwrites types-certifi types-croniter "
+            "{pip} install attrs pydantic "
+            "types-setuptools types-atomicwrites types-certifi types-croniter "
             "types-PyYAML types-requests types-python-slugify types-backports"
         ),
         cost=70,
