@@ -1597,6 +1597,12 @@ PROJECTS = [
         pip_cmd="{pip} install types-setuptools types-pywin32 types-python-xlib",
         expected_success=True,
     ),
+    Project(
+        location="https://github.com/mesonbuild/meson",
+        mypy_cmd="./run_mypy.py --mypy {mypy}",
+        pip_cmd="{pip} install types-PyYAML",
+        expected_success=True,
+    ),
     *(
         [
             Project(
