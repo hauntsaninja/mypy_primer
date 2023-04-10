@@ -545,13 +545,13 @@ class PrimerResult:
         return "\n".join(output_lines)
 
     def header(self) -> str:
-        ret = f"\n{Style.BOLD}{self.project.name}{Style.RESET}\n"
+        ret = f"\n{Style.BOLD}{self.project.name}{Style.RESET} {self.old_result.runtime:.2f}s / {self.new_result.runtime:.2f}s\n"
         ret += self.project.location + "\n"
         return ret
 
     def format_concise(self) -> str:
         if self.diff:
-            return f"{self.project.name} ({self.project.location})\n{self.diff}"
+            return f"{self.project.name} {self.old_result.runtime:.2f}s / {self.new_result.runtime:.2f}s ({self.project.location})\n{self.diff}"
         return ""
 
     def format_diff_only(self) -> str:
