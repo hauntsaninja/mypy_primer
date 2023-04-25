@@ -558,7 +558,7 @@ class PrimerResult:
         else:
             speed = "slower"
 
-        has_runtime_diff = runtime_diff > 1 and runtime_ratio > 1.1
+        has_runtime_diff = runtime_diff > 5 and runtime_ratio > 1.05
         if not self.diff and not has_runtime_diff:
             return ""
 
