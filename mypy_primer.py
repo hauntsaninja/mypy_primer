@@ -550,9 +550,27 @@ class PrimerResult:
         return ret
 
     def format_concise(self) -> str:
+        runtime_diff = abs(self.new_result.runtime - self.old_result.runtime)
+        runtime_ratio = self.new_result.runtime / self.old_result.runtime
+        if runtime_ratio < 1:
+            speed = "faster"
+            runtime_ratio = 1 / runtime_ratio
+        else:
+            speed = "slower"
+
+        has_runtime_diff = runtime_diff > 1 and runtime_ratio > 1.1
+        if not self.diff and not has_runtime_diff:
+            return ""
+
+        ret = f"{self.project.name} ({self.project.location})"
+        if has_runtime_diff:
+            ret += (
+                f" got {runtime_ratio:.2f} {speed} "
+                f"({self.old_result.runtime:.1f}s -> {self.new_result.runtime:.1f}s)"
+            )
         if self.diff:
-            return f"{self.project.name} ({self.project.location})\n{self.diff}"
-        return ""
+            ret += "\n" + self.diff
+        return ret
 
     def format_diff_only(self) -> str:
         ret = self.header()
