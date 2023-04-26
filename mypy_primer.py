@@ -1874,6 +1874,11 @@ PROJECTS = [
         mypy_cmd="{mypy} pwndbg",
         pip_cmd="{pip} install types-gdb",
     ),
+    Project(
+        location="https://github.com/keithasaurus/koda-validate",
+        mypy_cmd="{mypy} koda_validate --strict",
+        pip_cmd="{pip} install koda",
+    ),
 ]
 assert len(PROJECTS) == len({p.name for p in PROJECTS})
 
