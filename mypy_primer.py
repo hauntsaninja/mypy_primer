@@ -565,7 +565,7 @@ class PrimerResult:
         ret = f"{self.project.name} ({self.project.location})"
         if has_runtime_diff:
             ret += (
-                f" got {runtime_ratio:.2f} {speed} "
+                f" got {runtime_ratio:.2f}x {speed} "
                 f"({self.old_result.runtime:.1f}s -> {self.new_result.runtime:.1f}s)"
             )
         if self.diff:
