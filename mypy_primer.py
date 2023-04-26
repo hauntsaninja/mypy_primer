@@ -1851,13 +1851,7 @@ PROJECTS = [
     ),
     Project(
         location="https://github.com/keithasaurus/koda-validate",
-        mypy_cmd="{mypy} koda_validate --check-untyped-defs --disallow-any-generics "
-        "--disallow-incomplete-defs --disallow-subclassing-any "
-        "--disallow-untyped-calls --disallow-untyped-decorators "
-        "--disallow-untyped-defs --no-implicit-optional --no-implicit-reexport "
-        "--strict-optional --strict-equality --warn-no-return "
-        "--warn-redundant-casts --warn-return-any --warn-unused-configs "
-        "--warn-unused-ignores --warn-unreachable",
+        mypy_cmd="{mypy} koda_validate --strict",
         pip_cmd="{pip} install koda",
     ),
 ]
