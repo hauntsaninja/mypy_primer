@@ -385,7 +385,9 @@ class Project:
             mypy_cmd += " " + " ".join(additional_flags)
         if ARGS.output == "concise":
             mypy_cmd += "  --no-pretty --no-error-summary"
-        mypy_cmd += " --no-incremental --cache-dir=/dev/null --show-traceback --soft-error-limit=-1"
+        mypy_cmd += (
+            f" --no-incremental --cache-dir={os.devnull} --show-traceback --soft-error-limit=-1"
+        )
         mypy_cmd = mypy_cmd.format(mypy=mypy)
         return mypy_cmd
 
