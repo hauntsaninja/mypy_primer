@@ -7,6 +7,7 @@ import re
 import shlex
 import shutil
 import subprocess
+import sys
 import textwrap
 import venv
 from collections import defaultdict
@@ -146,6 +147,13 @@ class Project:
         if typeshed_dir is not None:
             pyright_cmd += f" --typeshed-path {shlex.quote(str(typeshed_dir))}"
 
+        if self.pip_cmd:
+            activate = (
+                f"source {shlex.quote(str(self.venv_dir / BIN_DIR / 'activate'))}"
+                if sys.platform != "win32"
+                else str(self.venv_dir / BIN_DIR / "activate.bat")
+            )
+            pyright_cmd = f"{activate}; {pyright_cmd}"
         proc, runtime = await run(
             pyright_cmd,
             shell=True,
