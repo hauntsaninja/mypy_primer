@@ -137,7 +137,7 @@ async def validate_expected_success() -> None:
         await project.setup()
         success = None
         for mypy_exe in recent_mypy_exes:
-            mypy_result = await project.run_mypy(mypy_exe, typeshed_dir=None, mypy_path=[])
+            mypy_result = await project.run_mypy(mypy_exe, typeshed_dir=None)
             if ARGS.debug:
                 debug_print(format(Style.BLUE))
                 debug_print(mypy_result)
@@ -172,7 +172,7 @@ async def measure_project_runtimes() -> None:
 
     async def inner(project: Project) -> tuple[float, Project]:
         await project.setup()
-        result = await project.run_mypy(mypy_exe, typeshed_dir=None, mypy_path=[])
+        result = await project.run_mypy(mypy_exe, typeshed_dir=None)
         return (result.runtime, project)
 
     results = sorted(
@@ -208,9 +208,7 @@ async def bisect() -> None:
     await asyncio.wait([project.setup() for project in projects])
 
     async def run_wrapper(project: Project) -> tuple[str, TypeCheckResult]:
-        return project.name, (
-            await project.run_mypy(str(mypy_exe), typeshed_dir=None, mypy_path=[])
-        )
+        return project.name, (await project.run_mypy(str(mypy_exe), typeshed_dir=None))
 
     results_fut = await asyncio.gather(*(run_wrapper(project) for project in projects))
     old_results: dict[str, TypeCheckResult] = dict(results_fut)
@@ -303,8 +301,6 @@ async def primer() -> int:
             old_mypy=str(old_mypy),
             new_typeshed=new_typeshed_dir,
             old_typeshed=old_typeshed_dir,
-            new_mypypath=ARGS.new_mypypath,
-            old_mypypath=ARGS.old_mypypath,
         )
         for project in projects
     ]

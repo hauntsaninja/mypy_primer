@@ -1,7 +1,6 @@
 import argparse
 import contextvars
 import multiprocessing
-import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -20,8 +19,6 @@ class _Args:
     new_typeshed: str | None
     old_typeshed: str | None
 
-    new_mypypath: list[str]
-    old_mypypath: list[str]
     additional_flags: list[str]
 
     # project group
@@ -102,18 +99,6 @@ def parse_options(argv: list[str]) -> _Args:
         help="old typeshed version, defaults to vendored (commit-ish, or isoformatted date)",
     )
 
-    type_checker_group.add_argument(
-        "--new-mypypath",
-        help="mypypath to use for new mypy",
-        type=lambda s: s.split(os.pathsep),
-        default=[],
-    )
-    type_checker_group.add_argument(
-        "--old-mypypath",
-        help="mypypath to use for old mypy",
-        type=lambda s: s.split(os.pathsep),
-        default=[],
-    )
     type_checker_group.add_argument(
         "--additional-flags",
         help="additional flags to pass to mypy",

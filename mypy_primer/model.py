@@ -89,14 +89,12 @@ class Project:
         mypy_cmd = mypy_cmd.format(mypy=mypy)
         return mypy_cmd
 
-    async def run_mypy(
-        self, mypy: str | Path, typeshed_dir: Path | None, mypy_path: list[str]
-    ) -> TypeCheckResult:
+    async def run_mypy(self, mypy: str | Path, typeshed_dir: Path | None) -> TypeCheckResult:
         additional_flags = ctx.get().additional_flags.copy()
         env = os.environ.copy()
         env["MYPY_FORCE_COLOR"] = "1"
 
-        mypy_path = mypy_path.copy()
+        mypy_path = []  # TODO: this used to be exposed, could be useful to expose it again
         if typeshed_dir is not None:
             additional_flags.append(f"--custom-typeshed-dir={typeshed_dir}")
             mypy_path += list(map(str, typeshed_dir.glob("stubs/*")))
@@ -148,13 +146,11 @@ class Project:
         old_mypy: str,
         new_typeshed: Path | None,
         old_typeshed: Path | None,
-        new_mypypath: list[str],
-        old_mypypath: list[str],
     ) -> PrimerResult:
         await self.setup()
         new_result, old_result = await asyncio.gather(
-            self.run_mypy(new_mypy, new_typeshed, new_mypypath),
-            self.run_mypy(old_mypy, old_typeshed, old_mypypath),
+            self.run_mypy(new_mypy, new_typeshed),
+            self.run_mypy(old_mypy, old_typeshed),
         )
         return PrimerResult(self, new_result, old_result)
 
