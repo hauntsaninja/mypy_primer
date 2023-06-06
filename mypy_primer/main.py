@@ -4,92 +4,24 @@ import asyncio
 import os
 import re
 import shutil
-import subprocess
 import sys
 import traceback
-import venv
 from dataclasses import replace
 from pathlib import Path
 from typing import Awaitable, Iterator, TypeVar
 
 from mypy_primer.git_utils import (
     RevisionLike,
-    ensure_repo_at_revision,
     get_revision_for_revision_or_date,
     revision_or_recent_tag_fn,
 )
 from mypy_primer.globals import ctx, parse_options_and_set_ctx
 from mypy_primer.model import Project, TypeCheckResult
 from mypy_primer.projects import get_projects
-from mypy_primer.utils import (
-    BIN_DIR,
-    MYPY_EXE_NAME,
-    Style,
-    debug_print,
-    line_count,
-    run,
-    strip_colour_code,
-)
+from mypy_primer.type_checker import setup_mypy, setup_typeshed
+from mypy_primer.utils import Style, debug_print, line_count, run, strip_colour_code
 
 T = TypeVar("T")
-
-# ==============================
-# mypy utils
-# ==============================
-
-
-async def setup_mypy(
-    mypy_dir: Path,
-    revision_like: RevisionLike,
-    *,
-    repo: str | None,
-    mypyc_compile_level: int | None,
-    editable: bool = False,
-) -> Path:
-    mypy_dir.mkdir(exist_ok=True)
-    venv_dir = mypy_dir / "venv"
-    venv.create(venv_dir, with_pip=True, clear=True)
-    pip_exe = str(venv_dir / BIN_DIR / "pip")
-
-    if mypyc_compile_level is not None:
-        editable = True
-
-    install_from_repo = True
-    if isinstance(revision_like, str) and not editable and repo is None:
-        # optimistically attempt to install the revision of mypy we want from pypi
-        try:
-            await run([pip_exe, "install", f"mypy=={revision_like}"])
-            install_from_repo = False
-        except subprocess.CalledProcessError:
-            install_from_repo = True
-
-    if install_from_repo:
-        if repo is None:
-            repo = "https://github.com/python/mypy"
-        repo_dir = await ensure_repo_at_revision(repo, mypy_dir, revision_like)
-        if mypyc_compile_level is not None:
-            env = os.environ.copy()
-            env["MYPYC_OPT_LEVEL"] = str(mypyc_compile_level)
-            python_exe = str(venv_dir / BIN_DIR / "python")
-            await run([pip_exe, "install", "typing_extensions", "mypy_extensions"])
-            await run(
-                [python_exe, "setup.py", "--use-mypyc", "build_ext", "--inplace"],
-                cwd=repo_dir,
-                env=env,
-            )
-        install_cmd = [pip_exe, "install"]
-        if editable:
-            install_cmd.append("--editable")
-        install_cmd.append(str(repo_dir))
-        install_cmd.append("tomli")
-        await run(install_cmd)
-
-    mypy_exe = venv_dir / BIN_DIR / MYPY_EXE_NAME
-    if sys.platform == "darwin":
-        # warm up mypy on macos to avoid the first run being slow
-        await run([str(mypy_exe), "--version"])
-    assert mypy_exe.exists()
-    return mypy_exe
 
 
 async def setup_new_and_old_mypy(
@@ -129,20 +61,16 @@ async def setup_new_and_old_typeshed(
     new_typeshed_dir = None
     old_typeshed_dir = None
     if ctx.get().new_typeshed:
-        parent_dir = ctx.get().base_dir / "new_typeshed"
-        if parent_dir.exists():
-            shutil.rmtree(parent_dir)
-        parent_dir.mkdir(exist_ok=True)
-        new_typeshed_dir = await ensure_repo_at_revision(
-            typeshed_repo, ctx.get().base_dir / "new_typeshed", new_typeshed_revision
+        new_typeshed_dir = await setup_typeshed(
+            ctx.get().base_dir / "new_typeshed",
+            repo=typeshed_repo,
+            revision_like=new_typeshed_revision,
         )
     if ctx.get().old_typeshed:
-        parent_dir = ctx.get().base_dir / "old_typeshed"
-        if parent_dir.exists():
-            shutil.rmtree(parent_dir)
-        parent_dir.mkdir(exist_ok=True)
-        old_typeshed_dir = await ensure_repo_at_revision(
-            typeshed_repo, parent_dir, old_typeshed_revision
+        old_typeshed_dir = await setup_typeshed(
+            ctx.get().base_dir / "old_typeshed",
+            repo=typeshed_repo,
+            revision_like=old_typeshed_revision,
         )
     return new_typeshed_dir, old_typeshed_dir
 
