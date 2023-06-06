@@ -13,7 +13,7 @@ class _Args:
     # mypy group
     new: str | None
     old: str | None
-    repo: str
+    repo: str | None
     mypyc_compile_level: int | None
 
     custom_typeshed_repo: str
@@ -76,7 +76,6 @@ def parse_options(argv: list[str]) -> _Args:
     )
     type_checker_group.add_argument(
         "--repo",
-        default="https://github.com/python/mypy",
         help=(
             "type checker repo to use (passed to git clone. if unspecified, we first try pypi, "
             "then fall back to github)"

@@ -42,7 +42,7 @@ async def setup_mypy(
     mypy_dir: Path,
     revision_like: RevisionLike,
     *,
-    repo: str,
+    repo: str | None,
     mypyc_compile_level: int | None,
     editable: bool = False,
 ) -> Path:
@@ -55,7 +55,7 @@ async def setup_mypy(
         editable = True
 
     install_from_repo = True
-    if isinstance(revision_like, str) and not editable and repo == "https://github.com/python/mypy":
+    if isinstance(revision_like, str) and not editable and repo is None:
         # optimistically attempt to install the revision of mypy we want from pypi
         try:
             await run([pip_exe, "install", f"mypy=={revision_like}"])
@@ -64,6 +64,8 @@ async def setup_mypy(
             install_from_repo = True
 
     if install_from_repo:
+        if repo is None:
+            repo = "https://github.com/python/mypy"
         repo_dir = await ensure_repo_at_revision(repo, mypy_dir, revision_like)
         if mypyc_compile_level is not None:
             env = os.environ.copy()
