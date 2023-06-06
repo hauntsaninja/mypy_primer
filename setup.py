@@ -20,6 +20,6 @@ setup(
         "Topic :: Software Development",
     ],
     py_modules=["mypy_primer"],
-    entry_points={"console_scripts": ["mypy_primer=mypy_primer:main"]},
+    entry_points={"console_scripts": ["mypy_primer=mypy_primer.main:main"]},
     python_requires=">=3.7",
 )
