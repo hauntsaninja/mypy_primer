@@ -18,7 +18,7 @@ from mypy_primer.git_utils import (
 from mypy_primer.globals import ctx, parse_options_and_set_ctx
 from mypy_primer.model import Project, TypeCheckResult
 from mypy_primer.projects import get_projects
-from mypy_primer.type_checker import setup_mypy, setup_typeshed
+from mypy_primer.type_checker import setup_mypy, setup_pyright, setup_typeshed
 from mypy_primer.utils import Style, debug_print, line_count, run, strip_colour_code
 
 T = TypeVar("T")
@@ -51,6 +51,33 @@ async def setup_new_and_old_mypy(
         debug_print(f"{Style.BLUE}old mypy version: {old_version.stdout.strip()}{Style.RESET}")
 
     return new_mypy, old_mypy
+
+
+async def setup_new_and_old_pyright(
+    new_pyright_revision: RevisionLike, old_pyright_revision: RevisionLike
+) -> tuple[Path, Path]:
+    new_pyright, old_pyright = await asyncio.gather(
+        setup_pyright(
+            ctx.get().base_dir / "new_pyright",
+            new_pyright_revision,
+            repo=ctx.get().repo,
+        ),
+        setup_pyright(
+            ctx.get().base_dir / "old_pyright",
+            old_pyright_revision,
+            repo=ctx.get().repo,
+        ),
+    )
+
+    if ctx.get().debug:
+        (new_version, _), (old_version, _) = await asyncio.gather(
+            run([str(new_pyright), "--version"], output=True),
+            run([str(old_pyright), "--version"], output=True),
+        )
+        debug_print(f"{Style.BLUE}new pyright version: {new_version.stdout.strip()}{Style.RESET}")
+        debug_print(f"{Style.BLUE}old pyright version: {old_version.stdout.strip()}{Style.RESET}")
+
+    return new_pyright, old_pyright
 
 
 async def setup_new_and_old_typeshed(
@@ -121,6 +148,9 @@ RECENT_MYPYS = ["0.991", "0.982", "0.971", "0.961"]
 async def validate_expected_success() -> None:
     """Check correctness of hardcoded Project.expected_success"""
     ARGS = ctx.get()
+
+    assert ARGS.type_checker == "mypy"
+
     recent_mypy_exes = await asyncio.gather(
         *[
             setup_mypy(
@@ -163,6 +193,8 @@ async def validate_expected_success() -> None:
 async def measure_project_runtimes() -> None:
     """Check mypy's runtime over each project."""
     ARGS = ctx.get()
+    assert ARGS.type_checker == "mypy"
+
     mypy_exe = await setup_mypy(
         ARGS.base_dir / "timer_mypy",
         ARGS.new or RECENT_MYPYS[0],
@@ -191,6 +223,7 @@ async def measure_project_runtimes() -> None:
 async def bisect() -> None:
     ARGS = ctx.get()
 
+    assert ARGS.type_checker == "mypy"
     assert not ARGS.new_typeshed
     assert not ARGS.old_typeshed
 
@@ -254,6 +287,7 @@ async def bisect() -> None:
 
 async def coverage() -> None:
     ARGS = ctx.get()
+    assert ARGS.type_checker == "mypy"
     mypy_exe = await setup_mypy(
         ARGS.base_dir / "new_mypy",
         revision_like=ARGS.new,
@@ -287,18 +321,28 @@ async def coverage() -> None:
 async def primer() -> int:
     projects = select_projects()
     ARGS = ctx.get()
-    new_mypy, old_mypy = await setup_new_and_old_mypy(
-        new_mypy_revision=ARGS.new,
-        old_mypy_revision=revision_or_recent_tag_fn(ARGS.old),
-    )
+
+    if ARGS.type_checker == "mypy":
+        new_type_checker, old_type_checker = await setup_new_and_old_mypy(
+            new_mypy_revision=ARGS.new,
+            old_mypy_revision=revision_or_recent_tag_fn(ARGS.old),
+        )
+    elif ARGS.type_checker == "pyright":
+        new_type_checker, old_type_checker = await setup_new_and_old_pyright(
+            new_pyright_revision=ARGS.new,
+            old_pyright_revision=revision_or_recent_tag_fn(ARGS.old),
+        )
+    else:
+        raise ValueError(f"Unknown type checker {ARGS.type_checker}")
+
     new_typeshed_dir, old_typeshed_dir = await setup_new_and_old_typeshed(
         ARGS.new_typeshed, ARGS.old_typeshed
     )
 
     results = [
         project.primer_result(
-            new_mypy=str(new_mypy),
-            old_mypy=str(old_mypy),
+            new_type_checker=str(new_type_checker),
+            old_type_checker=str(old_type_checker),
             new_typeshed=new_typeshed_dir,
             old_typeshed=old_typeshed_dir,
         )

@@ -65,6 +65,25 @@ async def setup_mypy(
     return mypy_exe
 
 
+async def setup_pyright(
+    pyright_dir: Path,
+    revision_like: RevisionLike,
+    *,
+    repo: str | None,
+) -> Path:
+    pyright_dir.mkdir(exist_ok=True)
+
+    if repo is None:
+        repo = "https://github.com/microsoft/pyright"
+    repo_dir = await ensure_repo_at_revision(repo, pyright_dir, revision_like)
+
+    # Can you tell I don't really work with JS? This is hopefully enough npms to get things working
+    await run(["npm", "install"], cwd=repo_dir)
+    await run(["npm", "install"], cwd=repo_dir / "packages" / "pyright")
+    await run(["npm", "run", "build"], cwd=repo_dir / "packages" / "pyright")
+    return repo_dir / "packages" / "pyright" / "index.js"
+
+
 async def setup_typeshed(parent_dir: Path, *, repo: str, revision_like: RevisionLike) -> Path:
     if parent_dir.exists():
         shutil.rmtree(parent_dir)

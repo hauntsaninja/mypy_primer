@@ -9,10 +9,11 @@ import mypy_primer.utils
 
 @dataclass
 class _Args:
-    # mypy group
+    # type checker group
     new: str | None
     old: str | None
     repo: str | None
+    type_checker: str
     mypyc_compile_level: int | None
 
     custom_typeshed_repo: str
@@ -70,6 +71,12 @@ def parse_options(argv: list[str]) -> _Args:
             "old type checker version, defaults to latest tag "
             "(pypi version, anything commit-ish, or isoformatted date)"
         ),
+    )
+    type_checker_group.add_argument(
+        "--type-checker",
+        default="mypy",
+        choices=["mypy", "pyright"],
+        help="type checker to use",
     )
     type_checker_group.add_argument(
         "--repo",
