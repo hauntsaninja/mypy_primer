@@ -11,8 +11,8 @@ import mypy_primer.utils
 @dataclass
 class _Args:
     # mypy group
-    new_mypy: str | None
-    old_mypy: str | None
+    new: str | None
+    old: str | None
     repo: str
     mypyc_compile_level: int | None
 
@@ -62,7 +62,6 @@ def parse_options(argv: list[str]) -> _Args:
     mypy_group = parser.add_argument_group("mypy")
     mypy_group.add_argument(
         "--new",
-        dest="new_mypy",
         help=(
             "new mypy version, defaults to HEAD "
             "(pypi version, anything commit-ish, or isoformatted date)"
@@ -70,7 +69,6 @@ def parse_options(argv: list[str]) -> _Args:
     )
     mypy_group.add_argument(
         "--old",
-        dest="old_mypy",
         help=(
             "old mypy version, defaults to latest tag "
             "(pypi version, anything commit-ish, or isoformatted date)"

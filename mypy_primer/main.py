@@ -235,7 +235,7 @@ async def measure_project_runtimes() -> None:
     ARGS = ctx.get()
     mypy_exe = await setup_mypy(
         ARGS.base_dir / "timer_mypy",
-        ARGS.new_mypy or RECENT_MYPYS[0],
+        ARGS.new or RECENT_MYPYS[0],
         repo=ARGS.repo,
         mypyc_compile_level=ARGS.mypyc_compile_level,
     )
@@ -266,7 +266,7 @@ async def bisect() -> None:
 
     mypy_exe = await setup_mypy(
         ARGS.base_dir / "bisect_mypy",
-        revision_or_recent_tag_fn(ARGS.old_mypy),
+        revision_or_recent_tag_fn(ARGS.old),
         repo=ARGS.repo,
         mypyc_compile_level=ARGS.mypyc_compile_level,
         editable=True,
@@ -291,7 +291,7 @@ async def bisect() -> None:
     # Note git bisect start will clean up old bisection state
     await run(["git", "bisect", "start"], cwd=repo_dir, output=True)
     await run(["git", "bisect", "good"], cwd=repo_dir, output=True)
-    new_revision = await get_revision_for_revision_or_date(ARGS.new_mypy or "origin/HEAD", repo_dir)
+    new_revision = await get_revision_for_revision_or_date(ARGS.new or "origin/HEAD", repo_dir)
     await run(["git", "bisect", "bad", new_revision], cwd=repo_dir, output=True)
 
     def are_results_good(results: dict[str, TypeCheckResult]) -> bool:
@@ -328,7 +328,7 @@ async def coverage() -> None:
     ARGS = ctx.get()
     mypy_exe = await setup_mypy(
         ARGS.base_dir / "new_mypy",
-        revision_like=ARGS.new_mypy,
+        revision_like=ARGS.new,
         repo=ARGS.repo,
         mypyc_compile_level=ARGS.mypyc_compile_level,
     )
@@ -358,12 +358,13 @@ async def coverage() -> None:
 
 async def primer() -> int:
     projects = select_projects()
+    ARGS = ctx.get()
     new_mypy, old_mypy = await setup_new_and_old_mypy(
-        new_mypy_revision=ctx.get().new_mypy,
-        old_mypy_revision=revision_or_recent_tag_fn(ctx.get().old_mypy),
+        new_mypy_revision=ARGS.new,
+        old_mypy_revision=revision_or_recent_tag_fn(ARGS.old),
     )
     new_typeshed_dir, old_typeshed_dir = await setup_new_and_old_typeshed(
-        ctx.get().new_typeshed, ctx.get().old_typeshed
+        ARGS.new_typeshed, ARGS.old_typeshed
     )
 
     results = [
@@ -372,22 +373,22 @@ async def primer() -> int:
             old_mypy=str(old_mypy),
             new_typeshed=new_typeshed_dir,
             old_typeshed=old_typeshed_dir,
-            new_mypypath=ctx.get().new_mypypath,
-            old_mypypath=ctx.get().old_mypypath,
+            new_mypypath=ARGS.new_mypypath,
+            old_mypypath=ARGS.old_mypypath,
         )
         for project in projects
     ]
     retcode = 0
     for result_fut in asyncio.as_completed(results):
         result = await result_fut
-        if ctx.get().old_success and not result.old_result.success:
+        if ARGS.old_success and not result.old_result.success:
             continue
-        if ctx.get().output == "full":
+        if ARGS.output == "full":
             print(result.format_full())
-        elif ctx.get().output == "diff":
+        elif ARGS.output == "diff":
             print(result.format_diff_only())
-        elif ctx.get().output == "concise":
-            # using ctx.get().output == "concise" also causes us to:
+        elif ARGS.output == "concise":
+            # using ARGS.output == "concise" also causes us to:
             # - always pass in --no-pretty and --no-error-summary
             concise = result.format_concise()
             if concise:
