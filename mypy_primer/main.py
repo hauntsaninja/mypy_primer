@@ -160,9 +160,9 @@ def select_projects() -> list[Project]:
         assert ARGS.shard_index is not None
         shard_costs = [0] * ARGS.num_shards
         shard_projects: list[list[Project]] = [[] for _ in range(ARGS.num_shards)]
-        for p in sorted(projects, key=lambda p: (p.cost, p.location), reverse=True):
+        for p in sorted(projects, key=lambda p: (p.mypy_cost, p.location), reverse=True):
             min_shard = min(range(ARGS.num_shards), key=lambda i: shard_costs[i])
-            shard_costs[min_shard] += p.cost
+            shard_costs[min_shard] += p.mypy_cost
             shard_projects[min_shard].append(p)
         return shard_projects[ARGS.shard_index]
     return projects

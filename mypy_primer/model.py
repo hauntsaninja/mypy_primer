@@ -27,8 +27,8 @@ class Project:
     pip_cmd: str | None = None
     # if expected_success, there is a recent version of mypy which passes cleanly
     expected_success: bool = False
-    # cost is vaguely proportional to type check time
-    cost: int = 3
+    # mypy_cost is vaguely proportional to mypy's type check time
+    mypy_cost: int = 3
 
     @property
     def name(self) -> str:

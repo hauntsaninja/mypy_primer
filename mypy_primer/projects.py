@@ -12,7 +12,7 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} --config-file mypy_self_check.ini -p mypy -p mypyc",
             pip_cmd="{pip} install pytest types-typed-ast filelock",
             expected_success=True,
-            cost=20,
+            mypy_cost=20,
         ),
         Project(
             location="https://github.com/hauntsaninja/mypy_primer",
@@ -45,7 +45,7 @@ def get_projects() -> list[Project]:
                 "types-setuptools pytest"
             ),
             expected_success=True,
-            cost=120,
+            mypy_cost=120,
         ),
         Project(
             location="https://github.com/pycqa/pylint",
@@ -286,7 +286,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/graphql-python/graphql-core",
             mypy_cmd="{mypy} src tests",
             expected_success=True,
-            cost=70,
+            mypy_cost=70,
         ),
         Project(
             location="https://github.com/Legrandin/pycryptodome",
@@ -374,7 +374,7 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} --config python/mypy.ini python/pyspark",
             pip_cmd="{pip} install numpy",
             expected_success=True,
-            cost=20,
+            mypy_cost=20,
         ),
         Project(
             location="https://github.com/laowantong/paroxython",
@@ -489,7 +489,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/sympy/sympy",
             mypy_cmd="{mypy} sympy",
             expected_success=True,
-            cost=70,
+            mypy_cost=70,
         ),
         Project(
             location="https://github.com/nion-software/nionutils",
@@ -594,7 +594,7 @@ def get_projects() -> list[Project]:
                 "types-setuptools types-atomicwrites types-certifi types-croniter "
                 "types-PyYAML types-requests types-python-slugify types-backports"
             ),
-            cost=70,
+            mypy_cost=70,
         ),
         Project(
             location="https://github.com/kornia/kornia",
@@ -633,7 +633,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/arviz-devs/arviz",
             mypy_cmd="{mypy} .",
             pip_cmd="{pip} install pytest types-setuptools types-ujson numpy xarray",
-            cost=20,
+            mypy_cost=20,
         ),
         Project(
             location="https://github.com/urllib3/urllib3",
@@ -654,7 +654,7 @@ def get_projects() -> list[Project]:
             mypy_cmd="MYPYPATH=$MYPYPATH:mypy-stubs {mypy} cwltool/*.py tests/*.py",
             pip_cmd="{pip} install types-requests types-setuptools types-psutil "
             "types-mock cwl-utils schema-salad ruamel-yaml pytest pytest-httpserver",
-            cost=20,
+            mypy_cost=20,
         ),
         Project(
             location="https://github.com/FasterSpeeding/Tanjun",
@@ -691,7 +691,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/Rapptz/discord.py",
             mypy_cmd="{mypy} discord",
             pip_cmd="{pip} install types-requests types-setuptools aiohttp",
-            cost=20,
+            mypy_cost=20,
         ),
         Project(
             location="https://github.com/canonical/cloud-init",
@@ -701,7 +701,7 @@ def get_projects() -> list[Project]:
                 "types-jsonschema types-oauthlib "
                 "types-pyyaml types-requests types-setuptools"
             ),
-            cost=20,
+            mypy_cost=20,
         ),
         Project(
             location="https://github.com/mongodb/mongo-python-driver",
@@ -717,7 +717,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/MaterializeInc/materialize",
             mypy_cmd="MYPYPATH=$MYPYPATH:misc/python {mypy} ci misc/python",
             pip_cmd="{pip} install -r ci/builder/requirements.txt",
-            cost=30,
+            mypy_cost=30,
         ),
         Project(
             "https://github.com/canonical/operator",
@@ -765,7 +765,7 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/pandas-dev/pandas-stubs",
             mypy_cmd="{mypy} pandas-stubs tests",
-            cost=20,
+            mypy_cost=20,
         ),
         Project(
             location="https://github.com/enthought/comtypes",
@@ -776,7 +776,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/mit-ll-responsible-ai/hydra-zen",
             mypy_cmd="{mypy} src",
             pip_cmd="{pip} install pydantic beartype hydra-core",
-            cost=30,
+            mypy_cost=30,
         ),
         Project(
             location="https://github.com/Avasam/Auto-Split",
@@ -794,7 +794,7 @@ def get_projects() -> list[Project]:
                 "{pip} install Flask PyJWT requests-cache types-Flask-SQLAlchemy "
                 "types-httplib2 types-requests"
             ),
-            cost=30,
+            mypy_cost=30,
         ),
         Project(
             location="https://github.com/pwndbg/pwndbg",
