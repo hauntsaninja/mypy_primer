@@ -287,10 +287,10 @@ class PrimerResult:
     def format_full(self) -> str:
         ret = self.header()
         ret += "----------\n\n"
-        ret += "old mypy\n"
+        ret += "old\n"
         ret += str(self.old_result)
         ret += "----------\n\n"
-        ret += "new mypy\n"
+        ret += "new\n"
         ret += str(self.new_result)
 
         if self.diff:
