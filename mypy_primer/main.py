@@ -266,7 +266,7 @@ async def coverage() -> None:
     assert mypy_python.exists()
 
     all_paths = await asyncio.gather(
-        *[project.source_paths(str(mypy_python)) for project in projects]
+        *[project.mypy_source_paths(str(mypy_python)) for project in projects]
     )
 
     project_to_paths: dict[str, int] = {}

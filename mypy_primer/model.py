@@ -154,7 +154,7 @@ class Project:
         )
         return PrimerResult(self, new_result, old_result)
 
-    async def source_paths(self, mypy_python: str) -> list[Path]:
+    async def mypy_source_paths(self, mypy_python: str) -> list[Path]:
         await self.setup()
         mypy_cmd = self.get_mypy_cmd(mypy="mypyprimersentinel")
         mypy_cmd = mypy_cmd.split("mypyprimersentinel", maxsplit=1)[1]
