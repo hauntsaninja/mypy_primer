@@ -38,21 +38,24 @@ T = TypeVar("T")
 # ==============================
 
 
-async def setup_mypy(mypy_dir: Path, revision_like: RevisionLike, editable: bool = False) -> Path:
+async def setup_mypy(
+    mypy_dir: Path,
+    revision_like: RevisionLike,
+    *,
+    repo: str,
+    mypyc_compile_level: int | None,
+    editable: bool = False,
+) -> Path:
     mypy_dir.mkdir(exist_ok=True)
     venv_dir = mypy_dir / "venv"
     venv.create(venv_dir, with_pip=True, clear=True)
     pip_exe = str(venv_dir / BIN_DIR / "pip")
 
-    if ctx.get().mypyc_compile_level is not None:
+    if mypyc_compile_level is not None:
         editable = True
 
     install_from_repo = True
-    if (
-        isinstance(revision_like, str)
-        and not editable
-        and ctx.get().repo == "https://github.com/python/mypy"
-    ):
+    if isinstance(revision_like, str) and not editable and repo == "https://github.com/python/mypy":
         # optimistically attempt to install the revision of mypy we want from pypi
         try:
             await run([pip_exe, "install", f"mypy=={revision_like}"])
@@ -61,10 +64,10 @@ async def setup_mypy(mypy_dir: Path, revision_like: RevisionLike, editable: bool
             install_from_repo = True
 
     if install_from_repo:
-        repo_dir = await ensure_repo_at_revision(ctx.get().repo, mypy_dir, revision_like)
-        if ctx.get().mypyc_compile_level is not None:
+        repo_dir = await ensure_repo_at_revision(repo, mypy_dir, revision_like)
+        if mypyc_compile_level is not None:
             env = os.environ.copy()
-            env["MYPYC_OPT_LEVEL"] = str(ctx.get().mypyc_compile_level)
+            env["MYPYC_OPT_LEVEL"] = str(mypyc_compile_level)
             python_exe = str(venv_dir / BIN_DIR / "python")
             await run([pip_exe, "install", "typing_extensions", "mypy_extensions"])
             await run(
@@ -91,8 +94,18 @@ async def setup_new_and_old_mypy(
     new_mypy_revision: RevisionLike, old_mypy_revision: RevisionLike
 ) -> tuple[Path, Path]:
     new_mypy, old_mypy = await asyncio.gather(
-        setup_mypy(ctx.get().base_dir / "new_mypy", new_mypy_revision),
-        setup_mypy(ctx.get().base_dir / "old_mypy", old_mypy_revision),
+        setup_mypy(
+            ctx.get().base_dir / "new_mypy",
+            new_mypy_revision,
+            repo=ctx.get().repo,
+            mypyc_compile_level=ctx.get().mypyc_compile_level,
+        ),
+        setup_mypy(
+            ctx.get().base_dir / "old_mypy",
+            old_mypy_revision,
+            repo=ctx.get().repo,
+            mypyc_compile_level=ctx.get().mypyc_compile_level,
+        ),
     )
 
     if ctx.get().debug:
@@ -177,9 +190,15 @@ RECENT_MYPYS = ["0.991", "0.982", "0.971", "0.961"]
 
 async def validate_expected_success() -> None:
     """Check correctness of hardcoded Project.expected_success"""
+    ARGS = ctx.get()
     recent_mypy_exes = await asyncio.gather(
         *[
-            setup_mypy(ctx.get().base_dir / ("mypy_" + recent_mypy), recent_mypy)
+            setup_mypy(
+                ARGS.base_dir / ("mypy_" + recent_mypy),
+                recent_mypy,
+                repo=ARGS.repo,
+                mypyc_compile_level=ARGS.mypyc_compile_level,
+            )
             for recent_mypy in RECENT_MYPYS
         ]
     )
@@ -189,7 +208,7 @@ async def validate_expected_success() -> None:
         success = None
         for mypy_exe in recent_mypy_exes:
             mypy_result = await project.run_mypy(mypy_exe, typeshed_dir=None, mypy_path=[])
-            if ctx.get().debug:
+            if ARGS.debug:
                 debug_print(format(Style.BLUE))
                 debug_print(mypy_result)
                 debug_print(format(Style.RESET))
@@ -213,8 +232,12 @@ async def validate_expected_success() -> None:
 
 async def measure_project_runtimes() -> None:
     """Check mypy's runtime over each project."""
+    ARGS = ctx.get()
     mypy_exe = await setup_mypy(
-        ctx.get().base_dir / "timer_mypy", ctx.get().new_mypy or RECENT_MYPYS[0]
+        ARGS.base_dir / "timer_mypy",
+        ARGS.new_mypy or RECENT_MYPYS[0],
+        repo=ARGS.repo,
+        mypyc_compile_level=ARGS.mypyc_compile_level,
     )
 
     async def inner(project: Project) -> tuple[float, Project]:
@@ -244,6 +267,8 @@ async def bisect() -> None:
     mypy_exe = await setup_mypy(
         ARGS.base_dir / "bisect_mypy",
         revision_or_recent_tag_fn(ARGS.old_mypy),
+        repo=ARGS.repo,
+        mypyc_compile_level=ARGS.mypyc_compile_level,
         editable=True,
     )
     repo_dir = ARGS.base_dir / "bisect_mypy" / "mypy"
@@ -300,7 +325,13 @@ async def bisect() -> None:
 
 
 async def coverage() -> None:
-    mypy_exe = await setup_mypy(ctx.get().base_dir / "new_mypy", ctx.get().new_mypy)
+    ARGS = ctx.get()
+    mypy_exe = await setup_mypy(
+        ARGS.base_dir / "new_mypy",
+        revision_like=ARGS.new_mypy,
+        repo=ARGS.repo,
+        mypyc_compile_level=ARGS.mypyc_compile_level,
+    )
 
     projects = select_projects()
     mypy_python = mypy_exe.parent / "python"
