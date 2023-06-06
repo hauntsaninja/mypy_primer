@@ -76,9 +76,11 @@ class Project:
     def get_mypy_cmd(self, mypy: str | Path, additional_flags: Sequence[str] = ()) -> str:
         mypy_cmd = self.mypy_cmd
         assert "{mypy}" in self.mypy_cmd
+        mypy_cmd = mypy_cmd.format(mypy=mypy)
+
         if self.pip_cmd:
             python_exe = self.venv_dir / BIN_DIR / "python"
-            mypy_cmd += f" --python-executable={python_exe}"
+            mypy_cmd += f" --python-executable={shlex.quote(str(python_exe))}"
         if additional_flags:
             mypy_cmd += " " + " ".join(additional_flags)
         if ctx.get().output == "concise":
@@ -86,7 +88,6 @@ class Project:
         mypy_cmd += (
             f" --no-incremental --cache-dir={os.devnull} --show-traceback --soft-error-limit=-1"
         )
-        mypy_cmd = mypy_cmd.format(mypy=mypy)
         return mypy_cmd
 
     async def run_mypy(self, mypy: str | Path, typeshed_dir: Path | None) -> TypeCheckResult:
@@ -96,7 +97,7 @@ class Project:
 
         mypy_path = []  # TODO: this used to be exposed, could be useful to expose it again
         if typeshed_dir is not None:
-            additional_flags.append(f"--custom-typeshed-dir={typeshed_dir}")
+            additional_flags.append(f"--custom-typeshed-dir={shlex.quote(str(typeshed_dir))}")
             mypy_path += list(map(str, typeshed_dir.glob("stubs/*")))
 
         if "MYPYPATH" in env:
@@ -140,12 +141,11 @@ class Project:
             mypy_cmd, output, not bool(proc.returncode), self.expected_mypy_success, runtime
         )
 
-    def get_pyright_cmd(self, pyright: str | Path) -> str:
-        # TODO: add support for venv, custom typeshed
-        return str(pyright)
-
     async def run_pyright(self, pyright: str | Path, typeshed_dir: Path | None) -> TypeCheckResult:
-        pyright_cmd = self.get_pyright_cmd(pyright)
+        pyright_cmd = str(pyright)
+        if typeshed_dir is not None:
+            pyright_cmd += f" --typeshed-path {shlex.quote(str(typeshed_dir))}"
+
         proc, runtime = await run(
             pyright_cmd,
             shell=True,

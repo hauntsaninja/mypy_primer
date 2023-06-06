@@ -81,7 +81,10 @@ async def setup_pyright(
     await run(["npm", "install"], cwd=repo_dir)
     await run(["npm", "install"], cwd=repo_dir / "packages" / "pyright")
     await run(["npm", "run", "build"], cwd=repo_dir / "packages" / "pyright")
-    return repo_dir / "packages" / "pyright" / "index.js"
+
+    pyright_exe = repo_dir / "packages" / "pyright" / "index.js"
+    assert pyright_exe.exists()
+    return pyright_exe
 
 
 async def setup_typeshed(parent_dir: Path, *, repo: str, revision_like: RevisionLike) -> Path:
