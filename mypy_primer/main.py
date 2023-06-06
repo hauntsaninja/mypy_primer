@@ -19,7 +19,7 @@ from mypy_primer.git_utils import (
     revision_or_recent_tag_fn,
 )
 from mypy_primer.globals import ctx, parse_options_and_set_ctx
-from mypy_primer.model import MypyResult, Project
+from mypy_primer.model import Project, TypeCheckResult
 from mypy_primer.projects import get_projects
 from mypy_primer.utils import (
     BIN_DIR,
@@ -252,13 +252,13 @@ async def bisect() -> None:
     projects = select_projects()
     await asyncio.wait([project.setup() for project in projects])
 
-    async def run_wrapper(project: Project) -> tuple[str, MypyResult]:
+    async def run_wrapper(project: Project) -> tuple[str, TypeCheckResult]:
         return project.name, (
             await project.run_mypy(str(mypy_exe), typeshed_dir=None, mypy_path=[])
         )
 
     results_fut = await asyncio.gather(*(run_wrapper(project) for project in projects))
-    old_results: dict[str, MypyResult] = dict(results_fut)
+    old_results: dict[str, TypeCheckResult] = dict(results_fut)
     if ARGS.debug:
         debug_print("\n".join(str(result) for result in old_results.values()))
         debug_print(format(Style.RESET))
@@ -269,7 +269,7 @@ async def bisect() -> None:
     new_revision = await get_revision_for_revision_or_date(ARGS.new_mypy or "origin/HEAD", repo_dir)
     await run(["git", "bisect", "bad", new_revision], cwd=repo_dir, output=True)
 
-    def are_results_good(results: dict[str, MypyResult]) -> bool:
+    def are_results_good(results: dict[str, TypeCheckResult]) -> bool:
         if ARGS.bisect_output:
             return not any(
                 re.search(ARGS.bisect_output, strip_colour_code(results[project.name].output))
@@ -284,7 +284,7 @@ async def bisect() -> None:
     while True:
         await run(["git", "submodule", "update", "--init"], cwd=repo_dir)
         results_fut = await asyncio.gather(*(run_wrapper(project) for project in projects))
-        results: dict[str, MypyResult] = dict(results_fut)
+        results: dict[str, TypeCheckResult] = dict(results_fut)
 
         state = "good" if are_results_good(results) else "bad"
         proc, _ = await run(["git", "bisect", state], output=True, cwd=repo_dir)

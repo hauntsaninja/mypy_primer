@@ -91,7 +91,7 @@ class Project:
 
     async def run_mypy(
         self, mypy: str | Path, typeshed_dir: Path | None, mypy_path: list[str]
-    ) -> MypyResult:
+    ) -> TypeCheckResult:
         additional_flags = ctx.get().additional_flags.copy()
         env = os.environ.copy()
         env["MYPY_FORCE_COLOR"] = "1"
@@ -138,7 +138,7 @@ class Project:
         if "error: INTERNAL ERROR" in output:
             output = re.sub('File ".*/mypy', 'File "', output)
 
-        return MypyResult(
+        return TypeCheckResult(
             mypy_cmd, output, not bool(proc.returncode), self.expected_success, runtime
         )
 
@@ -192,7 +192,7 @@ for source in sources:
 
 
 @dataclass(frozen=True)
-class MypyResult:
+class TypeCheckResult:
     command: str
     output: str
     success: bool
@@ -210,8 +210,8 @@ class MypyResult:
 @dataclass(frozen=True)
 class PrimerResult:
     project: Project
-    new_result: MypyResult
-    old_result: MypyResult
+    new_result: TypeCheckResult
+    old_result: TypeCheckResult
     diff: str = field(init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
