@@ -59,63 +59,63 @@ ctx = contextvars.ContextVar[_Args]("args")
 def parse_options(argv: list[str]) -> _Args:
     parser = argparse.ArgumentParser()
 
-    mypy_group = parser.add_argument_group("mypy")
-    mypy_group.add_argument(
+    type_checker_group = parser.add_argument_group("type checker")
+    type_checker_group.add_argument(
         "--new",
         help=(
-            "new mypy version, defaults to HEAD "
+            "new type checker version, defaults to HEAD "
             "(pypi version, anything commit-ish, or isoformatted date)"
         ),
     )
-    mypy_group.add_argument(
+    type_checker_group.add_argument(
         "--old",
         help=(
-            "old mypy version, defaults to latest tag "
+            "old type checker version, defaults to latest tag "
             "(pypi version, anything commit-ish, or isoformatted date)"
         ),
     )
-    mypy_group.add_argument(
+    type_checker_group.add_argument(
         "--repo",
         default="https://github.com/python/mypy",
         help=(
-            "mypy repo to use (passed to git clone. if unspecified, we first try pypi, "
+            "type checker repo to use (passed to git clone. if unspecified, we first try pypi, "
             "then fall back to github)"
         ),
     )
-    mypy_group.add_argument(
+    type_checker_group.add_argument(
         "--mypyc-compile-level",
         default=None,
         type=int,
         help="Compile mypy with the given mypyc optimisation level",
     )
 
-    mypy_group.add_argument(
+    type_checker_group.add_argument(
         "--custom-typeshed-repo",
         default="https://github.com/python/typeshed",
         help="typeshed repo to use (passed to git clone)",
     )
-    mypy_group.add_argument(
+    type_checker_group.add_argument(
         "--new-typeshed",
-        help="new typeshed version, defaults to mypy's (anything commit-ish, or isoformatted date)",
+        help="new typeshed version, defaults to vendored (commit-ish or isoformatted date)",
     )
-    mypy_group.add_argument(
+    type_checker_group.add_argument(
         "--old-typeshed",
-        help="old typeshed version, defaults to mypy's (anything commit-ish, or isoformatted date)",
+        help="old typeshed version, defaults to vendored (commit-ish, or isoformatted date)",
     )
 
-    mypy_group.add_argument(
+    type_checker_group.add_argument(
         "--new-mypypath",
         help="mypypath to use for new mypy",
         type=lambda s: s.split(os.pathsep),
         default=[],
     )
-    mypy_group.add_argument(
+    type_checker_group.add_argument(
         "--old-mypypath",
         help="mypypath to use for old mypy",
         type=lambda s: s.split(os.pathsep),
         default=[],
     )
-    mypy_group.add_argument(
+    type_checker_group.add_argument(
         "--additional-flags",
         help="additional flags to pass to mypy",
         nargs="*",
