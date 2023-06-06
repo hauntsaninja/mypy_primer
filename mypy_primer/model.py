@@ -140,17 +140,46 @@ class Project:
             mypy_cmd, output, not bool(proc.returncode), self.expected_mypy_success, runtime
         )
 
+    def get_pyright_cmd(self, pyright: str | Path) -> str:
+        # TODO: add support for venv, custom typeshed
+        return str(pyright)
+
+    async def run_pyright(self, pyright: str | Path, typeshed_dir: Path | None) -> TypeCheckResult:
+        pyright_cmd = self.get_pyright_cmd(pyright)
+        proc, runtime = await run(
+            pyright_cmd,
+            shell=True,
+            output=True,
+            check=False,
+            cwd=ctx.get().projects_dir / self.name,
+        )
+        if ctx.get().debug:
+            debug_print(f"{Style.BLUE}{pyright} on {self.name} took {runtime:.2f}s{Style.RESET}")
+
+        output = proc.stderr + proc.stdout
+        return TypeCheckResult(pyright_cmd, output, not bool(proc.returncode), False, runtime)
+
+    async def run_typechecker(
+        self, type_checker: str | Path, typeshed_dir: Path | None
+    ) -> TypeCheckResult:
+        if ctx.get().type_checker == "mypy":
+            return await self.run_mypy(type_checker, typeshed_dir)
+        elif ctx.get().type_checker == "pyright":
+            return await self.run_pyright(type_checker, typeshed_dir)
+        else:
+            raise ValueError(f"Unknown type checker: {ctx.get().type_checker}")
+
     async def primer_result(
         self,
-        new_mypy: str,
-        old_mypy: str,
+        new_type_checker: str,
+        old_type_checker: str,
         new_typeshed: Path | None,
         old_typeshed: Path | None,
     ) -> PrimerResult:
         await self.setup()
         new_result, old_result = await asyncio.gather(
-            self.run_mypy(new_mypy, new_typeshed),
-            self.run_mypy(old_mypy, old_typeshed),
+            self.run_typechecker(new_type_checker, new_typeshed),
+            self.run_typechecker(old_type_checker, old_typeshed),
         )
         return PrimerResult(self, new_result, old_result)
 
