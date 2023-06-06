@@ -161,7 +161,7 @@ def select_projects() -> list[Project]:
             p for p in project_iter if re.search(ARGS.project_selector, p.location, flags=re.I)
         )
     if ARGS.expected_success:
-        project_iter = (p for p in project_iter if p.expected_success)
+        project_iter = (p for p in project_iter if p.expected_mypy_success)
     if ARGS.project_date:
         project_iter = (replace(p, revision=ARGS.project_date) for p in project_iter)
 
@@ -215,12 +215,12 @@ async def validate_expected_success() -> None:
             if mypy_result.success:
                 success = mypy_exe
                 break
-        if bool(success) and not project.expected_success:
+        if bool(success) and not project.expected_mypy_success:
             return (
                 f"Project {project.location} succeeded with {success}, "
                 "but is not marked as expecting success"
             )
-        if not bool(success) and project.expected_success:
+        if not bool(success) and project.expected_mypy_success:
             return f"Project {project.location} did not succeed, but is marked as expecting success"
         return None
 

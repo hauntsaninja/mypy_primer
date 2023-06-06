@@ -26,7 +26,7 @@ class Project:
     revision: str | None = None
     pip_cmd: str | None = None
     # if expected_success, there is a recent version of mypy which passes cleanly
-    expected_success: bool = False
+    expected_mypy_success: bool = False
     # mypy_cost is vaguely proportional to mypy's type check time
     mypy_cost: int = 3
 
@@ -139,7 +139,7 @@ class Project:
             output = re.sub('File ".*/mypy', 'File "', output)
 
         return TypeCheckResult(
-            mypy_cmd, output, not bool(proc.returncode), self.expected_success, runtime
+            mypy_cmd, output, not bool(proc.returncode), self.expected_mypy_success, runtime
         )
 
     async def primer_result(
