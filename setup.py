@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 with open("README.md", "r", encoding="UTF-8") as f:
     long_description = f.read()
@@ -19,7 +19,7 @@ setup(
         "Programming Language :: Python :: 3",
         "Topic :: Software Development",
     ],
-    py_modules=["mypy_primer"],
+    packages=find_packages(),
     entry_points={"console_scripts": ["mypy_primer=mypy_primer.main:main"]},
     python_requires=">=3.7",
 )
