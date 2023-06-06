@@ -118,6 +118,8 @@ class Project:
             debug_print(f"{Style.BLUE}{mypy} on {self.name} took {runtime:.2f}s{Style.RESET}")
 
         output = proc.stderr + proc.stdout
+
+        # Various logic to reduce noise in the diff
         if typeshed_dir is not None:
             # Differing line numbers and typeshed paths create noisy diffs.
             # Not a problem for stdlib because mypy silences errors from --custom-typeshed-dir.
@@ -126,6 +128,16 @@ class Project:
                 for line in output.splitlines(keepends=True)
                 if not line.startswith(str(typeshed_dir / "stubs"))
             )
+
+        # Redact "note" lines which contain base_dir
+        # Avoids noisy diffs when e.g., mypy points to a stub definition
+        base_dir_re = f"{re.escape(str(ctx.get().base_dir))}.*: note:"
+        output = re.sub(base_dir_re, "note:", output)
+
+        # Avoids some noise in tracebacks
+        if "error: INTERNAL ERROR" in output:
+            output = re.sub('File ".*/mypy', 'File "', output)
+
         return MypyResult(
             mypy_cmd, output, not bool(proc.returncode), self.expected_success, runtime
         )
@@ -211,24 +223,13 @@ class PrimerResult:
         old_output = self.old_result.output
         new_output = self.new_result.output
 
-        if "error: INTERNAL ERROR" in old_output:
-            old_output = re.sub('File ".*/mypy', 'File "', old_output)
-        if "error: INTERNAL ERROR" in new_output:
-            new_output = re.sub('File ".*/mypy', 'File "', new_output)
-
         old_lines = old_output.splitlines()
         new_lines = new_output.splitlines()
-        # Hide "note" lines which contain ctx.get().base_dir... this hides differences between
-        # file paths, e.g., when mypy points to a stub definition.
-        base_dir_re = re.compile(f"{re.escape(str(ctx.get().base_dir))}.*: note:")
-        old_lines = [line for line in old_lines if not re.search(base_dir_re, line)]
-        new_lines = [line for line in new_lines if not re.search(base_dir_re, line)]
-        diff = d.compare(old_lines, new_lines)
-        diff_lines = [line for line in diff if line[0] in ("+", "-")]
 
         # mypy's output appears to be nondeterministic for some same line errors, e.g. on pypa/pip
         # Work around that by ignoring identical removal and addition pairs, e.g.
         # "- a.py:1: error xyz" and "+ a.py:1: error xyz"
+        diff_lines = [line for line in d.compare(old_lines, new_lines) if line[0] in ("+", "-")]
         net_change: dict[str, int] = defaultdict(int)
         for line in diff_lines:
             net_change[line[2:]] += 1 if line[0] == "+" else -1
