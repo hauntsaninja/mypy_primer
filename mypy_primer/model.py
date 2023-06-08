@@ -31,6 +31,9 @@ class Project:
     # mypy_cost is vaguely proportional to mypy's type check time
     mypy_cost: int = 3
 
+    pyright_cmd: str | None = None
+    expected_pyright_success: bool = False
+
     @property
     def name(self) -> str:
         return Path(self.location).name
@@ -38,6 +41,14 @@ class Project:
     @property
     def venv_dir(self) -> Path:
         return ctx.get().projects_dir / f"_{self.name}_venv"
+
+    def expected_success(self, type_checker: str) -> bool:
+        if type_checker == "mypy":
+            return self.expected_mypy_success
+        elif type_checker == "pyright":
+            return self.expected_pyright_success
+        else:
+            raise ValueError(f"unknown type checker {type_checker}")
 
     async def setup(self) -> None:
         if Path(self.location).exists():
@@ -142,11 +153,19 @@ class Project:
             mypy_cmd, output, not bool(proc.returncode), self.expected_mypy_success, runtime
         )
 
-    async def run_pyright(self, pyright: str | Path, typeshed_dir: Path | None) -> TypeCheckResult:
-        pyright_cmd = str(pyright)
-        if typeshed_dir is not None:
-            pyright_cmd += f" --typeshed-path {shlex.quote(str(typeshed_dir))}"
+    def get_pyright_cmd(self, pyright: str | Path, additional_flags: Sequence[str] = ()) -> str:
+        pyright_cmd = self.pyright_cmd or "{pyright}"
+        assert "{pyright}" in pyright_cmd
+        if additional_flags:
+            pyright_cmd += " " + " ".join(additional_flags)
+        pyright_cmd = pyright_cmd.format(pyright=pyright)
+        return pyright_cmd
 
+    async def run_pyright(self, pyright: str | Path, typeshed_dir: Path | None) -> TypeCheckResult:
+        additional_flags: list[str] = []
+        if typeshed_dir is not None:
+            additional_flags.append(f"--typeshedpath {shlex.quote(str(typeshed_dir))}")
+        pyright_cmd = self.get_pyright_cmd(pyright, additional_flags)
         if self.pip_cmd:
             activate = (
                 f"source {shlex.quote(str(self.venv_dir / BIN_DIR / 'activate'))}"
@@ -165,7 +184,9 @@ class Project:
             debug_print(f"{Style.BLUE}{pyright} on {self.name} took {runtime:.2f}s{Style.RESET}")
 
         output = proc.stderr + proc.stdout
-        return TypeCheckResult(pyright_cmd, output, not bool(proc.returncode), False, runtime)
+        return TypeCheckResult(
+            pyright_cmd, output, not bool(proc.returncode), self.expected_pyright_success, runtime
+        )
 
     async def run_typechecker(
         self, type_checker: str | Path, typeshed_dir: Path | None

@@ -30,6 +30,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/hauntsaninja/pyp",
             mypy_cmd="{mypy} --strict -m pyp",
             expected_mypy_success=True,
+            pyright_cmd="{pyright}",
         ),
         Project(
             location="https://github.com/pytest-dev/pytest",
@@ -193,6 +194,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/jab/bidict",
             mypy_cmd="{mypy} bidict",
             expected_mypy_success=True,
+            pyright_cmd="{pyright}",
         ),
         Project(
             location="https://github.com/jaraco/zipp",
@@ -766,6 +768,8 @@ def get_projects() -> list[Project]:
             location="https://github.com/pandas-dev/pandas-stubs",
             mypy_cmd="{mypy} pandas-stubs tests",
             mypy_cost=20,
+            pyright_cmd="{pyright}",
+            expected_pyright_success=True,
         ),
         Project(
             location="https://github.com/enthought/comtypes",
