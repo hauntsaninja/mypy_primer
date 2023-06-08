@@ -30,6 +30,9 @@ class Project:
     # mypy_cost is vaguely proportional to mypy's type check time
     mypy_cost: int = 3
 
+    pyright_cmd: str | None = None
+    expected_pyright_success: bool = False
+
     @property
     def name(self) -> str:
         return Path(self.location).name
@@ -140,12 +143,20 @@ class Project:
             mypy_cmd, output, not bool(proc.returncode), self.expected_mypy_success, runtime
         )
 
-    def get_pyright_cmd(self, pyright: str | Path) -> str:
-        # TODO: add support for venv, custom typeshed
-        return str(pyright)
+    def get_pyright_cmd(self, pyright: str | Path, additional_flags: Sequence[str] = ()) -> str:
+        pyright_cmd = self.pyright_cmd or "{pyright}"
+        assert "{pyright}" in pyright_cmd
+        if additional_flags:
+            pyright_cmd += " " + " ".join(additional_flags)
+        pyright_cmd = pyright_cmd.format(pyright=pyright)
+        return pyright_cmd
 
     async def run_pyright(self, pyright: str | Path, typeshed_dir: Path | None) -> TypeCheckResult:
-        pyright_cmd = self.get_pyright_cmd(pyright)
+        additional_flags: list[str] = []
+        if typeshed_dir is not None:
+            additional_flags.append(f"--typeshedpath {str(typeshed_dir)}")
+
+        pyright_cmd = self.get_pyright_cmd(pyright, additional_flags)
         proc, runtime = await run(
             pyright_cmd,
             shell=True,
@@ -157,7 +168,7 @@ class Project:
             debug_print(f"{Style.BLUE}{pyright} on {self.name} took {runtime:.2f}s{Style.RESET}")
 
         output = proc.stderr + proc.stdout
-        return TypeCheckResult(pyright_cmd, output, not bool(proc.returncode), False, runtime)
+        return TypeCheckResult(pyright_cmd, output, not bool(proc.returncode), self.expected_pyright_success, runtime)
 
     async def run_typechecker(
         self, type_checker: str | Path, typeshed_dir: Path | None
