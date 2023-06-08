@@ -77,9 +77,7 @@ async def setup_pyright(
         repo = "https://github.com/microsoft/pyright"
     repo_dir = await ensure_repo_at_revision(repo, pyright_dir, revision_like)
 
-    # Can you tell I don't really work with JS? This is hopefully enough npms to get things working
-    await run(["npm", "install"], cwd=repo_dir)
-    await run(["npm", "install"], cwd=repo_dir / "packages" / "pyright")
+    await run(["npm", "run", "install:all"], cwd=repo_dir)
     await run(["npm", "run", "build"], cwd=repo_dir / "packages" / "pyright")
 
     pyright_exe = repo_dir / "packages" / "pyright" / "index.js"
