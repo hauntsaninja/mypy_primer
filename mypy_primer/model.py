@@ -176,7 +176,9 @@ class Project:
             debug_print(f"{Style.BLUE}{pyright} on {self.name} took {runtime:.2f}s{Style.RESET}")
 
         output = proc.stderr + proc.stdout
-        return TypeCheckResult(pyright_cmd, output, not bool(proc.returncode), self.expected_pyright_success, runtime)
+        return TypeCheckResult(
+            pyright_cmd, output, not bool(proc.returncode), self.expected_pyright_success, runtime
+        )
 
     async def run_typechecker(
         self, type_checker: str | Path, typeshed_dir: Path | None

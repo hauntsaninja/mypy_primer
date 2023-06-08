@@ -113,7 +113,7 @@ def select_projects() -> list[Project]:
         return [Project.from_location(ARGS.local_project)]
 
     project_iter: Iterator[Project] = iter(p for p in get_projects())
-    if ARGS.type_checker == 'pyright':
+    if ARGS.type_checker == "pyright":
         project_iter = iter(p for p in project_iter if p.pyright_cmd is not None)
         check_success = lambda p: p.expected_pyright_success
     else:
