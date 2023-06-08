@@ -769,7 +769,7 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} pandas-stubs tests",
             mypy_cost=20,
             pyright_cmd="{pyright}",
-            expected_pyright_success=True
+            expected_pyright_success=True,
         ),
         Project(
             location="https://github.com/enthought/comtypes",
