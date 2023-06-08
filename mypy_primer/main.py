@@ -115,15 +115,12 @@ def select_projects() -> list[Project]:
     project_iter: Iterator[Project] = iter(p for p in get_projects())
     if ARGS.type_checker == "pyright":
         project_iter = iter(p for p in project_iter if p.pyright_cmd is not None)
-        check_success = lambda p: p.expected_pyright_success
-    else:
-        check_success = lambda p: p.expected_mypy_success
     if ARGS.project_selector:
         project_iter = iter(
             p for p in project_iter if re.search(ARGS.project_selector, p.location, flags=re.I)
         )
     if ARGS.expected_success:
-        project_iter = (p for p in project_iter if check_success(p))
+        project_iter = (p for p in project_iter if p.expected_success(ARGS.type_checker))
     if ARGS.project_date:
         project_iter = (replace(p, revision=ARGS.project_date) for p in project_iter)
 

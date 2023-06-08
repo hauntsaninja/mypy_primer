@@ -42,6 +42,14 @@ class Project:
     def venv_dir(self) -> Path:
         return ctx.get().projects_dir / f"_{self.name}_venv"
 
+    def expected_success(self, type_checker: str):
+        if type_checker == "mypy":
+            return self.expected_mypy_success
+        elif type_checker == "pyright":
+            return self.expected_pyright_success
+        else:
+            raise ValueError(f"unknown type checker {type_checker}")
+
     async def setup(self) -> None:
         if Path(self.location).exists():
             repo_dir = ctx.get().projects_dir / self.name
