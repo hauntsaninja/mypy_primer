@@ -42,7 +42,7 @@ class Project:
     def venv_dir(self) -> Path:
         return ctx.get().projects_dir / f"_{self.name}_venv"
 
-    def expected_success(self, type_checker: str):
+    def expected_success(self, type_checker: str) -> bool:
         if type_checker == "mypy":
             return self.expected_mypy_success
         elif type_checker == "pyright":
