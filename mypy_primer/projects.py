@@ -41,6 +41,7 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/pandas-dev/pandas",
             mypy_cmd="{mypy} pandas",
+            pyright_cmd="{pyright} pandas",
             pip_cmd=(
                 "{pip} install numpy types-python-dateutil types-pytz types-PyMySQL "
                 "types-setuptools pytest"
@@ -231,6 +232,7 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/freqtrade/freqtrade",
             mypy_cmd="{mypy} freqtrade scripts",
+            pyright_cmd="{pyright}",
             pip_cmd=(
                 "{pip} install types-cachetools types-requests types-python-dateutil "
                 "types-tabulate types-filelock"
@@ -313,6 +315,7 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/samuelcolvin/pydantic",
             mypy_cmd="{mypy} pydantic",
+            pyright_cmd="{pyright}",
             pip_cmd="{pip} install types-toml",
             expected_mypy_success=True,
         ),
@@ -406,6 +409,7 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/dropbox/mypy-protobuf",
             mypy_cmd="{mypy} mypy_protobuf/",
+            pyright_cmd="{pyright}",
             pip_cmd="{pip} install types-protobuf",
             expected_mypy_success=True,
         ),
@@ -413,6 +417,7 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/spack/spack",
             mypy_cmd="{mypy} -p spack -p llnl",
+            pyright_cmd="{pyright}",
             expected_mypy_success=True,
         ),
         Project(
@@ -445,6 +450,7 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/pandera-dev/pandera",
             mypy_cmd="{mypy} pandera tests",
+            pyright_cmd="{pyright}",
             pip_cmd="{pip} install types-click types-PyYAML types-setuptools types-requests",
             expected_mypy_success=True,
         ),
@@ -475,6 +481,7 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/DataDog/dd-trace-py",
             mypy_cmd="{mypy}",
+            pyright_cmd="{pyright}",
             pip_cmd=(
                 "{pip} install attrs types-six types-setuptools types-docutils "
                 "types-PyYAML types-protobuf"
@@ -484,6 +491,7 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/systemd/mkosi",
             mypy_cmd="{mypy} mkosi",
+            pyright_cmd="{pyright}",
             pip_cmd="{pip} install cryptography",
             expected_mypy_success=True,
         ),
@@ -522,6 +530,7 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/Kalmat/PyWinCtl",
             mypy_cmd="{mypy} src/pywinctl",
+            pyright_cmd="{pyright}",
             pip_cmd="{pip} install types-setuptools types-pywin32 types-python-xlib",
             expected_mypy_success=True,
         ),
@@ -661,24 +670,29 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/FasterSpeeding/Tanjun",
             mypy_cmd="{mypy} tanjun",
+            pyright_cmd="{pyright}",
             pip_cmd="{pip} install hikari alluka",
         ),
         Project(
             location="https://github.com/joerick/pyinstrument",
             mypy_cmd="{mypy} pyinstrument",
+            pyright_cmd="{pyright}",
         ),
         Project(
             location="https://github.com/Gobot1234/steam.py",
             mypy_cmd="{mypy} steam",
+            pyright_cmd="{pyright}",
             pip_cmd="{pip} install cryptography",
         ),
         Project(
             location="https://github.com/cpitclaudel/alectryon",
             mypy_cmd="{mypy} alectryon.py",
+            pyright_cmd="{pyright}",
         ),
         Project(
             location="https://github.com/yurijmikhalevich/rclip",
             mypy_cmd="{mypy} rclip",
+            pyright_cmd="{pyright}",
         ),
         Project(
             location="https://github.com/psycopg/psycopg",
@@ -692,6 +706,7 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/Rapptz/discord.py",
             mypy_cmd="{mypy} discord",
+            pyright_cmd="{pyright}",
             pip_cmd="{pip} install types-requests types-setuptools aiohttp",
             mypy_cost=20,
         ),
@@ -718,17 +733,20 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/MaterializeInc/materialize",
             mypy_cmd="MYPYPATH=$MYPYPATH:misc/python {mypy} ci misc/python",
+            pyright_cmd="{pyright}",
             pip_cmd="{pip} install -r ci/builder/requirements.txt",
             mypy_cost=30,
         ),
         Project(
             "https://github.com/canonical/operator",
             mypy_cmd="{mypy} ops",
+            pyright_cmd="{pyright}",
             pip_cmd="{pip} install types-PyYAML",
         ),
         Project(
             "https://github.com/astropenguin/xarray-dataclasses",
             mypy_cmd="{mypy} xarray_dataclasses",
+            pyright_cmd="{pyright}",
             pip_cmd="{pip} install numpy xarray",
         ),
         Project(
@@ -747,11 +765,13 @@ def get_projects() -> list[Project]:
         Project(
             "https://github.com/Finistere/antidote",
             mypy_cmd="{mypy} .",
+            pyright_cmd="{pyright}",
             pip_cmd="{pip} install pytest",
         ),
         Project(
             "https://github.com/cognitedata/Expression",
             mypy_cmd="{mypy} .",
+            pyright_cmd="{pyright}",
             pip_cmd="{pip} install pytest",
         ),
         Project(
@@ -779,12 +799,15 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/mit-ll-responsible-ai/hydra-zen",
             mypy_cmd="{mypy} src",
+            # https://github.com/microsoft/pyright/issues/5268
+            # pyright_cmd="{pyright}",
             pip_cmd="{pip} install pydantic beartype hydra-core",
             mypy_cost=30,
         ),
         Project(
             location="https://github.com/Avasam/Auto-Split",
             mypy_cmd="{mypy} src",
+            pyright_cmd="{pyright}",
             pip_cmd=(
                 "{pip} install certifi ImageHash numpy packaging PyQt6 "
                 "types-d3dshot types-keyboard types-Pillow types-psutil types-PyAutoGUI "
@@ -794,6 +817,7 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/Avasam/speedrun.com_global_scoreboard_webapp",
             mypy_cmd="{mypy} backend",
+            pyright_cmd="{pyright}",
             pip_cmd=(
                 "{pip} install Flask PyJWT requests-cache types-Flask-SQLAlchemy "
                 "types-httplib2 types-requests"
@@ -808,6 +832,7 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/keithasaurus/koda-validate",
             mypy_cmd="{mypy} koda_validate --strict",
+            pyright_cmd="{pyright}",
             pip_cmd="{pip} install koda",
         ),
     ]
