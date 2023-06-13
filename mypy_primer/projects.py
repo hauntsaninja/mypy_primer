@@ -805,7 +805,7 @@ def get_projects() -> list[Project]:
             mypy_cost=30,
         ),
         Project(
-            location="https://github.com/Avasam/Auto-Split",
+            location="https://github.com/Toufool/Auto-Split",
             mypy_cmd="{mypy} src",
             pyright_cmd="{pyright}",
             pip_cmd=(
