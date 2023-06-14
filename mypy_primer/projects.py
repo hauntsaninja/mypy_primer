@@ -805,12 +805,12 @@ def get_projects() -> list[Project]:
             mypy_cost=30,
         ),
         Project(
-            location="https://github.com/Toufool/Auto-Split",
+            location="https://github.com/Toufool/AutoSplit",
             mypy_cmd="{mypy} src",
-            pyright_cmd="{pyright}",
+            pyright_cmd="{pyright} src",
             pip_cmd=(
-                "{pip} install certifi ImageHash numpy packaging PyQt6 "
-                "types-d3dshot types-keyboard types-Pillow types-psutil types-PyAutoGUI "
+                "{pip} install certifi ImageHash numpy packaging PyWinCtl PySide6-Essentials "
+                "winsdk types-D3DShot types-keyboard types-Pillow types-psutil types-PyAutoGUI "
                 "types-pyinstaller types-pywin32 types-requests types-toml"
             ),
         ),
