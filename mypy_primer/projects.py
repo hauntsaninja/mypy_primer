@@ -799,8 +799,7 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/mit-ll-responsible-ai/hydra-zen",
             mypy_cmd="{mypy} src",
-            # https://github.com/microsoft/pyright/issues/5268
-            # pyright_cmd="{pyright}",
+            pyright_cmd="{pyright}",
             pip_cmd="{pip} install pydantic beartype hydra-core",
             mypy_cost=30,
         ),
