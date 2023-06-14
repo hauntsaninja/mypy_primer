@@ -809,7 +809,7 @@ def get_projects() -> list[Project]:
             pyright_cmd="{pyright} src",
             pip_cmd=(
                 "{pip} install certifi ImageHash numpy packaging PyWinCtl PySide6-Essentials "
-                "winsdk types-D3DShot types-keyboard types-Pillow types-psutil types-PyAutoGUI "
+                "types-D3DShot types-keyboard types-Pillow types-psutil types-PyAutoGUI "
                 "types-pyinstaller types-pywin32 types-requests types-toml"
             ),
         ),
