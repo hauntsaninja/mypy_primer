@@ -313,15 +313,16 @@ class PrimerResult:
         else:
             speed = "slower"
 
-        has_runtime_diff = runtime_diff > 5 and runtime_ratio > 1.05
+        has_runtime_diff = runtime_diff > 10 and runtime_ratio > 1.05
         if not self.diff and not has_runtime_diff:
             return ""
 
         ret = f"{self.project.name} ({self.project.location})"
         if has_runtime_diff:
             ret += (
-                f" got {runtime_ratio:.2f}x {speed} "
-                f"({self.old_result.runtime:.1f}s -> {self.new_result.runtime:.1f}s)"
+                f": typechecking got {runtime_ratio:.2f}x {speed} "
+                f"({self.old_result.runtime:.1f}s -> {self.new_result.runtime:.1f}s)\n"
+                f"(Performance measurements are based on a single noisy sample)"
             )
         if self.diff:
             ret += "\n" + self.diff
