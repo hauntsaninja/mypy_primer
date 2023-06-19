@@ -1,7 +1,17 @@
 # mypy_primer
 
-mypy_primer makes it easy to run [mypy](https://github.com/python/mypy/) over several million lines
-of open source projects for the purpose of finding regressions or evaluating changes.
+mypy_primer is a tool for regression testing Python static type checkers.
+
+mypy_primer makes it easy to run different versions of a type checker over several million lines
+of open source Python projects with typing for the purpose of evaluating changes.
+
+mypy_primer currently supports [mypy](https://github.com/python/mypy/) and
+[pyright](https://github.com/microsoft/pyright). mypy_primer's code and ideas have been used to
+improve testing of other tools in the code quality ecosystem; if you maintain such a tool, let me
+know if I can help you!
+
+mypy_primer was inspired by Rust's [crater](https://github.com/rust-lang/crater) and the name
+was inspired by [black](https://github.com/psf/black).
 
 ## Explanation
 
@@ -12,7 +22,7 @@ Here's what mypy_primer does:
 - Installs necessary stubs and dependencies per project
 - Runs the appropriate mypy command per project
 - Shows you the potentially differing results!
-- Lets you bisect to find the commit that causes a given change
+- Lets you bisect to find the mypy commit that causes a given change
 
 mypy_primer contains a hardcoded list of open source projects and their respective mypy setups (to
 which contributions are gladly accepted). The list is visible at the bottom of `mypy_primer.py` and
@@ -29,7 +39,7 @@ The hardcoded list is in theory susceptible to bitrot, but if you pass e.g. the 
 
 ```
 λ mypy_primer --help
-usage: mypy_primer [-h] [--new NEW] [--old OLD] [--repo REPO]
+usage: mypy_primer [-h] [--new NEW] [--old OLD] [--type-checker {mypy,pyright}] [--repo REPO]
                    [--mypyc-compile-level MYPYC_COMPILE_LEVEL]
                    [--custom-typeshed-repo CUSTOM_TYPESHED_REPO] [--new-typeshed NEW_TYPESHED]
                    [--old-typeshed OLD_TYPESHED] [--additional-flags [ADDITIONAL_FLAGS ...]]
@@ -42,23 +52,25 @@ usage: mypy_primer [-h] [--new NEW] [--old OLD] [--repo REPO]
 options:
   -h, --help            show this help message and exit
 
-mypy:
-  --new NEW             new mypy version, defaults to HEAD (pypi version, anything commit-ish, or
-                        isoformatted date)
-  --old OLD             old mypy version, defaults to latest tag (pypi version, anything commit-
+type checker:
+  --new NEW             new type checker version, defaults to HEAD (pypi version, anything commit-
                         ish, or isoformatted date)
-  --repo REPO           mypy repo to use (passed to git clone. if unspecified, we first try pypi,
-                        then fall back to github)
+  --old OLD             old type checker version, defaults to latest tag (pypi version, anything
+                        commit-ish, or isoformatted date)
+  --type-checker {mypy,pyright}
+                        type checker to use
+  --repo REPO           type checker repo to use (passed to git clone. if unspecified, we first
+                        try pypi, then fall back to github)
   --mypyc-compile-level MYPYC_COMPILE_LEVEL
                         Compile mypy with the given mypyc optimisation level
   --custom-typeshed-repo CUSTOM_TYPESHED_REPO
                         typeshed repo to use (passed to git clone)
   --new-typeshed NEW_TYPESHED
-                        new typeshed version, defaults to mypy's (anything commit-ish, or
-                        isoformatted date)
+                        new typeshed version, defaults to vendored (commit-ish or isoformatted
+                        date)
   --old-typeshed OLD_TYPESHED
-                        old typeshed version, defaults to mypy's (anything commit-ish, or
-                        isoformatted date)
+                        old typeshed version, defaults to vendored (commit-ish, or isoformatted
+                        date)
   --additional-flags [ADDITIONAL_FLAGS ...]
                         additional flags to pass to mypy
 
