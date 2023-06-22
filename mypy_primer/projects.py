@@ -540,6 +540,12 @@ def get_projects() -> list[Project]:
             pip_cmd="{pip} install types-PyYAML",
             expected_mypy_success=True,
         ),
+        Project(
+            location="https://github.com/aio-libs/aiohttp-devtools",
+            mypy_cmd="{mypy}",
+            pip_cmd="{pip} install aiohttp watchfiles types-pygments",
+            expected_mypy_success=True,
+        ),
         *(
             [
                 Project(
