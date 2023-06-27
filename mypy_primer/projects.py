@@ -698,18 +698,19 @@ def get_projects() -> list[Project]:
             location="https://github.com/common-workflow-language/schema_salad",
             mypy_cmd="MYPYPATH=$MYPYPATH:mypy-stubs {mypy} schema_salad",
             pip_cmd=(
-                "{pip} install types-pkg_resources types-requests types-dataclasses"
-                " types-setuptools black pytest ruamel.yaml"
+                "{pip} install $(grep -v mypy mypy-requirements.txt) -r test-requirements.txt"
+                " -rrequirements.txt"
             ),
+            expected_mypy_success=True,
+            supported_platforms=["linux", "darwin"],
         ),
         Project(
             location="https://github.com/common-workflow-language/cwltool",
-            mypy_cmd="MYPYPATH=$MYPYPATH:mypy-stubs {mypy} cwltool/*.py tests/*.py",
-            pip_cmd=(
-                "{pip} install types-requests types-setuptools types-psutil types-mock cwl-utils"
-                " schema-salad ruamel-yaml pytest pytest-httpserver"
-            ),
+            mypy_cmd="MYPYPATH=$MYPYPATH:mypy-stubs {mypy} cwltool tests/*.py setup.py",
+            pip_cmd="{pip} install $(grep -v mypy mypy-requirements.txt) -r test-requirements.txt",
+            expected_mypy_success=True,
             mypy_cost=20,
+            supported_platforms=["linux", "darwin"],
         ),
         Project(
             location="https://github.com/FasterSpeeding/Tanjun",
