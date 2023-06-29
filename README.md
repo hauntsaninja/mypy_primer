@@ -11,7 +11,7 @@ improve testing of other tools in the code quality ecosystem; if you maintain su
 know if I can help you!
 
 mypy_primer was inspired by Rust's [crater](https://github.com/rust-lang/crater) and the name
-was inspired by [black](https://github.com/psf/black).
+was inspired by [black-primer](https://github.com/cooperlees/black-primer).
 
 ## Explanation
 
