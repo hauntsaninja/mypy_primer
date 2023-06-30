@@ -181,7 +181,8 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} src",
             pip_cmd=(
                 "{pip} install types-python-dateutil types-requests types-simplejson types-toml "
-                "types-croniter types-PyYAML types-python-slugify types-pytz cryptography"
+                "types-croniter types-PyYAML types-python-slugify types-pytz cryptography "
+                "SQLAlchemy"
             ),
             expected_mypy_success=True,
         ),
@@ -254,7 +255,7 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/optuna/optuna",
             mypy_cmd="{mypy} .",
-            pip_cmd="{pip} install types-PyYAML types-redis types-setuptools",
+            pip_cmd="{pip} install types-PyYAML types-redis types-setuptools SQLAlchemy",
             expected_mypy_success=True,
         ),
         Project(
@@ -621,7 +622,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/ibis-project/ibis",
             mypy_cmd="{mypy} --ignore-missing-imports ibis",
             pip_cmd="{pip} install types-setuptools types-requests "
-            "types-python-dateutil types-pytz",
+            "types-python-dateutil types-pytz SQLAlchemy",
         ),
         Project(
             location="https://github.com/streamlit/streamlit",
