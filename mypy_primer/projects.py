@@ -10,7 +10,7 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/python/mypy",
             mypy_cmd="{mypy} --config-file mypy_self_check.ini -p mypy -p mypyc",
-            pip_cmd="{pip} install pytest types-typed-ast filelock",
+            pip_cmd="{pip} install pytest types-psutil types-setuptools filelock tomli",
             expected_mypy_success=True,
             mypy_cost=20,
         ),
@@ -22,8 +22,7 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/psf/black",
             mypy_cmd="{mypy} src",
-            pip_cmd="{pip} install types-dataclasses types-typed-ast aiohttp click "
-            "tomli platformdirs",
+            pip_cmd="{pip} install aiohttp click pathspec tomli platformdirs",
             expected_mypy_success=True,
         ),
         Project(
@@ -73,7 +72,7 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/sphinx-doc/sphinx",
             mypy_cmd="{mypy} sphinx",
-            pip_cmd="{pip} install docutils-stubs types-typed-ast types-requests types-setuptools",
+            pip_cmd="{pip} install docutils-stubs types-requests packaging",
             expected_mypy_success=True,
         ),
         Project(
@@ -385,7 +384,6 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/laowantong/paroxython",
             mypy_cmd="{mypy} paroxython",
-            pip_cmd="{pip} install types-typed-ast types-setuptools",
             expected_mypy_success=True,
         ),
         Project(
