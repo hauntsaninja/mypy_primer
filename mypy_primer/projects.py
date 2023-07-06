@@ -22,8 +22,7 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/psf/black",
             mypy_cmd="{mypy} src",
-            pip_cmd="{pip} install aiohttp click pathspec"
-            "tomli platformdirs",
+            pip_cmd="{pip} install aiohttp click pathspec tomli platformdirs",
             expected_mypy_success=True,
         ),
         Project(
