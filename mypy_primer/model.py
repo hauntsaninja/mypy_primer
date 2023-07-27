@@ -19,7 +19,6 @@ from mypy_primer.git_utils import ensure_repo_at_revision
 from mypy_primer.globals import ctx
 from mypy_primer.utils import BIN_DIR, Style, debug_print, run
 
-
 extra_dataclass_args = {"kw_only": True} if sys.version_info >= (3, 10) else {}
 
 

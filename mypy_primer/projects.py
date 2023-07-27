@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import sys
-
 from mypy_primer.model import Project
 
 # projects to re-enable:
