@@ -35,9 +35,9 @@ def update_projects(projects: list[Project], check: bool = False) -> None:
 
     if check:
         code_proc = subprocess.run(
-            ["black", "-c", "\n".join(result)], capture_output=True, text=True
+            ["black", "-"], input="\n".join(result), capture_output=True, text=True
         )
-        code_proc.check_returncode
+        code_proc.check_returncode()
         code = code_proc.stdout
 
         with open(__file__) as f:
