@@ -340,7 +340,7 @@ class PrimerResult:
             ret += (
                 f": typechecking got {runtime_ratio:.2f}x {speed} "
                 f"({self.old_result.runtime:.1f}s -> {self.new_result.runtime:.1f}s)\n"
-                f"(Performance measurements are based on a single noisy sample)"
+                "(Performance measurements are based on a single noisy sample)"
             )
         if self.diff:
             ret += "\n" + self.diff

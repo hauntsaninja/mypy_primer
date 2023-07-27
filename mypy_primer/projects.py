@@ -42,8 +42,8 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} pandas",
             pyright_cmd="{pyright} pandas",
             pip_cmd=(
-                "{pip} install numpy types-python-dateutil types-pytz types-PyMySQL "
-                "types-setuptools pytest"
+                "{pip} install numpy types-python-dateutil types-pytz types-PyMySQL"
+                " types-setuptools pytest"
             ),
             expected_mypy_success=True,
             mypy_cost=120,
@@ -155,8 +155,8 @@ def get_projects() -> list[Project]:
                 "{mypy} zerver zilencer zproject tools analytics corporate scripts --platform=linux"
             ),
             pip_cmd=(
-                "{pip} install types-PyYAML types-polib types-redis types-Markdown types-decorator "
-                "types-pytz types-requests types-python-dateutil types-orjson cryptography"
+                "{pip} install types-PyYAML types-polib types-redis types-Markdown types-decorator"
+                " types-pytz types-requests types-python-dateutil types-orjson cryptography"
             ),
             expected_mypy_success=True,
         ),
@@ -170,8 +170,8 @@ def get_projects() -> list[Project]:
             location="https://github.com/yelp/paasta",
             mypy_cmd="{mypy} paasta_tools",
             pip_cmd=(
-                "{pip} install types-retry types-tzlocal types-ujson types-python-dateutil "
-                "types-pytz types-PyYAML types-requests"
+                "{pip} install types-retry types-tzlocal types-ujson types-python-dateutil"
+                " types-pytz types-PyYAML types-requests"
             ),
             expected_mypy_success=True,
         ),
@@ -179,9 +179,9 @@ def get_projects() -> list[Project]:
             location="https://github.com/PrefectHQ/prefect",
             mypy_cmd="{mypy} src",
             pip_cmd=(
-                "{pip} install types-python-dateutil types-requests types-simplejson types-toml "
-                "types-croniter types-PyYAML types-python-slugify types-pytz cryptography "
-                "SQLAlchemy"
+                "{pip} install types-python-dateutil types-requests types-simplejson types-toml"
+                " types-croniter types-PyYAML types-python-slugify types-pytz cryptography"
+                " SQLAlchemy"
             ),
             expected_mypy_success=True,
         ),
@@ -234,8 +234,8 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} freqtrade scripts",
             pyright_cmd="{pyright}",
             pip_cmd=(
-                "{pip} install types-cachetools types-requests types-python-dateutil "
-                "types-tabulate types-filelock"
+                "{pip} install types-cachetools types-requests types-python-dateutil types-tabulate"
+                " types-filelock"
             ),
             expected_mypy_success=True,
         ),
@@ -434,8 +434,8 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/awslabs/sockeye",
             mypy_cmd=(
-                "{mypy} --ignore-missing-imports --follow-imports=silent"
-                " @typechecked-files --no-strict-optional"
+                "{mypy} --ignore-missing-imports --follow-imports=silent @typechecked-files"
+                " --no-strict-optional"
             ),
             pip_cmd="{pip} install types-PyYAML",
             expected_mypy_success=True,
@@ -482,8 +482,8 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy}",
             pyright_cmd="{pyright}",
             pip_cmd=(
-                "{pip} install attrs types-six types-setuptools types-docutils "
-                "types-PyYAML types-protobuf"
+                "{pip} install attrs types-six types-setuptools types-docutils types-PyYAML"
+                " types-protobuf"
             ),
             expected_mypy_success=True,
         ),
@@ -515,8 +515,8 @@ def get_projects() -> list[Project]:
             location="https://github.com/internetarchive/openlibrary",
             mypy_cmd="{mypy} openlibrary",
             pip_cmd=(
-                "{pip} install types-PyYAML types-python-dateutil types-requests "
-                "types-simplejson types-Deprecated"
+                "{pip} install types-PyYAML types-python-dateutil types-requests types-simplejson"
+                " types-Deprecated"
             ),
             expected_mypy_success=True,
         ),
@@ -599,9 +599,8 @@ def get_projects() -> list[Project]:
             location="https://github.com/home-assistant/core",
             mypy_cmd="{mypy} homeassistant",
             pip_cmd=(
-                "{pip} install attrs pydantic "
-                "types-setuptools types-atomicwrites types-certifi types-croniter "
-                "types-PyYAML types-requests types-python-slugify types-backports"
+                "{pip} install attrs pydantic types-setuptools types-atomicwrites types-certifi"
+                " types-croniter types-PyYAML types-requests types-python-slugify types-backports"
             ),
             mypy_cost=70,
         ),
@@ -609,15 +608,17 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/ibis-project/ibis",
             mypy_cmd="{mypy} --ignore-missing-imports ibis",
-            pip_cmd="{pip} install types-setuptools types-requests "
-            "types-python-dateutil types-pytz SQLAlchemy",
+            pip_cmd=(
+                "{pip} install types-setuptools types-requests types-python-dateutil types-pytz"
+                " SQLAlchemy"
+            ),
         ),
         Project(
             location="https://github.com/streamlit/streamlit",
             mypy_cmd="{mypy} --config-file=lib/mypy.ini lib scripts",
             pip_cmd=(
-                "{pip} install attrs tornado packaging types-toml types-python-dateutil "
-                "types-setuptools types-protobuf types-pytz types-requests types-cffi click pytest"
+                "{pip} install attrs tornado packaging types-toml types-python-dateutil"
+                " types-setuptools types-protobuf types-pytz types-requests types-cffi click pytest"
             ),
         ),
         Project(
@@ -645,21 +646,25 @@ def get_projects() -> list[Project]:
             location="https://github.com/urllib3/urllib3",
             mypy_cmd="{mypy} . --exclude setup.py",
             pip_cmd=(
-                "{pip} install idna>=2.0.0 cryptography>=1.3.4 tornado>=6.1 pytest "
-                "trustme==0.9.0 types-backports types-requests"
+                "{pip} install idna>=2.0.0 cryptography>=1.3.4 tornado>=6.1 pytest trustme==0.9.0"
+                " types-backports types-requests"
             ),
         ),
         Project(
             location="https://github.com/common-workflow-language/schema_salad",
             mypy_cmd="MYPYPATH=$MYPYPATH:mypy-stubs {mypy} schema_salad",
-            pip_cmd="{pip} install types-pkg_resources types-requests "
-            "types-dataclasses types-setuptools black pytest ruamel.yaml",
+            pip_cmd=(
+                "{pip} install types-pkg_resources types-requests types-dataclasses"
+                " types-setuptools black pytest ruamel.yaml"
+            ),
         ),
         Project(
             location="https://github.com/common-workflow-language/cwltool",
             mypy_cmd="MYPYPATH=$MYPYPATH:mypy-stubs {mypy} cwltool/*.py tests/*.py",
-            pip_cmd="{pip} install types-requests types-setuptools types-psutil "
-            "types-mock cwl-utils schema-salad ruamel-yaml pytest pytest-httpserver",
+            pip_cmd=(
+                "{pip} install types-requests types-setuptools types-psutil types-mock cwl-utils"
+                " schema-salad ruamel-yaml pytest pytest-httpserver"
+            ),
             mypy_cost=20,
         ),
         Project(
@@ -706,9 +711,8 @@ def get_projects() -> list[Project]:
             location="https://github.com/canonical/cloud-init",
             mypy_cmd="{mypy} cloudinit/ tests/ tools/",
             pip_cmd=(
-                "{pip} install jinja2 pytest "
-                "types-jsonschema types-oauthlib "
-                "types-pyyaml types-requests types-setuptools"
+                "{pip} install jinja2 pytest types-jsonschema types-oauthlib types-pyyaml"
+                " types-requests types-setuptools"
             ),
             mypy_cost=20,
         ),
@@ -745,8 +749,8 @@ def get_projects() -> list[Project]:
             location="https://github.com/caronc/apprise",
             mypy_cmd="{mypy} .",
             pip_cmd=(
-                "{pip} install types-six types-mock cryptography types-requests "
-                "types-PyYAML types-Markdown pytest certifi"
+                "{pip} install types-six types-mock cryptography types-requests types-PyYAML"
+                " types-Markdown pytest certifi"
             ),
         ),
         Project(
@@ -800,9 +804,9 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} src",
             pyright_cmd="{pyright} src",
             pip_cmd=(
-                "{pip} install certifi ImageHash numpy packaging PyWinCtl PySide6-Essentials "
-                "types-D3DShot types-keyboard types-Pillow types-psutil types-PyAutoGUI "
-                "types-pyinstaller types-pywin32 types-requests types-toml"
+                "{pip} install certifi ImageHash numpy packaging PyWinCtl PySide6-Essentials"
+                " types-D3DShot types-keyboard types-Pillow types-psutil types-PyAutoGUI"
+                " types-pyinstaller types-pywin32 types-requests types-toml"
             ),
         ),
         Project(
@@ -810,8 +814,8 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} backend",
             pyright_cmd="{pyright}",
             pip_cmd=(
-                "{pip} install Flask PyJWT requests-cache types-Flask-SQLAlchemy "
-                "types-httplib2 types-requests"
+                "{pip} install Flask PyJWT requests-cache types-Flask-SQLAlchemy types-httplib2"
+                " types-requests"
             ),
             mypy_cost=30,
         ),
