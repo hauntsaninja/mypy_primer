@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import difflib
+import subprocess
 import sys
 
 from mypy_primer.model import Project
@@ -33,11 +34,12 @@ def update_projects(projects: list[Project], check: bool = False) -> None:
                 keep = True
 
     if check:
-        import black
-
-        code = black.format_file_contents(
-            "\n".join(result), fast=False, mode=black.mode.Mode(preview=True, line_length=100)
+        code_proc = subprocess.run(
+            ["black", "-c", "\n".join(result)], capture_output=True, text=True
         )
+        code_proc.check_returncode
+        code = code_proc.stdout
+
         with open(__file__) as f:
             in_file = f.read()
             if in_file != code:
