@@ -28,8 +28,8 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/hauntsaninja/pyp",
             mypy_cmd="{mypy} --strict -m pyp",
-            expected_mypy_success=True,
             pyright_cmd="{pyright}",
+            expected_mypy_success=True,
         ),
         Project(
             location="https://github.com/pytest-dev/pytest",
@@ -194,8 +194,8 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/jab/bidict",
             mypy_cmd="{mypy} bidict",
-            expected_mypy_success=True,
             pyright_cmd="{pyright}",
+            expected_mypy_success=True,
         ),
         Project(
             location="https://github.com/jaraco/zipp",
@@ -472,7 +472,7 @@ def get_projects() -> list[Project]:
             expected_mypy_success=True,
         ),
         Project(
-            "https://github.com/rpdelaney/downforeveryone",
+            location="https://github.com/rpdelaney/downforeveryone",
             mypy_cmd="{mypy} .",
             pip_cmd="{pip} install types-requests types-requests",
             expected_mypy_success=True,
@@ -571,15 +571,6 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} pyppeteer --config-file tox.ini",
             pip_cmd="{pip} install .",
         ),
-        Project(
-            location="https://github.com/pypa/pip",
-            mypy_cmd="{mypy} src",
-        ),
-        Project(
-            # relies on setup.py to create a version.py file
-            location="https://github.com/pytorch/vision",
-            mypy_cmd="{mypy}",
-        ),
         # TODO: needs mypy-zope plugin
         # Project(
         #     location="https://github.com/twisted/twisted",
@@ -587,6 +578,8 @@ def get_projects() -> list[Project]:
         # ),
         # Other repos with plugins:
         # dry-python/returns, strawberry-graphql/strawberry, r-spacex/submanager, NeilGirdhar/efax
+        Project(location="https://github.com/pypa/pip", mypy_cmd="{mypy} src"),
+        Project(location="https://github.com/pytorch/vision", mypy_cmd="{mypy}"),
         Project(
             location="https://github.com/tornadoweb/tornado",
             mypy_cmd="{mypy} tornado",
@@ -612,10 +605,7 @@ def get_projects() -> list[Project]:
             ),
             mypy_cost=70,
         ),
-        Project(
-            location="https://github.com/kornia/kornia",
-            mypy_cmd="{mypy} kornia",
-        ),
+        Project(location="https://github.com/kornia/kornia", mypy_cmd="{mypy} kornia"),
         Project(
             location="https://github.com/ibis-project/ibis",
             mypy_cmd="{mypy} --ignore-missing-imports ibis",
@@ -704,10 +694,7 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy}",
             pip_cmd="{pip} install pytest pproxy",
         ),
-        Project(
-            location="https://gitlab.com/dkg/python-sop",
-            mypy_cmd="{mypy} --strict sop",
-        ),
+        Project(location="https://gitlab.com/dkg/python-sop", mypy_cmd="{mypy} --strict sop"),
         Project(
             location="https://github.com/Rapptz/discord.py",
             mypy_cmd="{mypy} discord",
@@ -743,19 +730,19 @@ def get_projects() -> list[Project]:
             mypy_cost=30,
         ),
         Project(
-            "https://github.com/canonical/operator",
+            location="https://github.com/canonical/operator",
             mypy_cmd="{mypy} ops",
             pyright_cmd="{pyright}",
             pip_cmd="{pip} install types-PyYAML",
         ),
         Project(
-            "https://github.com/astropenguin/xarray-dataclasses",
+            location="https://github.com/astropenguin/xarray-dataclasses",
             mypy_cmd="{mypy} xarray_dataclasses",
             pyright_cmd="{pyright}",
             pip_cmd="{pip} install numpy xarray",
         ),
         Project(
-            "https://github.com/caronc/apprise",
+            location="https://github.com/caronc/apprise",
             mypy_cmd="{mypy} .",
             pip_cmd=(
                 "{pip} install types-six types-mock cryptography types-requests "
@@ -763,18 +750,18 @@ def get_projects() -> list[Project]:
             ),
         ),
         Project(
-            "https://github.com/daveleroy/sublime_debugger",
+            location="https://github.com/daveleroy/sublime_debugger",
             mypy_cmd="{mypy} modules --namespace-packages",
             pip_cmd="{pip} install certifi",
         ),
         Project(
-            "https://github.com/Finistere/antidote",
+            location="https://github.com/Finistere/antidote",
             mypy_cmd="{mypy} .",
             pyright_cmd="{pyright}",
             pip_cmd="{pip} install pytest",
         ),
         Project(
-            "https://github.com/cognitedata/Expression",
+            location="https://github.com/cognitedata/Expression",
             mypy_cmd="{mypy} .",
             pyright_cmd="{pyright}",
             pip_cmd="{pip} install pytest",
@@ -792,9 +779,9 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/pandas-dev/pandas-stubs",
             mypy_cmd="{mypy} pandas-stubs tests",
-            mypy_cost=20,
             pyright_cmd="{pyright}",
             expected_pyright_success=True,
+            mypy_cost=20,
         ),
         Project(
             location="https://github.com/enthought/comtypes",

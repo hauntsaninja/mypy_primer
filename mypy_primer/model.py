@@ -34,6 +34,24 @@ class Project:
     pyright_cmd: str | None = None
     expected_pyright_success: bool = False
 
+    # custom __repr__ that omits defaults.
+    def __repr__(self) -> str:
+        result = f"Project(location={self.location!r}, mypy_cmd={self.mypy_cmd!r}"
+        if self.pyright_cmd:
+            result += f", pyright_cmd={self.pyright_cmd!r}"
+        if self.pip_cmd:
+            result += f", pip_cmd={self.pip_cmd!r}"
+        if self.expected_mypy_success:
+            result += f", expected_mypy_success={self.expected_mypy_success!r}"
+        if self.expected_pyright_success:
+            result += f", expected_pyright_success={self.expected_pyright_success!r}"
+        if self.mypy_cost != 3:
+            result += f", mypy_cost={self.mypy_cost!r}"
+        if self.revision:
+            result += f", revision={self.revision!r}"
+        result += ")"
+        return result
+
     @property
     def name(self) -> str:
         return Path(self.location).name
