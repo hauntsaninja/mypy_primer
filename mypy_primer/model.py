@@ -20,11 +20,15 @@ from mypy_primer.globals import ctx
 from mypy_primer.utils import BIN_DIR, Style, debug_print, run
 
 
-@dataclass(frozen=True)
+extra_dataclass_args = {"kw_only": True} if sys.version_info >= (3, 10) else {}
+
+
+@dataclass(frozen=True, **extra_dataclass_args)
 class Project:
     location: str
     mypy_cmd: str
     revision: str | None = None
+    min_python_version: tuple[int, int] | None = None
     pip_cmd: str | None = None
     # if expected_success, there is a recent version of mypy which passes cleanly
     expected_mypy_success: bool = False
@@ -49,6 +53,8 @@ class Project:
             result += f", mypy_cost={self.mypy_cost!r}"
         if self.revision:
             result += f", revision={self.revision!r}"
+        if self.min_python_version:
+            result += f", min_python_version={self.min_python_version!r}"
         result += ")"
         return result
 

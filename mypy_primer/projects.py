@@ -4,6 +4,16 @@ import sys
 
 from mypy_primer.model import Project
 
+# projects to re-enable:
+# - https://github.com/edgedb/edgedb
+# - https://github.com/twisted/twisted (needs mypy-zope plugin)
+
+# repos with plugins
+# - https://github.com/dry-python/returns
+# - https://github.com/strawberry-graphql/strawberry
+# - https://github.com/r-spacex/submanager
+# - https://github.com/NeilGirdhar/efax
+
 
 def get_projects() -> list[Project]:
     projects = [
@@ -391,20 +401,6 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} porcupine more_plugins",
             expected_mypy_success=True,
         ),
-        # Project(
-        #     location="https://github.com/edgedb/edgedb",
-        #     mypy_cmd="{mypy} edb",
-        #     # weeeee, extract the deps by noping out setuptools.setup and reading them
-        #     # from the setup.py
-        #     pip_cmd=(
-        #         "{pip} install "
-        #         '$(python3 -c "import setuptools; setuptools.setup=dict; '
-        #         "from edb import buildmeta; buildmeta.get_version_from_scm = lambda *a: 1; "
-        #         "import setup; "
-        #         "print(' '.join(setup.TEST_DEPS+setup.DOCS_DEPS+setup.RUNTIME_DEPS))\")"
-        #     ),
-        #     expected_mypy_success=True,
-        # ),
         Project(
             location="https://github.com/dropbox/mypy-protobuf",
             mypy_cmd="{mypy} mypy_protobuf/",
@@ -412,7 +408,6 @@ def get_projects() -> list[Project]:
             pip_cmd="{pip} install types-protobuf",
             expected_mypy_success=True,
         ),
-        # https://github.com/spack/spack/blob/develop/lib/spack/spack/cmd/style.py
         Project(
             location="https://github.com/spack/spack",
             mypy_cmd="{mypy} -p spack -p llnl",
@@ -545,39 +540,25 @@ def get_projects() -> list[Project]:
             pip_cmd="{pip} install aiohttp watchfiles types-pygments",
             expected_mypy_success=True,
         ),
-        *(
-            [
-                Project(
-                    location="https://github.com/sco1/pylox",
-                    mypy_cmd="{mypy} .",
-                    pip_cmd="{pip} install attrs",
-                    expected_mypy_success=True,
-                ),
-                Project(
-                    location="https://github.com/ppb/ppb-vector",
-                    mypy_cmd="{mypy} ppb_vector tests",
-                    pip_cmd="{pip} install hypothesis",
-                    expected_mypy_success=True,
-                ),
-            ]
-            if sys.version_info >= (3, 10)
-            else []
+        Project(
+            location="https://github.com/sco1/pylox",
+            mypy_cmd="{mypy} .",
+            pip_cmd="{pip} install attrs",
+            expected_mypy_success=True,
+            min_python_version=(3, 10),
         ),
-        # ==============================
-        # Failures expected...
-        # ==============================
+        Project(
+            location="https://github.com/ppb/ppb-vector",
+            mypy_cmd="{mypy} ppb_vector tests",
+            pip_cmd="{pip} install hypothesis",
+            expected_mypy_success=True,
+            min_python_version=(3, 10),
+        ),
         Project(
             location="https://github.com/pyppeteer/pyppeteer",
             mypy_cmd="{mypy} pyppeteer --config-file tox.ini",
             pip_cmd="{pip} install .",
         ),
-        # TODO: needs mypy-zope plugin
-        # Project(
-        #     location="https://github.com/twisted/twisted",
-        #     mypy_cmd="{mypy} src",
-        # ),
-        # Other repos with plugins:
-        # dry-python/returns, strawberry-graphql/strawberry, r-spacex/submanager, NeilGirdhar/efax
         Project(location="https://github.com/pypa/pip", mypy_cmd="{mypy} src"),
         Project(location="https://github.com/pytorch/vision", mypy_cmd="{mypy}"),
         Project(

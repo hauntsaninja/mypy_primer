@@ -112,7 +112,11 @@ def select_projects() -> list[Project]:
     if ARGS.local_project:
         return [Project.from_location(ARGS.local_project)]
 
-    project_iter: Iterator[Project] = iter(p for p in get_projects())
+    project_iter: Iterator[Project] = iter(
+        p
+        for p in get_projects()
+        if not (p.min_python_version and sys.version_info < p.min_python_version)
+    )
     if ARGS.type_checker == "pyright":
         project_iter = iter(p for p in project_iter if p.pyright_cmd is not None)
     if ARGS.project_selector:
