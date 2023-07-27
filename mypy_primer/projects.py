@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import difflib
+import sys
+
 from mypy_primer.model import Project
 
 # projects to re-enable:
@@ -11,6 +14,44 @@ from mypy_primer.model import Project
 # - https://github.com/strawberry-graphql/strawberry
 # - https://github.com/r-spacex/submanager
 # - https://github.com/NeilGirdhar/efax
+
+
+def update_projects(projects: list[Project], check: bool = False) -> None:
+    # modifies `get_projects` in place.
+    result = []
+    with open(__file__) as f:
+        keep = True
+        for line in f:
+            if line.endswith("\n"):
+                line = line[:-1]
+            if line == "    projects = [":
+                result.append(f"    projects = {projects!r}")
+                keep = False
+            if keep:
+                result.append(line)
+            if line == "    ]":
+                keep = True
+
+    if check:
+        import black
+
+        code = black.format_file_contents(
+            "\n".join(result), fast=False, mode=black.mode.Mode(preview=True, line_length=100)
+        )
+        with open(__file__) as f:
+            in_file = f.read()
+            if in_file != code:
+                diff = difflib.context_diff(
+                    in_file.splitlines(keepends=True),
+                    code.splitlines(keepends=True),
+                    fromfile=__file__,
+                    tofile=__file__,
+                )
+                print("".join(diff))
+                sys.exit(1)
+    else:
+        with open(__file__, "w") as f:
+            f.write("\n".join(result))
 
 
 def get_projects() -> list[Project]:
