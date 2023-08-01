@@ -72,7 +72,7 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/sphinx-doc/sphinx",
             mypy_cmd="{mypy} sphinx",
-            pip_cmd="{pip} install docutils-stubs types-requests packaging",
+            pip_cmd="{pip} install babel docutils-stubs types-requests packaging",
             expected_mypy_success=True,
         ),
         Project(
@@ -759,7 +759,7 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} .",
             pip_cmd=(
                 "{pip} install types-six types-mock cryptography types-requests "
-                "types-PyYAML types-Markdown pytest certifi"
+                "types-PyYAML types-Markdown pytest certifi babel"
             ),
         ),
         Project(
