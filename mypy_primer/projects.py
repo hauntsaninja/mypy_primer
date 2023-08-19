@@ -771,8 +771,8 @@ def get_projects() -> list[Project]:
             location="https://github.com/caronc/apprise",
             mypy_cmd="{mypy} .",
             pip_cmd=(
-                "{pip} install types-six types-mock cryptography types-requests "
-                " types-Markdown pytest certifi babel"
+                "{pip} install types-six types-mock cryptography types-requests types-Markdown"
+                " pytest certifi babel"
             ),
         ),
         Project(
