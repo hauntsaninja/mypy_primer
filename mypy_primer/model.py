@@ -97,6 +97,8 @@ class Project:
             mypy_cmd += " " + " ".join(additional_flags)
         if ctx.get().output == "concise":
             mypy_cmd += "  --no-pretty --no-error-summary"
+
+        mypy_cmd += " --warn-unused-ignores"
         mypy_cmd += (
             f" --no-incremental --cache-dir={os.devnull} --show-traceback --soft-error-limit=-1"
         )
