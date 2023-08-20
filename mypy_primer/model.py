@@ -19,12 +19,15 @@ from mypy_primer.git_utils import ensure_repo_at_revision
 from mypy_primer.globals import ctx
 from mypy_primer.utils import BIN_DIR, Style, debug_print, run
 
+extra_dataclass_args = {"kw_only": True} if sys.version_info >= (3, 10) else {}
 
-@dataclass(frozen=True)
+
+@dataclass(frozen=True, **extra_dataclass_args)
 class Project:
     location: str
     mypy_cmd: str
     revision: str | None = None
+    min_python_version: tuple[int, int] | None = None
     pip_cmd: str | None = None
     # if expected_success, there is a recent version of mypy which passes cleanly
     expected_mypy_success: bool = False
@@ -33,6 +36,26 @@ class Project:
 
     pyright_cmd: str | None = None
     expected_pyright_success: bool = False
+
+    # custom __repr__ that omits defaults.
+    def __repr__(self) -> str:
+        result = f"Project(location={self.location!r}, mypy_cmd={self.mypy_cmd!r}"
+        if self.pyright_cmd:
+            result += f", pyright_cmd={self.pyright_cmd!r}"
+        if self.pip_cmd:
+            result += f", pip_cmd={self.pip_cmd!r}"
+        if self.expected_mypy_success:
+            result += f", expected_mypy_success={self.expected_mypy_success!r}"
+        if self.expected_pyright_success:
+            result += f", expected_pyright_success={self.expected_pyright_success!r}"
+        if self.mypy_cost != 3:
+            result += f", mypy_cost={self.mypy_cost!r}"
+        if self.revision:
+            result += f", revision={self.revision!r}"
+        if self.min_python_version:
+            result += f", min_python_version={self.min_python_version!r}"
+        result += ")"
+        return result
 
     @property
     def name(self) -> str:
@@ -324,7 +347,7 @@ class PrimerResult:
             ret += (
                 f": typechecking got {runtime_ratio:.2f}x {speed} "
                 f"({self.old_result.runtime:.1f}s -> {self.new_result.runtime:.1f}s)\n"
-                f"(Performance measurements are based on a single noisy sample)"
+                "(Performance measurements are based on a single noisy sample)"
             )
         if self.diff:
             ret += "\n" + self.diff
