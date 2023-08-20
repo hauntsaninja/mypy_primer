@@ -582,6 +582,12 @@ def get_projects() -> list[Project]:
             expected_mypy_success=True,
         ),
         Project(
+            location="https://github.com/ZettaAI/zetta_utils",
+            mypy_cmd="{mypy} .",
+            pip_cmd="{pip} install types-Pillow types-cachetools types-requests attrs",
+            expected_mypy_success=True,
+        ),
+        Project(
             location="https://github.com/sco1/pylox",
             mypy_cmd="{mypy} .",
             pip_cmd="{pip} install attrs",
