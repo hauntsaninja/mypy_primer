@@ -167,7 +167,11 @@ class Project:
 
         # Redact "note" lines which contain base_dir
         # Avoids noisy diffs when e.g., mypy points to a stub definition
-        base_dir_re = f"{re.escape(str(ctx.get().base_dir))}.*: note:"
+        base_dir_re = (
+            f"{re.escape(str(ctx.get().base_dir))}"
+            f"|{re.escape(str(ctx.get().base_dir.resolve()))}"
+            ".*: note:"
+        )
         output = re.sub(base_dir_re, "note:", output)
 
         # Avoids some noise in tracebacks
