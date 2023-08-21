@@ -15,6 +15,7 @@ from mypy_primer.model import Project
 # - https://github.com/strawberry-graphql/strawberry
 # - https://github.com/r-spacex/submanager
 # - https://github.com/NeilGirdhar/efax
+# - https://github.com/google/duet
 
 
 def update_projects(projects: list[Project], check: bool = False) -> None:
