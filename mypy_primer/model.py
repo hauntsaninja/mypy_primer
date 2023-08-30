@@ -56,6 +56,8 @@ class Project:
             result += f", revision={self.revision!r}"
         if self.min_python_version:
             result += f", min_python_version={self.min_python_version!r}"
+        if self.name_override:
+            result += f", name_override={self.name_override!r}"
         result += ")"
         return result
 
