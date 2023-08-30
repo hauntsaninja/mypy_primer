@@ -62,7 +62,7 @@ class Project:
     @property
     def name(self) -> str:
         if self.name_override is not None:
-            return self._name_override
+            return self.name_override
         return Path(self.location).name
 
     @property
