@@ -37,6 +37,8 @@ class Project:
     pyright_cmd: str | None = None
     expected_pyright_success: bool = False
 
+    name_override: str | None = None
+
     # custom __repr__ that omits defaults.
     def __repr__(self) -> str:
         result = f"Project(location={self.location!r}, mypy_cmd={self.mypy_cmd!r}"
@@ -59,6 +61,8 @@ class Project:
 
     @property
     def name(self) -> str:
+        if self.name_override is not None:
+            return self._name_override
         return Path(self.location).name
 
     @property
