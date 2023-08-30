@@ -862,18 +862,18 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/python/cpython",
             mypy_cmd="{mypy} --config-file Tools/clinic/mypy.ini",
-            name_override="cpython-Argument_Clinic",
+            name_override="https://github.com/python/cpython (Argument Clinic)",
         ),
         Project(
             location="https://github.com/python/cpython",
             mypy_cmd="{mypy} --config-file Tools/cases_generator/mypy.ini",
-            name_override="cpython-cases_generator",
+            name_override="https://github.com/python/cpython (cases_generator)",
         ),
         Project(
             location="https://github.com/python/cpython",
             mypy_cmd="{mypy} --config-file Tools/peg_generator/mypy.ini",
             pip_cmd="{pip} install types-setuptools types-psutil",
-            name_override="cpython-peg_generator",
+            name_override="https://github.com/python/cpython (peg_generator)",
         ),
     ]
     assert len(projects) == len({p.name for p in projects})
