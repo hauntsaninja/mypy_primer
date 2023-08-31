@@ -12,8 +12,8 @@ RevisionLike = Union[str, None, Callable[[Path], Awaitable[str]]]
 
 
 async def clone(repo_url: str, repo_dir: Path, cwd: Path, shallow: bool = False) -> None:
-    if os.path.exists(repo_url):
-        repo_url = os.path.abspath(repo_url)
+    if os.path.exists(repo_dir):
+        repo_url = os.path.abspath(repo_dir)
     cmd = ["git", "clone", "--recurse-submodules", repo_url, str(repo_dir)]
     if shallow:
         cmd += ["--depth", "1"]
