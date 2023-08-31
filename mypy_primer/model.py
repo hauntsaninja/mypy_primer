@@ -94,7 +94,10 @@ class Project:
         else:
             # usually projects are something clonable
             repo_dir = await ensure_repo_at_revision(
-                self.location, ctx.get().projects_dir, self.revision
+                self.location,
+                ctx.get().projects_dir,
+                self.revision,
+                name_override=self.name_override,
             )
         assert repo_dir == ctx.get().projects_dir / self.name
         if self.pip_cmd:
