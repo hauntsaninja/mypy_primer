@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import subprocess
 from datetime import date
 from pathlib import Path
@@ -12,8 +11,8 @@ RevisionLike = Union[str, None, Callable[[Path], Awaitable[str]]]
 
 
 async def clone(repo_url: str, repo_dir: Path, cwd: Path, shallow: bool = False) -> None:
-    if os.path.exists(repo_dir):
-        repo_url = os.path.abspath(repo_dir)
+    if repo_dir.exists():
+        repo_dir = repo_dir.absolute()
     cmd = ["git", "clone", "--recurse-submodules", repo_url, str(repo_dir)]
     if shallow:
         cmd += ["--depth", "1"]
