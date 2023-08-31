@@ -48,7 +48,10 @@ async def get_revision_for_revision_or_date(revision: str, repo_dir: Path) -> st
 async def ensure_repo_at_revision(
     repo_url: str, cwd: Path, revision_like: RevisionLike, *, name_override: str | None = None
 ) -> Path:
-    repo_dir = cwd / Path(name_override or repo_url).name
+    if name_override:
+        repo_dir = cwd / name_override
+    else:
+        repo_dir = cwd / Path(repo_url).name
     if repo_dir.is_dir():
         await refresh(repo_dir)
     else:
