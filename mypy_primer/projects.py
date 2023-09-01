@@ -859,22 +859,6 @@ def get_projects() -> list[Project]:
             pyright_cmd="{pyright}",
             pip_cmd="{pip} install koda",
         ),
-        Project(
-            location="https://github.com/python/cpython",
-            mypy_cmd="{mypy} --config-file Tools/clinic/mypy.ini",
-            name_override="CPython (Argument Clinic)",
-        ),
-        Project(
-            location="https://github.com/python/cpython",
-            mypy_cmd="{mypy} --config-file Tools/cases_generator/mypy.ini",
-            name_override="CPython (cases_generator)",
-        ),
-        Project(
-            location="https://github.com/python/cpython",
-            mypy_cmd="{mypy} --config-file Tools/peg_generator/mypy.ini",
-            pip_cmd="{pip} install types-setuptools types-psutil",
-            name_override="CPython (peg_generator)",
-        ),
     ]
     assert len(projects) == len({p.name for p in projects})
     return projects
