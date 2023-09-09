@@ -115,7 +115,7 @@ class Project:
                     print(e.output)
                 if e.stderr:
                     print(e.stderr)
-                raise RuntimeError(f"pip install failed for {self.location}") from e
+                raise RuntimeError(f"pip install failed for {self.name}") from e
 
     def get_mypy_cmd(self, mypy: str | Path, additional_flags: Sequence[str] = ()) -> str:
         mypy_cmd = self.mypy_cmd
