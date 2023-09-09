@@ -29,7 +29,8 @@ if sys.platform == "win32":
 
     ILLEGAL_PATH_CHARS = set('*?"<>')
 
-    def quote_path(path: str) -> str:
+    def quote_path(path: Path | str) -> str:
+        path = str(path)
         if set(path) & ILLEGAL_PATH_CHARS:
             raise ValueError(
                 'Illegal character in {path!r}: Windows paths cannot contain *, ?, ", <, or >'
@@ -37,7 +38,9 @@ if sys.platform == "win32":
         return '"' + path + '"'
 
 else:
-    quote_path = shlex.quote
+
+    def quote_path(path: Path | str) -> str:
+        return shlex.quote(str(path))
 
 
 class Style(str, Enum):
