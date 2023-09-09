@@ -24,6 +24,22 @@ else:
     TEMP_DIR = "/tmp"
 
 
+if sys.platform == "win32":
+    # shlex.quote() doesn't work on Windows
+
+    ILLEGAL_PATH_CHARS = set('*?"<>')
+
+    def quote_path(path: str) -> str:
+        if set(path) & ILLEGAL_PATH_CHARS:
+            raise ValueError(
+                'Illegal character in {path!r}: Windows paths cannot contain *, ?, ", <, or >'
+            )
+        return '"' + path + '"'
+
+else:
+    quote_path = shlex.quote
+
+
 class Style(str, Enum):
     RED = "\033[91m"
     BLUE = "\033[94m"
