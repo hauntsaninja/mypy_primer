@@ -440,7 +440,7 @@ def get_projects() -> list[Project]:
         ),
         Project(
             location="https://github.com/Akuli/porcupine",
-            mypy_cmd="{mypy} porcupine more_plugins",
+            mypy_cmd="{mypy} --config-file= porcupine",
             expected_mypy_success=True,
         ),
         Project(
