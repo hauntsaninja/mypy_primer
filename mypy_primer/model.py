@@ -17,7 +17,7 @@ from typing import Sequence
 
 from mypy_primer.git_utils import ensure_repo_at_revision
 from mypy_primer.globals import ctx
-from mypy_primer.utils import BIN_DIR, Style, debug_print, run
+from mypy_primer.utils import BIN_DIR, Style, debug_print, quote_path, run
 
 extra_dataclass_args = {"kw_only": True} if sys.version_info >= (3, 10) else {}
 
@@ -96,7 +96,7 @@ class Project:
             venv.create(self.venv_dir, with_pip=True, clear=True)
             try:
                 await run(
-                    self.pip_cmd.format(pip=str(self.venv_dir / BIN_DIR / "pip")),
+                    self.pip_cmd.format(pip=quote_path(self.venv_dir / BIN_DIR / "pip")),
                     shell=True,
                     cwd=repo_dir,
                     output=True,
@@ -115,7 +115,7 @@ class Project:
 
         if self.pip_cmd:
             python_exe = self.venv_dir / BIN_DIR / "python"
-            mypy_cmd += f" --python-executable={shlex.quote(str(python_exe))}"
+            mypy_cmd += f" --python-executable={quote_path(python_exe)}"
         if additional_flags:
             mypy_cmd += " " + " ".join(additional_flags)
         if ctx.get().output == "concise":
@@ -134,7 +134,7 @@ class Project:
 
         mypy_path = []  # TODO: this used to be exposed, could be useful to expose it again
         if typeshed_dir is not None:
-            additional_flags.append(f"--custom-typeshed-dir={shlex.quote(str(typeshed_dir))}")
+            additional_flags.append(f"--custom-typeshed-dir={quote_path(typeshed_dir)}")
             mypy_path += list(map(str, typeshed_dir.glob("stubs/*")))
 
         if "MYPYPATH" in env:
@@ -193,7 +193,7 @@ class Project:
     async def run_pyright(self, pyright: str | Path, typeshed_dir: Path | None) -> TypeCheckResult:
         additional_flags: list[str] = []
         if typeshed_dir is not None:
-            additional_flags.append(f"--typeshedpath {shlex.quote(str(typeshed_dir))}")
+            additional_flags.append(f"--typeshedpath {quote_path(typeshed_dir)}")
         pyright_cmd = self.get_pyright_cmd(pyright, additional_flags)
         if self.pip_cmd:
             activate = (
