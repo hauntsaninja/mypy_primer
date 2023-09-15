@@ -11,10 +11,11 @@ from mypy_primer.utils import run
 RevisionLike = Union[str, None, Callable[[Path], Awaitable[str]]]
 
 
-async def clone(repo_url: str, cwd: Path, shallow: bool = False) -> None:
-    if os.path.exists(repo_url):
-        repo_url = os.path.abspath(repo_url)
-    cmd = ["git", "clone", "--recurse-submodules", repo_url]
+# repo_source could be a URL *or* a local path
+async def clone(repo_source: str, *, repo_dir: Path, cwd: Path, shallow: bool = False) -> None:
+    if os.path.exists(repo_source):
+        repo_source = os.path.abspath(repo_source)
+    cmd = ["git", "clone", "--recurse-submodules", repo_source, str(repo_dir)]
     if shallow:
         cmd += ["--depth", "1"]
     await run(cmd, cwd=cwd)
@@ -46,12 +47,17 @@ async def get_revision_for_revision_or_date(revision: str, repo_dir: Path) -> st
         return revision
 
 
-async def ensure_repo_at_revision(repo_url: str, cwd: Path, revision_like: RevisionLike) -> Path:
-    repo_dir = cwd / Path(repo_url).name
+async def ensure_repo_at_revision(
+    repo_url: str, cwd: Path, revision_like: RevisionLike, *, name_override: str | None = None
+) -> Path:
+    if name_override:
+        repo_dir = cwd / name_override
+    else:
+        repo_dir = cwd / Path(repo_url).name
     if repo_dir.is_dir():
         await refresh(repo_dir)
     else:
-        await clone(repo_url, cwd, shallow=revision_like is None)
+        await clone(repo_url, repo_dir=repo_dir, cwd=cwd, shallow=revision_like is None)
     assert repo_dir.is_dir(), f"{repo_dir} is not a directory"
 
     if revision_like is None:

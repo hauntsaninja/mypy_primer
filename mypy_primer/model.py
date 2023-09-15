@@ -37,6 +37,8 @@ class Project:
     pyright_cmd: str | None = None
     expected_pyright_success: bool = False
 
+    name_override: str | None = None
+
     # custom __repr__ that omits defaults.
     def __repr__(self) -> str:
         result = f"Project(location={self.location!r}, mypy_cmd={self.mypy_cmd!r}"
@@ -54,11 +56,15 @@ class Project:
             result += f", revision={self.revision!r}"
         if self.min_python_version:
             result += f", min_python_version={self.min_python_version!r}"
+        if self.name_override:
+            result += f", name_override={self.name_override!r}"
         result += ")"
         return result
 
     @property
     def name(self) -> str:
+        if self.name_override is not None:
+            return self.name_override
         return Path(self.location).name
 
     @property
@@ -88,7 +94,10 @@ class Project:
         else:
             # usually projects are something clonable
             repo_dir = await ensure_repo_at_revision(
-                self.location, ctx.get().projects_dir, self.revision
+                self.location,
+                ctx.get().projects_dir,
+                self.revision,
+                name_override=self.name_override,
             )
         assert repo_dir == ctx.get().projects_dir / self.name
         if self.pip_cmd:
@@ -106,7 +115,7 @@ class Project:
                     print(e.output)
                 if e.stderr:
                     print(e.stderr)
-                raise RuntimeError(f"pip install failed for {self.location}") from e
+                raise RuntimeError(f"pip install failed for {self.name}") from e
 
     def get_mypy_cmd(self, mypy: str | Path, additional_flags: Sequence[str] = ()) -> str:
         mypy_cmd = self.mypy_cmd
