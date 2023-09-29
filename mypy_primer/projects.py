@@ -814,6 +814,9 @@ def get_projects() -> list[Project]:
             location="https://github.com/pandas-dev/pandas-stubs",
             mypy_cmd="{mypy} pandas-stubs tests",
             pyright_cmd="{pyright}",
+            pip_cmd=(
+                "{pip} install numpy types-pytz matplotlib xarray pyarrow jinja2 pytest SQLAlchemy"
+            ),
             expected_pyright_success=True,
             mypy_cost=20,
         ),
