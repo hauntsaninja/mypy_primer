@@ -6,7 +6,7 @@ from datetime import date
 from pathlib import Path
 from typing import Awaitable, Callable, Union
 
-from mypy_primer.utils import run
+from pydoctor_primer.utils import run
 
 RevisionLike = Union[str, None, Callable[[Path], Awaitable[str]]]
 

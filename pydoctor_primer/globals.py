@@ -6,7 +6,7 @@ import multiprocessing
 from dataclasses import dataclass, field
 from pathlib import Path
 
-import mypy_primer.utils
+import pydoctor_primer.utils
 
 
 @dataclass
@@ -191,7 +191,7 @@ def parse_options(argv: list[str]) -> _Args:
     primer_group.add_argument("--debug", action="store_true", help="print commands as they run")
     primer_group.add_argument(
         "--base-dir",
-        default=Path(mypy_primer.utils.TEMP_DIR) / "mypy_primer",
+        default=Path(pydoctor_primer.utils.TEMP_DIR) / "mypy_primer",
         type=Path,
         help="dir to store repos and venvs",
     )

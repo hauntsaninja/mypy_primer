@@ -15,9 +15,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Sequence
 
-from mypy_primer.git_utils import ensure_repo_at_revision
-from mypy_primer.globals import ctx
-from mypy_primer.utils import BIN_DIR, Style, debug_print, quote_path, run
+from pydoctor_primer.git_utils import ensure_repo_at_revision
+from pydoctor_primer.globals import ctx
+from pydoctor_primer.utils import BIN_DIR, Style, debug_print, quote_path, run
 
 extra_dataclass_args = {"kw_only": True} if sys.version_info >= (3, 10) else {}
 

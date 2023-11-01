@@ -4,20 +4,7 @@ import difflib
 import subprocess
 import sys
 
-from mypy_primer.model import Project
-
-# projects to re-enable:
-# - https://github.com/edgedb/edgedb
-# - https://github.com/twisted/twisted (needs mypy-zope plugin)
-
-# repos with plugins
-# - https://github.com/dry-python/returns
-# - https://github.com/strawberry-graphql/strawberry
-# - https://github.com/r-spacex/submanager
-# - https://github.com/NeilGirdhar/efax
-# - https://github.com/google/duet
-# - https://github.com/RobertCraigie/prisma-client-py
-
+from pydoctor_primer.model import Project
 
 def update_projects(projects: list[Project], check: bool = False) -> None:
     # modifies `get_projects` in place.

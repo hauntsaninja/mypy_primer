@@ -10,16 +10,16 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Awaitable, Iterator, TypeVar
 
-from mypy_primer.git_utils import (
+from pydoctor_primer.git_utils import (
     RevisionLike,
     get_revision_for_revision_or_date,
     revision_or_recent_tag_fn,
 )
-from mypy_primer.globals import ctx, parse_options_and_set_ctx
-from mypy_primer.model import Project, TypeCheckResult
-from mypy_primer.projects import get_projects
-from mypy_primer.type_checker import setup_mypy, setup_pyright, setup_typeshed
-from mypy_primer.utils import Style, debug_print, line_count, run, strip_colour_code
+from pydoctor_primer.globals import ctx, parse_options_and_set_ctx
+from pydoctor_primer.model import Project, TypeCheckResult
+from pydoctor_primer.projects import get_projects
+from pydoctor_primer.type_checker import setup_mypy, setup_pyright, setup_typeshed
+from pydoctor_primer.utils import Style, debug_print, line_count, run, strip_colour_code
 
 T = TypeVar("T")
 

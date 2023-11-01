@@ -7,8 +7,8 @@ import sys
 import venv
 from pathlib import Path
 
-from mypy_primer.git_utils import RevisionLike, ensure_repo_at_revision
-from mypy_primer.utils import BIN_DIR, MYPY_EXE_NAME, run
+from pydoctor_primer.git_utils import RevisionLike, ensure_repo_at_revision
+from pydoctor_primer.utils import BIN_DIR, MYPY_EXE_NAME, run
 
 
 async def setup_mypy(

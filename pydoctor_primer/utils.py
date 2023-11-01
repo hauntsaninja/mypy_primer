@@ -10,7 +10,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
-from mypy_primer.globals import ctx
+from pydoctor_primer.globals import ctx
 
 if sys.platform == "win32":
     import tempfile

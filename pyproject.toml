@@ -1,9 +1,0 @@
-[tool.black]
-line-length = 100
-# Necessary for string wrapping. Undo in 2024.
-preview = true
-
-[tool.isort]
-profile = "black"
-line_length = 100
-skip_gitignore = true
