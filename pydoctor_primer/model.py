@@ -25,33 +25,21 @@ extra_dataclass_args = {"kw_only": True} if sys.version_info >= (3, 10) else {}
 @dataclass(frozen=True, **extra_dataclass_args)
 class Project:
     location: str
-    mypy_cmd: str
+    pydoctor_cmd: str
     revision: str | None = None
     min_python_version: tuple[int, int] | None = None
     pip_cmd: str | None = None
-    # if expected_success, there is a recent version of mypy which passes cleanly
-    expected_mypy_success: bool = False
-    # mypy_cost is vaguely proportional to mypy's type check time
-    mypy_cost: int = 3
-
-    pyright_cmd: str | None = None
-    expected_pyright_success: bool = False
-
+    # if expected_success, there is a recent version of pydoctor which passes cleanly
+    expected_success: bool = False
     name_override: str | None = None
 
     # custom __repr__ that omits defaults.
     def __repr__(self) -> str:
-        result = f"Project(location={self.location!r}, mypy_cmd={self.mypy_cmd!r}"
-        if self.pyright_cmd:
-            result += f", pyright_cmd={self.pyright_cmd!r}"
+        result = f"Project(location={self.location!r}, pydoctor_cmd={self.pydoctor_cmd!r}"
         if self.pip_cmd:
             result += f", pip_cmd={self.pip_cmd!r}"
-        if self.expected_mypy_success:
-            result += f", expected_mypy_success={self.expected_mypy_success!r}"
-        if self.expected_pyright_success:
-            result += f", expected_pyright_success={self.expected_pyright_success!r}"
-        if self.mypy_cost != 3:
-            result += f", mypy_cost={self.mypy_cost!r}"
+        if self.expected_success:
+            result += f", expected_success={self.expected_success!r}"
         if self.revision:
             result += f", revision={self.revision!r}"
         if self.min_python_version:
@@ -70,14 +58,6 @@ class Project:
     @property
     def venv_dir(self) -> Path:
         return ctx.get().projects_dir / f"_{self.name}_venv"
-
-    def expected_success(self, type_checker: str) -> bool:
-        if type_checker == "mypy":
-            return self.expected_mypy_success
-        elif type_checker == "pyright":
-            return self.expected_pyright_success
-        else:
-            raise ValueError(f"unknown type checker {type_checker}")
 
     async def setup(self) -> None:
         if Path(self.location).exists():
@@ -117,42 +97,24 @@ class Project:
                     print(e.stderr)
                 raise RuntimeError(f"pip install failed for {self.name}") from e
 
-    def get_mypy_cmd(self, mypy: str | Path, additional_flags: Sequence[str] = ()) -> str:
-        mypy_cmd = self.mypy_cmd
-        assert "{mypy}" in self.mypy_cmd
-        mypy_cmd = mypy_cmd.format(mypy=mypy)
+    def get_pydoctor_cmd(self, pydoctor_path: str | Path, additional_flags: Sequence[str] = ()) -> str:
+        cmd = self.pydoctor_cmd
+        assert "{pydoctor}" in self.pydoctor_cmd
+        cmd = cmd.format(pydoctor=pydoctor_path)
 
-        if self.pip_cmd:
-            python_exe = self.venv_dir / BIN_DIR / "python"
-            mypy_cmd += f" --python-executable={quote_path(python_exe)}"
         if additional_flags:
-            mypy_cmd += " " + " ".join(additional_flags)
-        if ctx.get().output == "concise":
-            mypy_cmd += "  --no-pretty --no-error-summary"
+            cmd += " " + " ".join(additional_flags)
 
-        mypy_cmd += " --warn-unused-ignores --warn-redundant-casts"
-        mypy_cmd += (
-            f" --no-incremental --cache-dir={os.devnull} --show-traceback --soft-error-limit=-1"
-        )
-        return mypy_cmd
+        cmd += " --make-html --quiet"
+        return cmd
 
-    async def run_mypy(self, mypy: str | Path, typeshed_dir: Path | None) -> TypeCheckResult:
+    async def run_pydoctor(self, pydoctor_path: str | Path) -> TypeCheckResult:
         additional_flags = ctx.get().additional_flags.copy()
         env = os.environ.copy()
-        env["MYPY_FORCE_COLOR"] = "1"
 
-        mypy_path = []  # TODO: this used to be exposed, could be useful to expose it again
-        if typeshed_dir is not None:
-            additional_flags.append(f"--custom-typeshed-dir={quote_path(typeshed_dir)}")
-            mypy_path += list(map(str, typeshed_dir.glob("stubs/*")))
-
-        if "MYPYPATH" in env:
-            mypy_path = env["MYPYPATH"].split(os.pathsep) + mypy_path
-        env["MYPYPATH"] = os.pathsep.join(mypy_path)
-
-        mypy_cmd = self.get_mypy_cmd(mypy, additional_flags)
+        cmd = self.get_pydoctor_cmd(pydoctor_path, additional_flags)
         proc, runtime = await run(
-            mypy_cmd,
+            cmd,
             shell=True,
             output=True,
             check=False,
@@ -160,127 +122,42 @@ class Project:
             env=env,
         )
         if ctx.get().debug:
-            debug_print(f"{Style.BLUE}{mypy} on {self.name} took {runtime:.2f}s{Style.RESET}")
+            debug_print(f"{Style.BLUE}{pydoctor_path} on {self.name} took {runtime:.2f}s{Style.RESET}")
 
         output = proc.stderr + proc.stdout
 
-        # Various logic to reduce noise in the diff
-        if typeshed_dir is not None:
-            # Differing line numbers and typeshed paths create noisy diffs.
-            # Not a problem for stdlib because mypy silences errors from --custom-typeshed-dir.
-            output = "".join(
-                line
-                for line in output.splitlines(keepends=True)
-                if not line.startswith(str(typeshed_dir / "stubs"))
-            )
-
-        # Redact "note" lines which contain base_dir
-        # Avoids noisy diffs when e.g., mypy points to a stub definition
+        # Redact lines which contain base_dir
+        # Avoids noisy diffs
         base_dir_re = (
             f"({re.escape(str(ctx.get().base_dir))}"
             f"|{re.escape(str(ctx.get().base_dir.resolve()))})"
-            ".*: note:"
         )
-        output = re.sub(base_dir_re, "note:", output)
-
-        # Avoids some noise in tracebacks
-        if "error: INTERNAL ERROR" in output:
-            output = re.sub('File ".*/mypy', 'File "', output)
+        output = re.sub(base_dir_re, "", output)
 
         return TypeCheckResult(
-            mypy_cmd, output, not bool(proc.returncode), self.expected_mypy_success, runtime
-        )
-
-    def get_pyright_cmd(self, pyright: str | Path, additional_flags: Sequence[str] = ()) -> str:
-        pyright_cmd = self.pyright_cmd or "{pyright}"
-        assert "{pyright}" in pyright_cmd
-        if additional_flags:
-            pyright_cmd += " " + " ".join(additional_flags)
-        pyright_cmd = pyright_cmd.format(pyright=pyright)
-        return pyright_cmd
-
-    async def run_pyright(self, pyright: str | Path, typeshed_dir: Path | None) -> TypeCheckResult:
-        additional_flags: list[str] = []
-        if typeshed_dir is not None:
-            additional_flags.append(f"--typeshedpath {quote_path(typeshed_dir)}")
-        pyright_cmd = self.get_pyright_cmd(pyright, additional_flags)
-        if self.pip_cmd:
-            activate = (
-                f"source {shlex.quote(str(self.venv_dir / BIN_DIR / 'activate'))}"
-                if sys.platform != "win32"
-                else str(self.venv_dir / BIN_DIR / "activate.bat")
-            )
-            pyright_cmd = f"{activate}; {pyright_cmd}"
-        proc, runtime = await run(
-            pyright_cmd,
-            shell=True,
-            output=True,
-            check=False,
-            cwd=ctx.get().projects_dir / self.name,
-        )
-        if ctx.get().debug:
-            debug_print(f"{Style.BLUE}{pyright} on {self.name} took {runtime:.2f}s{Style.RESET}")
-
-        output = proc.stderr + proc.stdout
-        return TypeCheckResult(
-            pyright_cmd, output, not bool(proc.returncode), self.expected_pyright_success, runtime
+            cmd, output, not bool(proc.returncode), self.expected_success, runtime
         )
 
     async def run_typechecker(
-        self, type_checker: str | Path, typeshed_dir: Path | None
+        self, type_checker: str | Path, 
     ) -> TypeCheckResult:
-        if ctx.get().type_checker == "mypy":
-            return await self.run_mypy(type_checker, typeshed_dir)
-        elif ctx.get().type_checker == "pyright":
-            return await self.run_pyright(type_checker, typeshed_dir)
-        else:
-            raise ValueError(f"Unknown type checker: {ctx.get().type_checker}")
+        return await self.run_pydoctor(type_checker)
 
     async def primer_result(
         self,
         new_type_checker: str,
         old_type_checker: str,
-        new_typeshed: Path | None,
-        old_typeshed: Path | None,
     ) -> PrimerResult:
         await self.setup()
         new_result, old_result = await asyncio.gather(
-            self.run_typechecker(new_type_checker, new_typeshed),
-            self.run_typechecker(old_type_checker, old_typeshed),
+            self.run_typechecker(new_type_checker),
+            self.run_typechecker(old_type_checker),
         )
         return PrimerResult(self, new_result, old_result)
 
-    async def mypy_source_paths(self, mypy_python: str) -> list[Path]:
-        await self.setup()
-        mypy_cmd = self.get_mypy_cmd(mypy="mypyprimersentinel")
-        mypy_cmd = mypy_cmd.split("mypyprimersentinel", maxsplit=1)[1]
-        program = """
-import io, sys, mypy.fscache, mypy.main
-args = sys.argv[1:]
-fscache = mypy.fscache.FileSystemCache()
-sources, _ = mypy.main.process_options(args, io.StringIO(), io.StringIO(), fscache=fscache)
-for source in sources:
-    if source.path is not None:  # can happen for modules...
-        print(source.path)
-"""
-        # the extra shell stuff here makes sure we expand globs in mypy_cmd
-        proc, _ = await run(
-            f"{mypy_python} -c {shlex.quote(program)} {mypy_cmd}",
-            output=True,
-            cwd=ctx.get().projects_dir / self.name,
-            shell=True,
-        )
-        return [ctx.get().projects_dir / self.name / p for p in proc.stdout.splitlines()]
-
     @classmethod
     def from_location(cls, location: str) -> Project:
-        additional_flags = ""
-        if Path(location).is_file():
-            with open(location, encoding="UTF-8") as f:
-                header = f.readline().strip()
-                if header.startswith("# flags:"):
-                    additional_flags = header[len("# flags:") :]
-        return Project(location=location, mypy_cmd=f"{{mypy}} {location} {additional_flags}")
+        return Project(location=location, pydoctor_cmd=f"{{pydoctor}} {location}")
 
 
 @dataclass(frozen=True)

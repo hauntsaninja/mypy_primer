@@ -15,12 +15,6 @@ class _Args:
     new: str | None
     old: str | None
     repo: str | None
-    type_checker: str
-    mypyc_compile_level: int | None
-
-    custom_typeshed_repo: str
-    new_typeshed: str | None
-    old_typeshed: str | None
 
     additional_flags: list[str]
 
@@ -38,7 +32,6 @@ class _Args:
     old_success: bool
 
     # modes group
-    coverage: bool
     bisect: bool
     bisect_output: str | None
     validate_expected_success: bool
@@ -59,58 +52,32 @@ ctx = contextvars.ContextVar[_Args]("args")
 def parse_options(argv: list[str]) -> _Args:
     parser = argparse.ArgumentParser()
 
-    type_checker_group = parser.add_argument_group("type checker")
+    type_checker_group = parser.add_argument_group("pydoctor")
     type_checker_group.add_argument(
         "--new",
         help=(
-            "new type checker version, defaults to HEAD "
+            "new pydoctor version, defaults to HEAD "
             "(pypi version, anything commit-ish, or isoformatted date)"
         ),
     )
     type_checker_group.add_argument(
         "--old",
         help=(
-            "old type checker version, defaults to latest tag "
+            "old pydoctor version, defaults to latest tag "
             "(pypi version, anything commit-ish, or isoformatted date)"
         ),
     )
     type_checker_group.add_argument(
-        "--type-checker",
-        default="mypy",
-        choices=["mypy", "pyright"],
-        help="type checker to use",
-    )
-    type_checker_group.add_argument(
         "--repo",
         help=(
-            "type checker repo to use (passed to git clone. if unspecified, we first try pypi, "
+            "pydoctor repo to use (passed to git clone. if unspecified, we first try pypi, "
             "then fall back to github)"
         ),
-    )
-    type_checker_group.add_argument(
-        "--mypyc-compile-level",
-        default=None,
-        type=int,
-        help="Compile mypy with the given mypyc optimisation level",
-    )
-
-    type_checker_group.add_argument(
-        "--custom-typeshed-repo",
-        default="https://github.com/python/typeshed",
-        help="typeshed repo to use (passed to git clone)",
-    )
-    type_checker_group.add_argument(
-        "--new-typeshed",
-        help="new typeshed version, defaults to vendored (commit-ish or isoformatted date)",
-    )
-    type_checker_group.add_argument(
-        "--old-typeshed",
-        help="old typeshed version, defaults to vendored (commit-ish, or isoformatted date)",
     )
 
     type_checker_group.add_argument(
         "--additional-flags",
-        help="additional flags to pass to mypy",
+        help="additional flags to pass to pydoctor",
         nargs="*",
         default=[],
     )
@@ -123,16 +90,15 @@ def parse_options(argv: list[str]) -> _Args:
         "-p",
         "--local-project",
         help=(
-            "run only on the given file or directory. if a single file, supports a "
-            "'# flags: ...' comment, like mypy unit tests"
+            "run pydoctor only on the given file or directory"
         ),
     )
     proj_group.add_argument(
         "--expected-success",
         action="store_true",
         help=(
-            "filter to hardcoded subset of projects where some recent mypy version succeeded "
-            "aka are committed to the mypy way of life. also look at: --old-success"
+            "filter to hardcoded subset of projects where some recent pydoctor "
+            "version succeeded. also look at: --old-success"
         ),
     )
     proj_group.add_argument(
@@ -160,18 +126,15 @@ def parse_options(argv: list[str]) -> _Args:
     output_group.add_argument(
         "--old-success",
         action="store_true",
-        help="only output a result for a project if the old mypy run was successful",
+        help="only output a result for a project if the old pydoctor run was successful",
     )
 
     modes_group = parser.add_argument_group("modes")
     modes_group.add_argument(
-        "--coverage", action="store_true", help="count files and lines covered"
+        "--bisect", action="store_true", help="find first pydoctor revision to introduce a difference"
     )
     modes_group.add_argument(
-        "--bisect", action="store_true", help="find first mypy revision to introduce a difference"
-    )
-    modes_group.add_argument(
-        "--bisect-output", help="find first mypy revision with output matching given regex"
+        "--bisect-output", help="find first pydoctor revision with output matching given regex"
     )
     modes_group.add_argument(
         "--validate-expected-success", action="store_true", help=argparse.SUPPRESS
@@ -191,7 +154,7 @@ def parse_options(argv: list[str]) -> _Args:
     primer_group.add_argument("--debug", action="store_true", help="print commands as they run")
     primer_group.add_argument(
         "--base-dir",
-        default=Path(pydoctor_primer.utils.TEMP_DIR) / "mypy_primer",
+        default=Path(pydoctor_primer.utils.TEMP_DIR) / "pydoctor_primer",
         type=Path,
         help="dir to store repos and venvs",
     )

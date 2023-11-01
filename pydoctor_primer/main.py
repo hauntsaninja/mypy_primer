@@ -18,89 +18,37 @@ from pydoctor_primer.git_utils import (
 from pydoctor_primer.globals import ctx, parse_options_and_set_ctx
 from pydoctor_primer.model import Project, TypeCheckResult
 from pydoctor_primer.projects import get_projects
-from pydoctor_primer.type_checker import setup_mypy, setup_pyright, setup_typeshed
+from pydoctor_primer.type_checker import setup_pydoctor
 from pydoctor_primer.utils import Style, debug_print, line_count, run, strip_colour_code
 
 T = TypeVar("T")
 
 
-async def setup_new_and_old_mypy(
-    new_mypy_revision: RevisionLike, old_mypy_revision: RevisionLike
+async def setup_new_and_old_pydoctor(
+    new_revision: RevisionLike, old_revision: RevisionLike
 ) -> tuple[Path, Path]:
-    new_mypy, old_mypy = await asyncio.gather(
-        setup_mypy(
-            ctx.get().base_dir / "new_mypy",
-            new_mypy_revision,
-            repo=ctx.get().repo,
-            mypyc_compile_level=ctx.get().mypyc_compile_level,
-        ),
-        setup_mypy(
-            ctx.get().base_dir / "old_mypy",
-            old_mypy_revision,
-            repo=ctx.get().repo,
-            mypyc_compile_level=ctx.get().mypyc_compile_level,
-        ),
-    )
-
-    if ctx.get().debug:
-        (new_version, _), (old_version, _) = await asyncio.gather(
-            run([str(new_mypy), "--version"], output=True),
-            run([str(old_mypy), "--version"], output=True),
-        )
-        debug_print(f"{Style.BLUE}new mypy version: {new_version.stdout.strip()}{Style.RESET}")
-        debug_print(f"{Style.BLUE}old mypy version: {old_version.stdout.strip()}{Style.RESET}")
-
-    return new_mypy, old_mypy
-
-
-async def setup_new_and_old_pyright(
-    new_pyright_revision: RevisionLike, old_pyright_revision: RevisionLike
-) -> tuple[Path, Path]:
-    new_pyright, old_pyright = await asyncio.gather(
-        setup_pyright(
-            ctx.get().base_dir / "new_pyright",
-            new_pyright_revision,
+    new_exe, old_exe = await asyncio.gather(
+        setup_pydoctor(
+            ctx.get().base_dir / "new_pydoctor",
+            new_revision,
             repo=ctx.get().repo,
         ),
-        setup_pyright(
-            ctx.get().base_dir / "old_pyright",
-            old_pyright_revision,
+        setup_pydoctor(
+            ctx.get().base_dir / "old_pydoctor",
+            old_revision,
             repo=ctx.get().repo,
         ),
     )
 
     if ctx.get().debug:
         (new_version, _), (old_version, _) = await asyncio.gather(
-            run([str(new_pyright), "--version"], output=True),
-            run([str(old_pyright), "--version"], output=True),
+            run([str(new_exe), "--version"], output=True),
+            run([str(old_exe), "--version"], output=True),
         )
-        debug_print(f"{Style.BLUE}new pyright version: {new_version.stdout.strip()}{Style.RESET}")
-        debug_print(f"{Style.BLUE}old pyright version: {old_version.stdout.strip()}{Style.RESET}")
+        debug_print(f"{Style.BLUE}new: {new_version.stdout.strip()}{Style.RESET}")
+        debug_print(f"{Style.BLUE}old: {old_version.stdout.strip()}{Style.RESET}")
 
-    return new_pyright, old_pyright
-
-
-async def setup_new_and_old_typeshed(
-    new_typeshed_revision: RevisionLike, old_typeshed_revision: RevisionLike
-) -> tuple[Path | None, Path | None]:
-    typeshed_repo = ctx.get().custom_typeshed_repo
-
-    new_typeshed_dir = None
-    old_typeshed_dir = None
-    if ctx.get().new_typeshed:
-        new_typeshed_dir = await setup_typeshed(
-            ctx.get().base_dir / "new_typeshed",
-            repo=typeshed_repo,
-            revision_like=new_typeshed_revision,
-        )
-    if ctx.get().old_typeshed:
-        old_typeshed_dir = await setup_typeshed(
-            ctx.get().base_dir / "old_typeshed",
-            repo=typeshed_repo,
-            revision_like=old_typeshed_revision,
-        )
-    return new_typeshed_dir, old_typeshed_dir
-
+    return new_exe, old_exe
 
 # ==============================
 # project utils
@@ -117,14 +65,12 @@ def select_projects() -> list[Project]:
         for p in get_projects()
         if not (p.min_python_version and sys.version_info < p.min_python_version)
     )
-    if ARGS.type_checker == "pyright":
-        project_iter = iter(p for p in project_iter if p.pyright_cmd is not None)
     if ARGS.project_selector:
         project_iter = iter(
             p for p in project_iter if re.search(ARGS.project_selector, p.location, flags=re.I)
         )
     if ARGS.expected_success:
-        project_iter = (p for p in project_iter if p.expected_success(ARGS.type_checker))
+        project_iter = (p for p in project_iter if p.expected_success)
     if ARGS.project_date:
         project_iter = (replace(p, revision=ARGS.project_date) for p in project_iter)
 
@@ -136,9 +82,9 @@ def select_projects() -> list[Project]:
         assert ARGS.shard_index is not None
         shard_costs = [0] * ARGS.num_shards
         shard_projects: list[list[Project]] = [[] for _ in range(ARGS.num_shards)]
-        for p in sorted(projects, key=lambda p: (p.mypy_cost, p.location), reverse=True):
+        for p in sorted(projects, key=lambda p: (1, p.location), reverse=True):
             min_shard = min(range(ARGS.num_shards), key=lambda i: shard_costs[i])
-            shard_costs[min_shard] += p.mypy_cost
+            shard_costs[min_shard] += 1
             shard_projects[min_shard].append(p)
         return shard_projects[ARGS.shard_index]
     return projects
@@ -148,45 +94,42 @@ def select_projects() -> list[Project]:
 # hidden entrypoint logic
 # ==============================
 
-RECENT_MYPYS = ["0.991", "0.982", "0.971", "0.961"]
+RECENT_PYDOCTOR = ["23.9.0", "23.4.1", "22.9.1", "22.7.0"]
 
 
 async def validate_expected_success() -> None:
     """Check correctness of hardcoded Project.expected_success"""
     ARGS = ctx.get()
 
-    assert ARGS.type_checker == "mypy"
-
-    recent_mypy_exes = await asyncio.gather(
+    recent_pydoctor_exes = await asyncio.gather(
         *[
-            setup_mypy(
-                ARGS.base_dir / ("mypy_" + recent_mypy),
-                recent_mypy,
+            setup_pydoctor(
+                ARGS.base_dir / ("pydoctor_" + pydoctor_dir),
+                pydoctor_dir,
                 repo=ARGS.repo,
-                mypyc_compile_level=ARGS.mypyc_compile_level,
             )
-            for recent_mypy in RECENT_MYPYS
+            for pydoctor_dir in RECENT_PYDOCTOR
         ]
     )
 
     async def inner(project: Project) -> str | None:
         await project.setup()
         success = None
-        for mypy_exe in recent_mypy_exes:
-            mypy_result = await project.run_mypy(mypy_exe, typeshed_dir=None)
+        for exe in recent_pydoctor_exes:
+            result = await project.run_pydoctor(exe)
             if ARGS.debug:
                 debug_print(format(Style.BLUE))
-                debug_print(mypy_result)
+                debug_print(result)
                 debug_print(format(Style.RESET))
-            if mypy_result.success:
-                success = mypy_exe
+            if result.success:
+                success = exe
                 break
-        if bool(success) and not project.expected_mypy_success:
+        if bool(success) and not project.expected_success:
             return (
                 f"Project {project.location} succeeded with {success}, "
                 "but is not marked as expecting success"
             )
-        if not bool(success) and project.expected_mypy_success:
+        if not bool(success) and project.expected_success:
             return f"Project {project.location} did not succeed, but is marked as expecting success"
         return None
 
@@ -197,20 +140,18 @@ async def validate_expected_success() -> None:
 
 
 async def measure_project_runtimes() -> None:
-    """Check mypy's runtime over each project."""
+    """Check pydoctor's runtime over each project."""
     ARGS = ctx.get()
-    assert ARGS.type_checker == "mypy"
-
-    mypy_exe = await setup_mypy(
-        ARGS.base_dir / "timer_mypy",
-        ARGS.new or RECENT_MYPYS[0],
+    
+    exe = await setup_pydoctor(
+        ARGS.base_dir / "runtimes",
+        ARGS.new or RECENT_PYDOCTOR[0],
         repo=ARGS.repo,
-        mypyc_compile_level=ARGS.mypyc_compile_level,
     )
 
     async def inner(project: Project) -> tuple[float, Project]:
         await project.setup()
-        result = await project.run_mypy(mypy_exe, typeshed_dir=None)
+        result = await project.run_pydoctor(exe)
         return (result.runtime, project)
 
     results = sorted(
@@ -229,25 +170,20 @@ async def measure_project_runtimes() -> None:
 async def bisect() -> None:
     ARGS = ctx.get()
 
-    assert ARGS.type_checker == "mypy"
-    assert not ARGS.new_typeshed
-    assert not ARGS.old_typeshed
-
-    mypy_exe = await setup_mypy(
-        ARGS.base_dir / "bisect_mypy",
+    exe = await setup_pydoctor(
+        ARGS.base_dir / "bisect",
         revision_or_recent_tag_fn(ARGS.old),
         repo=ARGS.repo,
-        mypyc_compile_level=ARGS.mypyc_compile_level,
         editable=True,
     )
-    repo_dir = ARGS.base_dir / "bisect_mypy" / "mypy"
+    repo_dir = ARGS.base_dir / "bisect" / "pydoctor"
     assert repo_dir.is_dir()
 
     projects = select_projects()
     await asyncio.wait([project.setup() for project in projects])
 
     async def run_wrapper(project: Project) -> tuple[str, TypeCheckResult]:
-        return project.name, (await project.run_mypy(str(mypy_exe), typeshed_dir=None))
+        return project.name, (await project.run_pydoctor(str(exe)))
 
     results_fut = await asyncio.gather(*(run_wrapper(project) for project in projects))
     old_results: dict[str, TypeCheckResult] = dict(results_fut)
@@ -291,66 +227,19 @@ async def bisect() -> None:
             debug_print(format(Style.RESET))
 
 
-async def coverage() -> None:
-    ARGS = ctx.get()
-    assert ARGS.type_checker == "mypy"
-    mypy_exe = await setup_mypy(
-        ARGS.base_dir / "new_mypy",
-        revision_like=ARGS.new,
-        repo=ARGS.repo,
-        mypyc_compile_level=ARGS.mypyc_compile_level,
-    )
-
-    projects = select_projects()
-    mypy_python = mypy_exe.parent / "python"
-    assert mypy_python.exists()
-
-    all_paths = await asyncio.gather(
-        *[project.mypy_source_paths(str(mypy_python)) for project in projects]
-    )
-
-    project_to_paths: dict[str, int] = {}
-    project_to_lines: dict[str, int] = {}
-    for project, paths in zip(projects, all_paths):
-        project_to_paths[project.location] = len(paths)
-        project_to_lines[project.location] = sum(map(line_count, paths))
-
-    for project in sorted(projects, key=lambda p: project_to_lines[p.location], reverse=True):
-        p = project.location
-        print(p, project_to_lines[p], project_to_paths[p])
-
-    print(f"Checking {len(projects)} projects...")
-    print(f"Containing {sum(project_to_paths.values())} files...")
-    print(f"Totalling to {sum(project_to_lines.values())} lines...")
-
-
 async def primer() -> int:
     projects = select_projects()
     ARGS = ctx.get()
 
-    if ARGS.type_checker == "mypy":
-        new_type_checker, old_type_checker = await setup_new_and_old_mypy(
-            new_mypy_revision=ARGS.new,
-            old_mypy_revision=revision_or_recent_tag_fn(ARGS.old),
-        )
-    elif ARGS.type_checker == "pyright":
-        new_type_checker, old_type_checker = await setup_new_and_old_pyright(
-            new_pyright_revision=ARGS.new,
-            old_pyright_revision=revision_or_recent_tag_fn(ARGS.old),
-        )
-    else:
-        raise ValueError(f"Unknown type checker {ARGS.type_checker}")
-
-    new_typeshed_dir, old_typeshed_dir = await setup_new_and_old_typeshed(
-        ARGS.new_typeshed, ARGS.old_typeshed
+    new_type_checker, old_type_checker = await setup_new_and_old_pydoctor(
+        ARGS.new,
+        revision_or_recent_tag_fn(ARGS.old),
     )
 
     results = [
         project.primer_result(
             new_type_checker=str(new_type_checker),
             old_type_checker=str(old_type_checker),
-            new_typeshed=new_typeshed_dir,
-            old_typeshed=old_typeshed_dir,
         )
         for project in projects
     ]
@@ -364,8 +253,6 @@ async def primer() -> int:
         elif ARGS.output == "diff":
             print(result.format_diff_only())
         elif ARGS.output == "concise":
-            # using ARGS.output == "concise" also causes us to:
-            # - always pass in --no-pretty and --no-error-summary
             concise = result.format_concise()
             if concise:
                 print(concise)
@@ -391,9 +278,7 @@ def main() -> None:
         ARGS.projects_dir.mkdir(exist_ok=True)
 
         coro: Awaitable[int | None]
-        if ARGS.coverage:
-            coro = coverage()
-        elif ARGS.bisect or ARGS.bisect_output:
+        if ARGS.bisect or ARGS.bisect_output:
             coro = bisect()
         elif ARGS.validate_expected_success:
             coro = validate_expected_success()

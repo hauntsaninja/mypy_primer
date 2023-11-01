@@ -16,11 +16,11 @@ if sys.platform == "win32":
     import tempfile
 
     BIN_DIR = "scripts"
-    MYPY_EXE_NAME = "mypy.exe"
+    PYDOCTOR_EXE_NAME = "pydoctor.exe"
     TEMP_DIR = tempfile.gettempdir()
 else:
     BIN_DIR = "bin"
-    MYPY_EXE_NAME = "mypy"
+    PYDOCTOR_EXE_NAME = "pydoctor"
     TEMP_DIR = "/tmp"
 
 
