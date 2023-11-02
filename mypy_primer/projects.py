@@ -606,7 +606,10 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/mkdocs/mkdocs",
             mypy_cmd="{mypy} mkdocs",
-            pip_cmd="{pip} install babel types-Markdown types-pytz types-PyYAML types-setuptools",
+            pip_cmd=(
+                "{pip} install babel types-Markdown types-pytz types-PyYAML types-setuptools jinja2"
+                " click watchdog pathspec platformdirs packaging"
+            ),
             expected_mypy_success=True,
         ),
         Project(
