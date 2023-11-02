@@ -604,6 +604,12 @@ def get_projects() -> list[Project]:
             min_python_version=(3, 10),
         ),
         Project(
+            location="https://github.com/mkdocs/mkdocs",
+            mypy_cmd="{mypy} mkdocs",
+            pip_cmd="{pip} install babel types-Markdown types-pytz types-PyYAML types-setuptools",
+            expected_mypy_success=True,
+        ),
+        Project(
             location="https://github.com/pyppeteer/pyppeteer",
             mypy_cmd="{mypy} pyppeteer --config-file tox.ini",
             pip_cmd="{pip} install .",
