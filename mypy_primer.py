@@ -1421,6 +1421,24 @@ PROJECTS = [
         mypy_cmd="{mypy} --namespace-packages --strict -p nion.utils",
         expected_success=True,
     ),
+    Project(
+        location="https://github.com/nion-software/nionui",
+        mypy_cmd="{mypy} --install-types --non-interactive --namespace-packages --strict -p nion.ui -p nionui_app.nionui_examples",
+        pip_cmd="{pip} install -r test-requirements.txt",
+        expected_success=True,
+    ),
+    Project(
+        location="https://github.com/nion-software/niondata",
+        mypy_cmd="{mypy} --install-types --non-interactive --namespace-packages --strict --ignore-missing-imports -p nion.data",
+        pip_cmd="{pip} install -r test-requirements.txt",
+        expected_success=True,
+    ),
+    Project(
+        location="https://github.com/nion-software/nionswift",
+        mypy_cmd="{mypy} --install-types --non-interactive --namespace-packages --ignore-missing-imports --strict --exclude '/test' -p nion.swift",
+        pip_cmd="{pip} install -r test-requirements.txt",
+        expected_success=True,
+    ),
     *(
         [
             Project(
