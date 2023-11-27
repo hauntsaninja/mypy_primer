@@ -157,17 +157,15 @@ async def validate_expected_success() -> None:
 
     assert ARGS.type_checker == "mypy"
 
-    recent_mypy_exes = await asyncio.gather(
-        *[
-            setup_mypy(
-                ARGS.base_dir / ("mypy_" + recent_mypy),
-                recent_mypy,
-                repo=ARGS.repo,
-                mypyc_compile_level=ARGS.mypyc_compile_level,
-            )
-            for recent_mypy in RECENT_MYPYS
-        ]
-    )
+    recent_mypy_exes = await asyncio.gather(*[
+        setup_mypy(
+            ARGS.base_dir / ("mypy_" + recent_mypy),
+            recent_mypy,
+            repo=ARGS.repo,
+            mypyc_compile_level=ARGS.mypyc_compile_level,
+        )
+        for recent_mypy in RECENT_MYPYS
+    ])
 
     async def inner(project: Project) -> str | None:
         await project.setup()
@@ -305,9 +303,9 @@ async def coverage() -> None:
     mypy_python = mypy_exe.parent / "python"
     assert mypy_python.exists()
 
-    all_paths = await asyncio.gather(
-        *[project.mypy_source_paths(str(mypy_python)) for project in projects]
-    )
+    all_paths = await asyncio.gather(*[
+        project.mypy_source_paths(str(mypy_python)) for project in projects
+    ])
 
     project_to_paths: dict[str, int] = {}
     project_to_lines: dict[str, int] = {}
