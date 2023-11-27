@@ -39,7 +39,7 @@ class Project:
 
     name_override: str | None = None
 
-    only_platform: str | None = None
+    supported_platforms: list[str] | None = None
 
     # custom __repr__ that omits defaults.
     def __repr__(self) -> str:
@@ -60,8 +60,8 @@ class Project:
             result += f", min_python_version={self.min_python_version!r}"
         if self.name_override:
             result += f", name_override={self.name_override!r}"
-        if self.only_platform:
-            result += f", only_platform={self.only_platform!r}"
+        if self.supported_platforms:
+            result += f", supported_platforms={self.supported_platforms!r}"
         result += ")"
         return result
 

@@ -112,7 +112,7 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} aiohttp",
             pip_cmd="AIOHTTP_NO_EXTENSIONS=1 {pip} install -e . pytest",
             expected_mypy_success=True,
-            only_platform="linux",
+            supported_platforms=["linux", "darwin"],
         ),
         Project(
             location="https://github.com/python-attrs/attrs",
@@ -145,7 +145,7 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} boostedblob",
             pip_cmd="{pip} install aiohttp uvloop pycryptodome",
             expected_mypy_success=True,
-            only_platform="linux",
+            supported_platforms=["linux", "darwin"],
         ),
         Project(
             location="https://github.com/quora/asynq",
@@ -229,7 +229,7 @@ def get_projects() -> list[Project]:
                 " types-pytz types-PyYAML types-requests"
             ),
             expected_mypy_success=True,
-            only_platform="linux",
+            supported_platforms=["linux", "darwin"],
         ),
         Project(
             location="https://github.com/PrefectHQ/prefect",
@@ -341,7 +341,7 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} src/schemathesis",
             pip_cmd="{pip} install attrs types-requests types-PyYAML",
             expected_mypy_success=True,
-            only_platform="linux",
+            supported_platforms=["linux", "darwin"],
         ),
         Project(
             location="https://github.com/graphql-python/graphql-core",
@@ -592,7 +592,7 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} .",
             pip_cmd="{pip} install types-Pillow types-cachetools types-requests attrs",
             expected_mypy_success=True,
-            only_platform="linux",
+            supported_platforms=["linux", "darwin"],
         ),
         Project(
             location="https://github.com/sco1/pylox",
@@ -896,5 +896,7 @@ def get_projects() -> list[Project]:
     ]
     assert len(projects) == len({p.name for p in projects})
     for p in projects:
-        assert p.only_platform is None or p.only_platform == "linux"
+        assert p.supported_platforms is None or all(
+            p in ("linux", "darwin") for p in p.supported_platforms
+        )
     return projects

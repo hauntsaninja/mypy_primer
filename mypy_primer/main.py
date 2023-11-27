@@ -129,7 +129,9 @@ def select_projects() -> list[Project]:
         project_iter = (replace(p, revision=ARGS.project_date) for p in project_iter)
 
     projects = [
-        p for p in project_iter if p.only_platform is None or p.only_platform == sys.platform
+        p
+        for p in project_iter
+        if p.supported_platforms is None or sys.platform in p.supported_platforms
     ]
     if projects == []:
         raise ValueError("No projects selected!")
