@@ -39,6 +39,8 @@ class Project:
 
     name_override: str | None = None
 
+    supported_platforms: list[str] | None = None
+
     # custom __repr__ that omits defaults.
     def __repr__(self) -> str:
         result = f"Project(location={self.location!r}, mypy_cmd={self.mypy_cmd!r}"
@@ -58,6 +60,8 @@ class Project:
             result += f", min_python_version={self.min_python_version!r}"
         if self.name_override:
             result += f", name_override={self.name_override!r}"
+        if self.supported_platforms:
+            result += f", supported_platforms={self.supported_platforms!r}"
         result += ")"
         return result
 
@@ -265,7 +269,7 @@ for source in sources:
 """
         # the extra shell stuff here makes sure we expand globs in mypy_cmd
         proc, _ = await run(
-            f"{mypy_python} -c {shlex.quote(program)} {mypy_cmd}",
+            f"{mypy_python} -c {quote_path(program)} {mypy_cmd}",
             output=True,
             cwd=ctx.get().projects_dir / self.name,
             shell=True,

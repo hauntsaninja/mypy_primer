@@ -128,7 +128,11 @@ def select_projects() -> list[Project]:
     if ARGS.project_date:
         project_iter = (replace(p, revision=ARGS.project_date) for p in project_iter)
 
-    projects = list(project_iter)
+    projects = [
+        p
+        for p in project_iter
+        if p.supported_platforms is None or sys.platform in p.supported_platforms
+    ]
     if projects == []:
         raise ValueError("No projects selected!")
 
@@ -300,7 +304,11 @@ async def coverage() -> None:
     )
 
     projects = select_projects()
-    mypy_python = mypy_exe.parent / "python"
+    if sys.platform == "win32":
+        mypy_python = mypy_exe.parent / "python.exe"
+    else:
+        mypy_python = mypy_exe.parent / "python"
+
     assert mypy_python.exists()
 
     all_paths = await asyncio.gather(*[
