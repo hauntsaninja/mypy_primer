@@ -894,6 +894,15 @@ def get_projects() -> list[Project]:
             pip_cmd="{pip} install types-setuptools types-psutil",
             name_override="CPython (peg_generator)",
         ),
+        Project(
+            location="https://github.com/python-trio/trio",
+            mypy_cmd="{mypy} src/trio",
+            pyright_cmd="{pyright} src/trio",
+            pip_cmd=(
+                "{pip} install types-pyOpenSSL types-cffi attrs outcome exceptiongroup pytest"
+                " sniffio"
+            ),
+        ),
     ]
     assert len(projects) == len({p.name for p in projects})
     for p in projects:
