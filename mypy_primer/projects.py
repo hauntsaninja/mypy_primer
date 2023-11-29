@@ -896,6 +896,7 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/python-trio/trio",
             mypy_cmd="{mypy} src/trio",
+            pyright_cmd="{pyright} src/trio/_tests/type_tests",
             pip_cmd=(
                 "{pip} install types-pyOpenSSL types-cffi attrs outcome exceptiongroup pytest"
                 " sniffio"
