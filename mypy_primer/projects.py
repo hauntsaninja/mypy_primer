@@ -587,13 +587,14 @@ def get_projects() -> list[Project]:
             pip_cmd="{pip} install aiohttp watchfiles types-pygments",
             expected_mypy_success=True,
         ),
-        Project(
-            location="https://github.com/ZettaAI/zetta_utils",
-            mypy_cmd="{mypy} .",
-            pip_cmd="{pip} install types-Pillow types-cachetools types-requests attrs",
-            expected_mypy_success=True,
-            supported_platforms=["linux", "darwin"],
-        ),
+        # See https://github.com/hauntsaninja/mypy_primer/issues/112
+        # Project(
+        #     location="https://github.com/ZettaAI/zetta_utils",
+        #     mypy_cmd="{mypy} .",
+        #     pip_cmd="{pip} install types-Pillow types-cachetools types-requests attrs",
+        #     expected_mypy_success=True,
+        #     supported_platforms=["linux", "darwin"],
+        # ),
         Project(
             location="https://github.com/sco1/pylox",
             mypy_cmd="{mypy} .",
