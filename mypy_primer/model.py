@@ -347,7 +347,7 @@ class PrimerResult:
         return ret
 
     def format_concise(self) -> str:
-        runtime_diff = abs(self.new_result.runtime - self.old_result.runtime)
+        # runtime_diff = abs(self.new_result.runtime - self.old_result.runtime)
         runtime_ratio = self.new_result.runtime / self.old_result.runtime
         if runtime_ratio < 1:
             speed = "faster"

@@ -246,7 +246,7 @@ async def bisect() -> None:
     assert repo_dir.is_dir()
 
     projects = select_projects()
-    await asyncio.wait([project.setup() for project in projects])
+    await asyncio.gather(*[project.setup() for project in projects])
 
     async def run_wrapper(project: Project) -> tuple[str, TypeCheckResult]:
         return project.name, (await project.run_mypy(str(mypy_exe), typeshed_dir=None))
@@ -311,9 +311,9 @@ async def coverage() -> None:
 
     assert mypy_python.exists()
 
-    all_paths = await asyncio.gather(*[
-        project.mypy_source_paths(str(mypy_python)) for project in projects
-    ])
+    all_paths = await asyncio.gather(
+        *[project.mypy_source_paths(str(mypy_python)) for project in projects]
+    )
 
     project_to_paths: dict[str, int] = {}
     project_to_lines: dict[str, int] = {}
