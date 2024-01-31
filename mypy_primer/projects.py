@@ -642,12 +642,15 @@ def get_projects() -> list[Project]:
         ),
         Project(
             location="https://github.com/home-assistant/core",
-            mypy_cmd="{mypy} homeassistant",
+            mypy_cmd=(
+                "sed -i.bak '/^plugins = pydantic.mypy$/s/^/#/' mypy.ini; {mypy} homeassistant"
+            ),
             pip_cmd=(
                 "{pip} install attrs pydantic types-setuptools types-atomicwrites types-certifi"
                 " types-croniter types-PyYAML types-requests types-python-slugify types-backports"
             ),
             mypy_cost=70,
+            supported_platforms=["linux", "darwin"],  # hack for sed
         ),
         Project(location="https://github.com/kornia/kornia", mypy_cmd="{mypy} kornia"),
         Project(
