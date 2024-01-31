@@ -161,15 +161,17 @@ async def validate_expected_success() -> None:
 
     assert ARGS.type_checker == "mypy"
 
-    recent_mypy_exes = await asyncio.gather(*[
-        setup_mypy(
-            ARGS.base_dir / ("mypy_" + recent_mypy),
-            recent_mypy,
-            repo=ARGS.repo,
-            mypyc_compile_level=ARGS.mypyc_compile_level,
-        )
-        for recent_mypy in RECENT_MYPYS
-    ])
+    recent_mypy_exes = await asyncio.gather(
+        *[
+            setup_mypy(
+                ARGS.base_dir / ("mypy_" + recent_mypy),
+                recent_mypy,
+                repo=ARGS.repo,
+                mypyc_compile_level=ARGS.mypyc_compile_level,
+            )
+            for recent_mypy in RECENT_MYPYS
+        ]
+    )
 
     async def inner(project: Project) -> str | None:
         await project.setup()
