@@ -95,7 +95,7 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/pytest-dev/pytest",
             mypy_cmd="{mypy} src testing",
-            pip_cmd="{pip} install attrs py types-setuptools",
+            pip_cmd="{pip} install attrs pluggy py types-setuptools",
             expected_mypy_success=True,
         ),
         Project(
