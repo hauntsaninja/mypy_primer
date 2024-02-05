@@ -907,6 +907,11 @@ def get_projects() -> list[Project]:
                 " sniffio"
             ),
         ),
+        Project(
+            location="https://github.com/detachhead/pytest-robotframework",
+            mypy_cmd="{mypy} -p pytest_robotframework",
+            pyright_cmd="{pyright}",
+        ),
     ]
     assert len(projects) == len({p.name for p in projects})
     for p in projects:
