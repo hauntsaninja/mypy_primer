@@ -717,6 +717,11 @@ def get_projects() -> list[Project]:
             supported_platforms=["linux", "darwin"],
         ),
         Project(
+            location="https://github.com/AlexWaygood/typeshed-stats",
+            mypy_cmd="{mypy} .",
+            pip_cmd="{pip} install attrs cattrs pytest aiohttp pathspec jinja2 tomli",
+        ),
+        Project(
             location="https://github.com/FasterSpeeding/Tanjun",
             mypy_cmd="{mypy} tanjun",
             pyright_cmd="{pyright}",
