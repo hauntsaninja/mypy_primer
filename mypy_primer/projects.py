@@ -586,7 +586,7 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/mesonbuild/meson",
             mypy_cmd="./run_mypy.py --mypy {mypy}",
-            pip_cmd="{pip} install types-PyYAML",
+            pip_cmd="{pip} install coverage types-chevron types-PyYAML types-tqdm",
             expected_mypy_success=True,
         ),
         Project(
