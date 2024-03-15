@@ -912,6 +912,13 @@ def get_projects() -> list[Project]:
                 " sniffio"
             ),
         ),
+        # pywin32 is itself the biggest user of types-pywin32 C-module extension stubs
+        Project(
+            location="https://github.com/mhammond/pywin32",
+            mypy_cmd="{mypy}",
+            pyright_cmd="{pyright}",
+            pip_cmd="{pip} install types-pywin32 types-regex types-setuptools",
+        ),
     ]
     assert len(projects) == len({p.name for p in projects})
     for p in projects:
