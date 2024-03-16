@@ -912,6 +912,19 @@ def get_projects() -> list[Project]:
                 " sniffio"
             ),
         ),
+        # setuptools & pkg_resources are important users of the stdlib
+        # We can also use setuptools' own tests to validate types-setuptools changes
+        Project(
+            location="https://github.com/pypa/setuptools",
+            mypy_cmd="{mypy} setuptools",
+            pip_cmd="{pip} install types-setuptools pytest filelock importlib_metadata ini2toml packaging tomli tomli-w",
+        ),
+        Project(
+            location="https://github.com/pypa/setuptools",
+            mypy_cmd="{mypy} pkg_resources",
+            pip_cmd=("{pip} install pytest"),
+            name_override="pkg_resources",
+        ),
     ]
     assert len(projects) == len({p.name for p in projects})
     for p in projects:
