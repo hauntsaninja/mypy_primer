@@ -52,6 +52,14 @@ class _Args:
 
     projects_dir: Path = field(init=False)
 
+    @property
+    def venv_dir(self) -> Path:
+        return self.base_dir / "python"
+
+    @property
+    def pip_exe(self) -> Path:
+        return self.venv_dir / mypy_primer.utils.BIN_DIR / "pip"
+
 
 ctx = contextvars.ContextVar[_Args]("args")
 

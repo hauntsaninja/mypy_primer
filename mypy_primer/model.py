@@ -106,14 +106,13 @@ class Project:
         assert repo_dir == ctx.get().projects_dir / self.name
         if self.pip_cmd:
             assert "{pip}" in self.pip_cmd
-            venv.create(self.venv_dir, with_pip=True, clear=True)
+            pip, install, tail = self.pip_cmd.partition(" install ")
+            cmd = (pip + install + "--target {target} " + tail).format(
+                pip=quote_path(ctx.get().pip_exe),
+                target=quote_path(self.venv_dir),
+            )
             try:
-                await run(
-                    self.pip_cmd.format(pip=quote_path(self.venv_dir / BIN_DIR / "pip")),
-                    shell=True,
-                    cwd=repo_dir,
-                    output=True,
-                )
+                await run(cmd, shell=True, cwd=repo_dir, output=True)
             except subprocess.CalledProcessError as e:
                 if e.output:
                     print(e.output)
@@ -127,7 +126,7 @@ class Project:
         mypy_cmd = mypy_cmd.format(mypy=mypy)
 
         if self.pip_cmd:
-            python_exe = self.venv_dir / BIN_DIR / "python"
+            python_exe = ctx.get().venv_dir / BIN_DIR / "python"
             mypy_cmd += f" --python-executable={quote_path(python_exe)}"
         if additional_flags:
             mypy_cmd += " " + " ".join(additional_flags)
@@ -153,8 +152,13 @@ class Project:
         if "MYPYPATH" in env:
             mypy_path = env["MYPYPATH"].split(os.pathsep) + mypy_path
         env["MYPYPATH"] = os.pathsep.join(mypy_path)
+        pythonpath = env.get("PYTHONPATH", "").split(os.pathsep)
+        pythonpath.insert(0, str(self.venv_dir))
+        env["PYTHONPATH"] = os.pathsep.join(pythonpath)
 
         mypy_cmd = self.get_mypy_cmd(mypy, additional_flags)
+        if ctx.get().debug:
+            debug_print(f'{Style.BLUE}PYTHONPATH={env["PYTHONPATH"]}{Style.RESET}')
         proc, runtime = await run(
             mypy_cmd,
             shell=True,

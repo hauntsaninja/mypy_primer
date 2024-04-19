@@ -6,6 +6,7 @@ import re
 import shutil
 import sys
 import traceback
+import venv
 from dataclasses import replace
 from pathlib import Path
 from typing import Awaitable, Iterator, TypeVar
@@ -336,6 +337,8 @@ async def primer() -> int:
     projects = select_projects()
     ARGS = ctx.get()
 
+    # Create a python executable with pip that all projects can share
+    venv.create(ARGS.venv_dir, with_pip=True, clear=True)
     if ARGS.type_checker == "mypy":
         new_type_checker, old_type_checker = await setup_new_and_old_mypy(
             new_mypy_revision=ARGS.new,
