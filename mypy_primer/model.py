@@ -9,7 +9,6 @@ import shutil
 import subprocess
 import sys
 import textwrap
-import venv
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
