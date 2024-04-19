@@ -229,7 +229,9 @@ class Project:
             cwd=ctx.get().projects_dir / self.name,
         )
         if ctx.get().debug:
-            debug_print(f"{Style.BLUE}{pyright.path} on {self.name} took {runtime:.2f}s{Style.RESET}")
+            debug_print(
+                f"{Style.BLUE}{pyright.path} on {self.name} took {runtime:.2f}s{Style.RESET}"
+            )
 
         output = proc.stderr + proc.stdout
         return TypeCheckResult(
