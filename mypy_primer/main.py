@@ -19,7 +19,7 @@ from mypy_primer.git_utils import (
 from mypy_primer.globals import ctx, parse_options_and_set_ctx
 from mypy_primer.model import Project, TypeCheckResult
 from mypy_primer.projects import get_projects
-from mypy_primer.type_checker import setup_mypy, setup_pyright, setup_typeshed
+from mypy_primer.type_checker import Checker, setup_mypy, setup_pyright, setup_typeshed
 from mypy_primer.utils import Style, debug_print, line_count, run, strip_colour_code
 
 T = TypeVar("T")
@@ -27,7 +27,7 @@ T = TypeVar("T")
 
 async def setup_new_and_old_mypy(
     new_mypy_revision: RevisionLike, old_mypy_revision: RevisionLike
-) -> tuple[Path, Path]:
+) -> tuple[Checker, Checker]:
     new_mypy, old_mypy = await asyncio.gather(
         setup_mypy(
             ctx.get().base_dir / "new_mypy",
@@ -45,8 +45,8 @@ async def setup_new_and_old_mypy(
 
     if ctx.get().debug:
         (new_version, _), (old_version, _) = await asyncio.gather(
-            run([str(new_mypy), "--version"], output=True),
-            run([str(old_mypy), "--version"], output=True),
+            run([str(new_mypy.path), "--version"], output=True),
+            run([str(old_mypy.path), "--version"], output=True),
         )
         debug_print(f"{Style.BLUE}new mypy version: {new_version.stdout.strip()}{Style.RESET}")
         debug_print(f"{Style.BLUE}old mypy version: {old_version.stdout.strip()}{Style.RESET}")
@@ -56,7 +56,7 @@ async def setup_new_and_old_mypy(
 
 async def setup_new_and_old_pyright(
     new_pyright_revision: RevisionLike, old_pyright_revision: RevisionLike
-) -> tuple[Path, Path]:
+) -> tuple[Checker, Checker]:
     new_pyright, old_pyright = await asyncio.gather(
         setup_pyright(
             ctx.get().base_dir / "new_pyright",
@@ -72,8 +72,8 @@ async def setup_new_and_old_pyright(
 
     if ctx.get().debug:
         (new_version, _), (old_version, _) = await asyncio.gather(
-            run([str(new_pyright), "--version"], output=True),
-            run([str(old_pyright), "--version"], output=True),
+            run([str(new_pyright.path), "--version"], output=True),
+            run([str(old_pyright.path), "--version"], output=True),
         )
         debug_print(f"{Style.BLUE}new pyright version: {new_version.stdout.strip()}{Style.RESET}")
         debug_print(f"{Style.BLUE}old pyright version: {old_version.stdout.strip()}{Style.RESET}")
@@ -252,7 +252,7 @@ async def bisect() -> None:
     await asyncio.gather(*[project.setup() for project in projects])
 
     async def run_wrapper(project: Project) -> tuple[str, TypeCheckResult]:
-        return project.name, (await project.run_mypy(str(mypy_exe), typeshed_dir=None))
+        return project.name, (await project.run_mypy(mypy_exe, typeshed_dir=None))
 
     results_fut = await asyncio.gather(*(run_wrapper(project) for project in projects))
     old_results: dict[str, TypeCheckResult] = dict(results_fut)
@@ -308,9 +308,9 @@ async def coverage() -> None:
 
     projects = select_projects()
     if sys.platform == "win32":
-        mypy_python = mypy_exe.parent / "python.exe"
+        mypy_python = mypy_exe.path.parent / "python.exe"
     else:
-        mypy_python = mypy_exe.parent / "python"
+        mypy_python = mypy_exe.path.parent / "python"
 
     assert mypy_python.exists()
 
@@ -358,8 +358,8 @@ async def primer() -> int:
 
     results = [
         project.primer_result(
-            new_type_checker=str(new_type_checker),
-            old_type_checker=str(old_type_checker),
+            new_type_checker=new_type_checker,
+            old_type_checker=old_type_checker,
             new_typeshed=new_typeshed_dir,
             old_typeshed=old_typeshed_dir,
         )

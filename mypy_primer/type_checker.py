@@ -6,9 +6,15 @@ import subprocess
 import sys
 import venv
 from pathlib import Path
+from typing import NamedTuple
 
 from mypy_primer.git_utils import RevisionLike, ensure_repo_at_revision
 from mypy_primer.utils import BIN_DIR, MYPY_EXE_NAME, run
+
+
+class Checker(NamedTuple):
+    path: Path
+    site_packages: Path | None
 
 
 async def setup_mypy(
@@ -18,7 +24,7 @@ async def setup_mypy(
     repo: str | None,
     mypyc_compile_level: int | None,
     editable: bool = False,
-) -> Path:
+) -> Checker:
     mypy_dir.mkdir(exist_ok=True)
     venv_dir = mypy_dir / "venv"
     venv.create(venv_dir, with_pip=True, clear=True)
@@ -62,7 +68,8 @@ async def setup_mypy(
         # warm up mypy on macos to avoid the first run being slow
         await run([str(mypy_exe), "--version"])
     assert mypy_exe.exists()
-    return mypy_exe
+    python = f"python{sys.version_info.major}.{sys.version_info.minor}"
+    return Checker(path=mypy_exe, site_packages=venv_dir / "lib" / python / "site-packages")
 
 
 async def setup_pyright(
@@ -70,7 +77,7 @@ async def setup_pyright(
     revision_like: RevisionLike,
     *,
     repo: str | None,
-) -> Path:
+) -> Checker:
     pyright_dir.mkdir(exist_ok=True)
 
     if repo is None:
@@ -82,7 +89,7 @@ async def setup_pyright(
 
     pyright_exe = repo_dir / "packages" / "pyright" / "index.js"
     assert pyright_exe.exists()
-    return pyright_exe
+    return Checker(path=pyright_exe, site_packages=None)
 
 
 async def setup_typeshed(parent_dir: Path, *, repo: str, revision_like: RevisionLike) -> Path:

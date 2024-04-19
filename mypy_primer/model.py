@@ -16,6 +16,7 @@ from typing import Sequence
 
 from mypy_primer.git_utils import ensure_repo_at_revision
 from mypy_primer.globals import ctx
+from mypy_primer.type_checker import Checker
 from mypy_primer.utils import BIN_DIR, Style, debug_print, quote_path, run
 
 extra_dataclass_args = {"kw_only": True} if sys.version_info >= (3, 10) else {}
@@ -138,7 +139,7 @@ class Project:
         )
         return mypy_cmd
 
-    async def run_mypy(self, mypy: str | Path, typeshed_dir: Path | None) -> TypeCheckResult:
+    async def run_mypy(self, mypy: Checker, typeshed_dir: Path | None) -> TypeCheckResult:
         additional_flags = ctx.get().additional_flags.copy()
         env = os.environ.copy()
         env["MYPY_FORCE_COLOR"] = "1"
@@ -153,9 +154,11 @@ class Project:
         env["MYPYPATH"] = os.pathsep.join(mypy_path)
         pythonpath = env.get("PYTHONPATH", "").split(os.pathsep)
         pythonpath.insert(0, str(self.venv_dir))
+        if mypy.site_packages is not None:
+            pythonpath.insert(0, str(mypy.site_packages))
         env["PYTHONPATH"] = os.pathsep.join(pythonpath)
 
-        mypy_cmd = self.get_mypy_cmd(mypy, additional_flags)
+        mypy_cmd = self.get_mypy_cmd(mypy.path, additional_flags)
         if ctx.get().debug:
             debug_print(f'{Style.BLUE}PYTHONPATH={env["PYTHONPATH"]}{Style.RESET}')
         proc, runtime = await run(
@@ -167,7 +170,7 @@ class Project:
             env=env,
         )
         if ctx.get().debug:
-            debug_print(f"{Style.BLUE}{mypy} on {self.name} took {runtime:.2f}s{Style.RESET}")
+            debug_print(f"{Style.BLUE}{mypy.path} on {self.name} took {runtime:.2f}s{Style.RESET}")
 
         output = proc.stderr + proc.stdout
 
@@ -206,11 +209,11 @@ class Project:
         pyright_cmd = pyright_cmd.format(pyright=pyright)
         return pyright_cmd
 
-    async def run_pyright(self, pyright: str | Path, typeshed_dir: Path | None) -> TypeCheckResult:
+    async def run_pyright(self, pyright: Checker, typeshed_dir: Path | None) -> TypeCheckResult:
         additional_flags: list[str] = []
         if typeshed_dir is not None:
             additional_flags.append(f"--typeshedpath {quote_path(typeshed_dir)}")
-        pyright_cmd = self.get_pyright_cmd(pyright, additional_flags)
+        pyright_cmd = self.get_pyright_cmd(pyright.path, additional_flags)
         if self.pip_cmd:
             activate = (
                 f"source {shlex.quote(str(self.venv_dir / BIN_DIR / 'activate'))}"
@@ -226,7 +229,7 @@ class Project:
             cwd=ctx.get().projects_dir / self.name,
         )
         if ctx.get().debug:
-            debug_print(f"{Style.BLUE}{pyright} on {self.name} took {runtime:.2f}s{Style.RESET}")
+            debug_print(f"{Style.BLUE}{pyright.path} on {self.name} took {runtime:.2f}s{Style.RESET}")
 
         output = proc.stderr + proc.stdout
         return TypeCheckResult(
@@ -234,7 +237,7 @@ class Project:
         )
 
     async def run_typechecker(
-        self, type_checker: str | Path, typeshed_dir: Path | None
+        self, type_checker: Checker, typeshed_dir: Path | None
     ) -> TypeCheckResult:
         if ctx.get().type_checker == "mypy":
             return await self.run_mypy(type_checker, typeshed_dir)
@@ -245,8 +248,8 @@ class Project:
 
     async def primer_result(
         self,
-        new_type_checker: str,
-        old_type_checker: str,
+        new_type_checker: Checker,
+        old_type_checker: Checker,
         new_typeshed: Path | None,
         old_typeshed: Path | None,
     ) -> PrimerResult:
