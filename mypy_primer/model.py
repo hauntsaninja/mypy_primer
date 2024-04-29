@@ -9,6 +9,7 @@ import shutil
 import subprocess
 import sys
 import textwrap
+import venv
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -75,6 +76,11 @@ class Project:
     def venv_dir(self) -> Path:
         return ctx.get().projects_dir / f"_{self.name}_venv"
 
+    @property
+    def site_packages(self) -> Path:
+        python = f"python{sys.version_info.major}.{sys.version_info.minor}"
+        return self.venv_dir / "lib" / python / "site-packages"
+
     def expected_success(self, type_checker: str) -> bool:
         if type_checker == "mypy":
             return self.expected_mypy_success
@@ -106,19 +112,22 @@ class Project:
         assert repo_dir == ctx.get().projects_dir / self.name
         if self.pip_cmd:
             assert "{pip}" in self.pip_cmd
-            pip, install, tail = self.pip_cmd.partition(" install ")
-            cmd = (pip + install + "--target {target} " + tail).format(
-                pip=quote_path(ctx.get().pip_exe),
-                target=quote_path(self.venv_dir),
-            )
+            venv.create(self.venv_dir, with_pip=True, clear=True)
             try:
-                await run(cmd, shell=True, cwd=repo_dir, output=True)
+                await run(
+                    self.pip_cmd.format(pip=quote_path(self.venv_dir / BIN_DIR / "pip")),
+                    shell=True,
+                    cwd=repo_dir,
+                    output=True,
+                )
             except subprocess.CalledProcessError as e:
                 if e.output:
                     print(e.output)
                 if e.stderr:
                     print(e.stderr)
                 raise RuntimeError(f"pip install failed for {self.name}") from e
+            else:
+                assert not (self.venv_dir / BIN_DIR / "mypy").exists(), "Mypy installed by project"
 
     def get_mypy_cmd(self, mypy: str | Path, additional_flags: Sequence[str] = ()) -> str:
         mypy_cmd = self.mypy_cmd
@@ -126,7 +135,7 @@ class Project:
         mypy_cmd = mypy_cmd.format(mypy=mypy)
 
         if self.pip_cmd:
-            python_exe = ctx.get().venv_dir / BIN_DIR / "python"
+            python_exe = self.venv_dir / BIN_DIR / "python"
             mypy_cmd += f" --python-executable={quote_path(python_exe)}"
         if additional_flags:
             mypy_cmd += " " + " ".join(additional_flags)
@@ -153,7 +162,7 @@ class Project:
             mypy_path = env["MYPYPATH"].split(os.pathsep) + mypy_path
         env["MYPYPATH"] = os.pathsep.join(mypy_path)
         pythonpath = env.get("PYTHONPATH", "").split(os.pathsep)
-        pythonpath.insert(0, str(self.venv_dir))
+        pythonpath.insert(0, str(self.site_packages))
         if mypy.site_packages is not None:
             pythonpath.insert(0, str(mypy.site_packages))
         env["PYTHONPATH"] = os.pathsep.join(pythonpath)
