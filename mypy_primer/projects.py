@@ -917,7 +917,10 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/pypa/setuptools",
             mypy_cmd="{mypy} setuptools",
-            pip_cmd="{pip} install types-setuptools pytest filelock importlib_metadata ini2toml packaging tomli tomli-w",
+            pip_cmd=(
+                "{pip} install types-setuptools pytest filelock importlib_metadata ini2toml"
+                "packaging tomli tomli-w"
+            ),
         ),
         Project(
             location="https://github.com/pypa/setuptools",
