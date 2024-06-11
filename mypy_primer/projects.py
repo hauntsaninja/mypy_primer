@@ -675,11 +675,6 @@ def get_projects() -> list[Project]:
             pip_cmd="{pip} install types-redis types-requests",
         ),
         Project(
-            location="https://github.com/mikeshardmind/SinbadCogs",
-            mypy_cmd="{mypy} .",
-            pip_cmd="{pip} install attrs types-pytz types-python-dateutil types-PyYAML",
-        ),
-        Project(
             location="https://github.com/rotki/rotki",
             mypy_cmd="{mypy} rotkehlchen/ tools/data_faker",
             pip_cmd="{pip} install eth-typing types-requests types-setuptools",
