@@ -378,7 +378,7 @@ def get_projects() -> list[Project]:
             expected_mypy_success=True,
         ),
         Project(
-            location="https://github.com/samuelcolvin/pydantic",
+            location="https://github.com/pydantic/pydantic",
             mypy_cmd="{mypy} pydantic",
             pyright_cmd="{pyright}",
             pip_cmd="{pip} install types-toml",
