@@ -145,13 +145,14 @@ def get_projects() -> list[Project]:
             location="https://github.com/sphinx-doc/sphinx",
             mypy_cmd="{mypy} sphinx",
             pyright_cmd="{pyright} sphinx",
-            deps=["babel", "docutils-stubs", "types-requests", "packaging"],
+            deps=["babel", "docutils-stubs", "types-requests", "packaging", "jinja"],
             expected_mypy_success=True,
         ),
         Project(
             location="https://github.com/scikit-learn/scikit-learn",
             mypy_cmd="{mypy} sklearn",
             pyright_cmd="{pyright} sklearn",
+            deps=["numpy"],
             expected_mypy_success=True,
         ),
         Project(
@@ -187,7 +188,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/pypa/twine",
             mypy_cmd="{mypy} twine",
             pyright_cmd="{pyright} twine",
-            deps=["keyring", "types-requests"],
+            deps=["keyring", "types-requests", "rich"],
             expected_mypy_success=True,
         ),
         Project(
