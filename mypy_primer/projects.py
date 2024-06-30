@@ -693,7 +693,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/mesonbuild/meson",
             mypy_cmd="./run_mypy.py --mypy {mypy}",
             pyright_cmd=None,
-            deps=["types-PyYAML"],
+            deps=["types-PyYAML", "coverage", "types-chevron", "types-PyYAML", "types-tqdm"],
             expected_mypy_success=True,
         ),
         Project(
