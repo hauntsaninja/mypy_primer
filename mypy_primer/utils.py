@@ -125,7 +125,7 @@ def has_uv() -> bool:
 
 async def make_venv(venv_dir: Path) -> Path:
     if has_uv():
-        await run(["uv", "venv", str(venv_dir), "--python", sys.executable])
+        await run(["uv", "venv", str(venv_dir), "--python", sys.executable, "--seed"])
     else:
         venv.create(venv_dir, with_pip=True, clear=True)
     return venv_dir
