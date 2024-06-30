@@ -145,7 +145,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/sphinx-doc/sphinx",
             mypy_cmd="{mypy} sphinx",
             pyright_cmd="{pyright} sphinx",
-            deps=["babel", "docutils-stubs", "types-requests", "packaging", "jinja"],
+            deps=["babel", "docutils-stubs", "types-requests", "packaging", "jinja2"],
             expected_mypy_success=True,
         ),
         Project(
@@ -540,7 +540,6 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/spack/spack",
             mypy_cmd="{mypy} -p spack -p llnl",
-            pyright_cmd="{pyright}",
             expected_mypy_success=True,
         ),
         Project(
