@@ -126,6 +126,7 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/aio-libs/aiohttp",
             mypy_cmd="{mypy} aiohttp",
+            pyright_cmd="{pyright} aiohttp",
             pip_cmd="AIOHTTP_NO_EXTENSIONS=1 {pip} install -e . pytest",
             expected_mypy_success=True,
             supported_platforms=["linux", "darwin"],
@@ -137,28 +138,33 @@ def get_projects() -> list[Project]:
                 " src/attr/exceptions.pyi src/attr/filters.pyi src/attr/setters.pyi"
                 " src/attr/validators.pyi tests/typing_example.py"
             ),
+            pyright_cmd="{pyright}",
             expected_mypy_success=True,
         ),
         Project(
             location="https://github.com/sphinx-doc/sphinx",
             mypy_cmd="{mypy} sphinx",
+            pyright_cmd="{pyright} sphinx",
             deps=["babel", "docutils-stubs", "types-requests", "packaging"],
             expected_mypy_success=True,
         ),
         Project(
             location="https://github.com/scikit-learn/scikit-learn",
             mypy_cmd="{mypy} sklearn",
+            pyright_cmd="{pyright} sklearn",
             expected_mypy_success=True,
         ),
         Project(
             location="https://github.com/pypa/bandersnatch",
             mypy_cmd="{mypy} src",
+            pyright_cmd="{pyright} src",
             deps=["types-filelock", "types-freezegun", "types-setuptools"],
             expected_mypy_success=True,
         ),
         Project(
             location="https://github.com/hauntsaninja/boostedblob",
             mypy_cmd="{mypy} boostedblob",
+            pyright_cmd="{pyright} boostedblob",
             deps=["aiohttp", "uvloop", "pycryptodome"],
             expected_mypy_success=True,
             supported_platforms=["linux", "darwin"],
@@ -166,18 +172,21 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/quora/asynq",
             mypy_cmd="{mypy} asynq",
+            pyright_cmd="{pyright} asynq",
             deps=["qcore"],
             expected_mypy_success=True,
         ),
         Project(
             location="https://github.com/scrapy/scrapy",
             mypy_cmd="{mypy} scrapy tests",
+            pyright_cmd="{pyright}",
             deps=["attrs", "types-pyOpenSSL", "types-setuptools"],
             expected_mypy_success=True,
         ),
         Project(
             location="https://github.com/pypa/twine",
             mypy_cmd="{mypy} twine",
+            pyright_cmd="{pyright} twine",
             deps=["keyring", "types-requests"],
             expected_mypy_success=True,
         ),
