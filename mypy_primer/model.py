@@ -6,6 +6,7 @@ import os
 import re
 import shlex
 import shutil
+import string
 import subprocess
 import sys
 import textwrap
@@ -28,7 +29,10 @@ class Project:
     mypy_cmd: str
     revision: str | None = None
     min_python_version: tuple[int, int] | None = None
+
     pip_cmd: str | None = None
+    deps: list[str] | None = None
+
     # if expected_success, there is a recent version of mypy which passes cleanly
     expected_mypy_success: bool = False
     # mypy_cost is vaguely proportional to mypy's type check time
@@ -41,6 +45,10 @@ class Project:
 
     supported_platforms: list[str] | None = None
 
+    def __post_init__(self) -> None:
+        if self.deps:
+            assert all(d[0] in string.ascii_letters for d in self.deps)
+
     # custom __repr__ that omits defaults.
     def __repr__(self) -> str:
         result = f"Project(location={self.location!r}, mypy_cmd={self.mypy_cmd!r}"
@@ -48,6 +56,8 @@ class Project:
             result += f", pyright_cmd={self.pyright_cmd!r}"
         if self.pip_cmd:
             result += f", pip_cmd={self.pip_cmd!r}"
+        if self.deps:
+            result += f", deps={self.deps!r}"
         if self.expected_mypy_success:
             result += f", expected_mypy_success={self.expected_mypy_success!r}"
         if self.expected_pyright_success:
@@ -104,9 +114,9 @@ class Project:
                 name_override=self.name_override,
             )
         assert repo_dir == ctx.get().projects_dir / self.name
+        venv.create(self.venv_dir, with_pip=True, clear=True)
         if self.pip_cmd:
             assert "{pip}" in self.pip_cmd
-            venv.create(self.venv_dir, with_pip=True, clear=True)
             try:
                 await run(
                     self.pip_cmd.format(pip=quote_path(self.venv_dir / BIN_DIR / "pip")),
@@ -120,15 +130,30 @@ class Project:
                 if e.stderr:
                     print(e.stderr)
                 raise RuntimeError(f"pip install failed for {self.name}") from e
+        if self.deps:
+            if shutil.which("uv"):
+                install_base = (
+                    f"uv pip install --python {quote_path(self.venv_dir / BIN_DIR / 'python')}"
+                )
+            else:
+                install_base = f"{quote_path(self.venv_dir / BIN_DIR / 'pip')} install"
+            install_cmd = f"{install_base} {' '.join(self.deps)}"
+            try:
+                await run(install_cmd, shell=True, cwd=repo_dir, output=True)
+            except subprocess.CalledProcessError as e:
+                if e.output:
+                    print(e.output)
+                if e.stderr:
+                    print(e.stderr)
+                raise RuntimeError(f"dependency install failed for {self.name}") from e
 
     def get_mypy_cmd(self, mypy: str | Path, additional_flags: Sequence[str] = ()) -> str:
         mypy_cmd = self.mypy_cmd
         assert "{mypy}" in self.mypy_cmd
         mypy_cmd = mypy_cmd.format(mypy=mypy)
 
-        if self.pip_cmd:
-            python_exe = self.venv_dir / BIN_DIR / "python"
-            mypy_cmd += f" --python-executable={quote_path(python_exe)}"
+        python_exe = self.venv_dir / BIN_DIR / "python"
+        mypy_cmd += f" --python-executable={quote_path(python_exe)}"
         if additional_flags:
             mypy_cmd += " " + " ".join(additional_flags)
         if ctx.get().output == "concise":
@@ -208,13 +233,12 @@ class Project:
         if typeshed_dir is not None:
             additional_flags.append(f"--typeshedpath {quote_path(typeshed_dir)}")
         pyright_cmd = self.get_pyright_cmd(pyright, additional_flags)
-        if self.pip_cmd:
-            activate = (
-                f"source {shlex.quote(str(self.venv_dir / BIN_DIR / 'activate'))}"
-                if sys.platform != "win32"
-                else str(self.venv_dir / BIN_DIR / "activate.bat")
-            )
-            pyright_cmd = f"{activate}; {pyright_cmd}"
+        activate = (
+            f"source {shlex.quote(str(self.venv_dir / BIN_DIR / 'activate'))}"
+            if sys.platform != "win32"
+            else str(self.venv_dir / BIN_DIR / "activate.bat")
+        )
+        pyright_cmd = f"{activate}; {pyright_cmd}"
         proc, runtime = await run(
             pyright_cmd,
             shell=True,
