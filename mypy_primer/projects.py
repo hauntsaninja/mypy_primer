@@ -78,11 +78,13 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/hauntsaninja/mypy_primer",
             mypy_cmd="{mypy} -p mypy_primer --strict",
+            pyright_cmd="{pyright}",
             expected_mypy_success=True,
         ),
         Project(
             location="https://github.com/psf/black",
             mypy_cmd="{mypy} src",
+            pyright_cmd="{pyright} src",
             pip_cmd="{pip} install aiohttp click pathspec tomli platformdirs",
             expected_mypy_success=True,
         ),
@@ -95,6 +97,7 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/pytest-dev/pytest",
             mypy_cmd="{mypy} src testing",
+            pyright_cmd="{pyright}",
             pip_cmd="{pip} install attrs pluggy py types-setuptools",
             expected_mypy_success=True,
         ),
@@ -112,6 +115,7 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/pycqa/pylint",
             mypy_cmd="{mypy} pylint/checkers --ignore-missing-imports",
+            pyright_cmd="{pyright} pylint/checkers",
             pip_cmd="{pip} install types-toml",
             expected_mypy_success=True,
         ),
