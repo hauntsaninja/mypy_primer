@@ -225,11 +225,18 @@ async def measure_project_runtimes() -> None:
         result = await project.run_typechecker(type_checker_exe, typeshed_dir=None)
         return (result.runtime, project)
 
-    results = sorted(
-        (await asyncio.gather(*[inner(project) for project in select_projects()])), reverse=True
-    )
+    projects = select_projects()
+    results = []
+    for fut in asyncio.as_completed([inner(project) for project in projects]):
+        time_taken, project = await fut
+        results.append((time_taken, project))
+        print(f"[{len(results)}/{len(projects)}] {time_taken:6.2f}s  {project.location}")
+
+    results.sort(reverse=True)
+    print("\n" * 5)
+    print("Results:")
     for time_taken, project in results:
-        print(f"{time_taken:6.2f}  {project.location}")
+        print(f"{time_taken:6.2f}s  {project.location}")
 
 
 # ==============================
