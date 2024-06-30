@@ -922,6 +922,7 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/caronc/apprise",
             mypy_cmd="{mypy} .",
+            pyright_cmd="{pyright}",
             deps=[
                 "types-six",
                 "types-mock",
@@ -936,6 +937,7 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/daveleroy/sublime_debugger",
             mypy_cmd="{mypy} modules --namespace-packages",
+            pyright_cmd="{pyright} modules",
             deps=["certifi"],
         ),
         Project(
@@ -953,11 +955,13 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/pyodide/pyodide",
             mypy_cmd="{mypy} src pyodide-build --exclude 'setup.py|^src/tests|conftest.py'",
+            pyright_cmd="{pyright} src pyodide-build",
             deps=["packaging", "types-docutils", "types-pyyaml", "types-setuptools", "numpy"],
         ),
         Project(
             location="https://github.com/bokeh/bokeh",
             mypy_cmd="{mypy} src release",
+            pyright_cmd="{pyright}",
             deps=["types-boto", "tornado", "numpy", "jinja2", "selenium"],
         ),
         Project(
@@ -980,6 +984,7 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/enthought/comtypes",
             mypy_cmd="{mypy} comtypes --platform win32",
+            pyright_cmd="{pyright}",
             deps=["numpy"],
         ),
         Project(
@@ -1028,6 +1033,7 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/pwndbg/pwndbg",
             mypy_cmd="{mypy} pwndbg",
+            pyright_cmd="{pyright}",
             deps=["types-gdb"],
         ),
         Project(
