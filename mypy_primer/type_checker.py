@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 from mypy_primer.git_utils import RevisionLike, ensure_repo_at_revision
-from mypy_primer.utils import BIN_DIR, MYPY_EXE_NAME, run, make_venv, has_uv
+from mypy_primer.utils import BIN_DIR, MYPY_EXE_NAME, has_uv, make_venv, run
 
 
 async def setup_mypy(
@@ -25,7 +25,9 @@ async def setup_mypy(
 
     async def pip_install(*targets: str) -> None:
         if has_uv():
-            await run(["uv", "pip", "install", "--python", str(venv_dir / BIN_DIR / "python"), *targets])
+            await run(
+                ["uv", "pip", "install", "--python", str(venv_dir / BIN_DIR / "python"), *targets]
+            )
         else:
             await run([str(venv_dir / BIN_DIR / "pip"), "install", *targets])
 

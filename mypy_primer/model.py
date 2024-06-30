@@ -10,7 +10,6 @@ import string
 import subprocess
 import sys
 import textwrap
-import venv
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -18,15 +17,16 @@ from typing import Sequence
 
 from mypy_primer.git_utils import ensure_repo_at_revision
 from mypy_primer.globals import ctx
-from mypy_primer.utils import BIN_DIR, Style, debug_print, quote_path, run, has_uv, make_venv
-
-extra_dataclass_args = {"kw_only": True} if sys.version_info >= (3, 10) else {}
+from mypy_primer.utils import BIN_DIR, Style, debug_print, has_uv, make_venv, quote_path, run
 
 
-@dataclass(frozen=True, **extra_dataclass_args)
+@dataclass(frozen=True, kw_only=True)
 class Project:
     location: str
+
     mypy_cmd: str
+    pyright_cmd: str | None
+
     revision: str | None = None
     min_python_version: tuple[int, int] | None = None
 
@@ -35,11 +35,10 @@ class Project:
 
     # if expected_success, there is a recent version of mypy which passes cleanly
     expected_mypy_success: bool = False
+    expected_pyright_success: bool = False
+
     # mypy_cost is vaguely proportional to mypy's type check time
     mypy_cost: int = 3
-
-    pyright_cmd: str | None = None
-    expected_pyright_success: bool = False
 
     name_override: str | None = None
 
@@ -308,7 +307,9 @@ for source in sources:
                 header = f.readline().strip()
                 if header.startswith("# flags:"):
                     additional_flags = header[len("# flags:") :]
-        return Project(location=location, mypy_cmd=f"{{mypy}} {location} {additional_flags}")
+        return Project(
+            location=location, mypy_cmd=f"{{mypy}} {location} {additional_flags}", pyright_cmd=None
+        )
 
 
 @dataclass(frozen=True)

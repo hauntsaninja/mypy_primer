@@ -22,5 +22,5 @@ setup(
     packages=find_packages(),
     install_requires=["uv"],
     entry_points={"console_scripts": ["mypy_primer=mypy_primer.main:main"]},
-    python_requires=">=3.7",
+    python_requires=">=3.10",
 )
