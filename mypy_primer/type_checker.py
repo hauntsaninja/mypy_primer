@@ -4,11 +4,10 @@ import os
 import shutil
 import subprocess
 import sys
-import venv
 from pathlib import Path
 
 from mypy_primer.git_utils import RevisionLike, ensure_repo_at_revision
-from mypy_primer.utils import BIN_DIR, MYPY_EXE_NAME, run
+from mypy_primer.utils import BIN_DIR, MYPY_EXE_NAME, run, make_venv, has_uv
 
 
 async def setup_mypy(
@@ -21,8 +20,14 @@ async def setup_mypy(
 ) -> Path:
     mypy_dir.mkdir(exist_ok=True)
     venv_dir = mypy_dir / "venv"
-    venv.create(venv_dir, with_pip=True, clear=True)
-    pip_exe = str(venv_dir / BIN_DIR / "pip")
+
+    await make_venv(venv_dir)
+
+    async def pip_install(*targets: str) -> None:
+        if has_uv():
+            await run(["uv", "pip", "install", "--python", str(venv_dir / BIN_DIR / "python"), *targets])
+        else:
+            await run([str(venv_dir / BIN_DIR / "pip"), "install", *targets])
 
     if mypyc_compile_level is not None:
         editable = True
@@ -31,7 +36,7 @@ async def setup_mypy(
     if isinstance(revision_like, str) and not editable and repo is None:
         # optimistically attempt to install the revision of mypy we want from pypi
         try:
-            await run([pip_exe, "install", f"mypy=={revision_like}"])
+            await pip_install(f"mypy=={revision_like}")
             install_from_repo = False
         except subprocess.CalledProcessError:
             install_from_repo = True
@@ -44,18 +49,18 @@ async def setup_mypy(
             env = os.environ.copy()
             env["MYPYC_OPT_LEVEL"] = str(mypyc_compile_level)
             python_exe = str(venv_dir / BIN_DIR / "python")
-            await run([pip_exe, "install", "typing_extensions", "mypy_extensions"])
+            await pip_install("typing_extensions", "mypy_extensions")
             await run(
                 [python_exe, "setup.py", "--use-mypyc", "build_ext", "--inplace"],
                 cwd=repo_dir,
                 env=env,
             )
-        install_cmd = [pip_exe, "install"]
+        targets = []
         if editable:
-            install_cmd.append("--editable")
-        install_cmd.append(str(repo_dir))
-        install_cmd.append("tomli")
-        await run(install_cmd)
+            targets.append("--editable")
+        targets.append(str(repo_dir))
+        targets.append("tomli")
+        await pip_install(*targets)
 
     mypy_exe = venv_dir / BIN_DIR / MYPY_EXE_NAME
     if sys.platform == "darwin":

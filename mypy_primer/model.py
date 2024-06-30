@@ -18,7 +18,7 @@ from typing import Sequence
 
 from mypy_primer.git_utils import ensure_repo_at_revision
 from mypy_primer.globals import ctx
-from mypy_primer.utils import BIN_DIR, Style, debug_print, quote_path, run
+from mypy_primer.utils import BIN_DIR, Style, debug_print, quote_path, run, has_uv, make_venv
 
 extra_dataclass_args = {"kw_only": True} if sys.version_info >= (3, 10) else {}
 
@@ -114,7 +114,7 @@ class Project:
                 name_override=self.name_override,
             )
         assert repo_dir == ctx.get().projects_dir / self.name
-        venv.create(self.venv_dir, with_pip=True, clear=True)
+        await make_venv(self.venv_dir)
         if self.pip_cmd:
             assert "{pip}" in self.pip_cmd
             try:
@@ -131,7 +131,7 @@ class Project:
                     print(e.stderr)
                 raise RuntimeError(f"pip install failed for {self.name}") from e
         if self.deps:
-            if shutil.which("uv"):
+            if has_uv():
                 install_base = (
                     f"uv pip install --python {quote_path(self.venv_dir / BIN_DIR / 'python')}"
                 )

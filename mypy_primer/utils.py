@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import asyncio
+import functools
 import re
 import shlex
+import shutil
 import subprocess
 import sys
 import time
+import venv
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -113,6 +116,19 @@ async def run(
     if check and proc.returncode:
         raise subprocess.CalledProcessError(proc.returncode, cmd, output=stdout, stderr=stderr)
     return subprocess.CompletedProcess(cmd, proc.returncode, stdout, stderr), end_t - start_t
+
+
+@functools.cache
+def has_uv() -> bool:
+    return bool(shutil.which("uv"))
+
+
+async def make_venv(venv_dir: Path) -> Path:
+    if has_uv():
+        await run(["uv", "venv", str(venv_dir), "--python", sys.executable])
+    else:
+        venv.create(venv_dir, with_pip=True, clear=True)
+    return venv_dir
 
 
 def line_count(path: Path) -> int:
