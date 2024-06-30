@@ -165,7 +165,7 @@ class Project:
         )
         return mypy_cmd
 
-    async def run_mypy(self, mypy: str | Path, typeshed_dir: Path | None) -> TypeCheckResult:
+    async def run_mypy(self, mypy: Path, typeshed_dir: Path | None) -> TypeCheckResult:
         additional_flags = ctx.get().additional_flags.copy()
         env = os.environ.copy()
         env["MYPY_FORCE_COLOR"] = "1"
@@ -220,7 +220,7 @@ class Project:
             mypy_cmd, output, not bool(proc.returncode), self.expected_mypy_success, runtime
         )
 
-    def get_pyright_cmd(self, pyright: str | Path, additional_flags: Sequence[str] = ()) -> str:
+    def get_pyright_cmd(self, pyright: Path, additional_flags: Sequence[str] = ()) -> str:
         pyright_cmd = self.pyright_cmd or "{pyright}"
         assert "{pyright}" in pyright_cmd
         if additional_flags:
@@ -228,7 +228,7 @@ class Project:
         pyright_cmd = pyright_cmd.format(pyright=pyright)
         return pyright_cmd
 
-    async def run_pyright(self, pyright: str | Path, typeshed_dir: Path | None) -> TypeCheckResult:
+    async def run_pyright(self, pyright: Path, typeshed_dir: Path | None) -> TypeCheckResult:
         additional_flags: list[str] = []
         if typeshed_dir is not None:
             additional_flags.append(f"--typeshedpath {quote_path(typeshed_dir)}")
@@ -255,7 +255,7 @@ class Project:
         )
 
     async def run_typechecker(
-        self, type_checker: str | Path, typeshed_dir: Path | None
+        self, type_checker: Path, typeshed_dir: Path | None
     ) -> TypeCheckResult:
         if ctx.get().type_checker == "mypy":
             return await self.run_mypy(type_checker, typeshed_dir)
@@ -266,8 +266,8 @@ class Project:
 
     async def primer_result(
         self,
-        new_type_checker: str,
-        old_type_checker: str,
+        new_type_checker: Path,
+        old_type_checker: Path,
         new_typeshed: Path | None,
         old_typeshed: Path | None,
     ) -> PrimerResult:

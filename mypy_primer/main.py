@@ -214,7 +214,7 @@ async def measure_project_runtimes() -> None:
 
     async def inner(project: Project) -> tuple[float, Project]:
         await project.setup()
-        result = await project.run_mypy(mypy_exe, typeshed_dir=None)
+        result = await project.run_typechecker(mypy_exe, typeshed_dir=None)
         return (result.runtime, project)
 
     results = sorted(
@@ -251,7 +251,7 @@ async def bisect() -> None:
     await asyncio.gather(*[project.setup() for project in projects])
 
     async def run_wrapper(project: Project) -> tuple[str, TypeCheckResult]:
-        return project.name, (await project.run_mypy(str(mypy_exe), typeshed_dir=None))
+        return project.name, (await project.run_mypy(mypy_exe, typeshed_dir=None))
 
     results_fut = await asyncio.gather(*(run_wrapper(project) for project in projects))
     old_results: dict[str, TypeCheckResult] = dict(results_fut)
@@ -355,8 +355,8 @@ async def primer() -> int:
 
     results = [
         project.primer_result(
-            new_type_checker=str(new_type_checker),
-            old_type_checker=str(old_type_checker),
+            new_type_checker=new_type_checker,
+            old_type_checker=old_type_checker,
             new_typeshed=new_typeshed_dir,
             old_typeshed=old_typeshed_dir,
         )
