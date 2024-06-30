@@ -74,7 +74,7 @@ def get_projects() -> list[Project]:
             pyright_cmd=None,
             deps=["pytest", "types-psutil", "types-setuptools", "filelock", "tomli"],
             expected_mypy_success=True,
-            mypy_cost=20,
+            cost={"mypy": 15},
         ),
         Project(
             location="https://github.com/hauntsaninja/mypy_primer",
@@ -115,7 +115,7 @@ def get_projects() -> list[Project]:
                 "pytest",
             ],
             expected_mypy_success=True,
-            mypy_cost=120,
+            cost={"mypy": 60},
         ),
         Project(
             location="https://github.com/pycqa/pylint",
@@ -155,6 +155,7 @@ def get_projects() -> list[Project]:
             pyright_cmd="{pyright} sklearn",
             deps=["numpy"],
             expected_mypy_success=True,
+            cost={"mypy": 15, "pyright": 240}
         ),
         Project(
             location="https://github.com/pypa/bandersnatch",
@@ -200,10 +201,11 @@ def get_projects() -> list[Project]:
         ),
         Project(
             location="https://github.com/pydata/xarray",
-            mypy_cmd="{mypy} .",
+            mypy_cmd="{mypy} --exclude conftest.py",
             pyright_cmd="{pyright}",
             deps=["types-PyYAML", "types-python-dateutil", "types-pytz", "numpy"],
             expected_mypy_success=True,
+            cost={"mypy": 15, "pyright": 170},
         ),
         Project(
             location="https://github.com/pallets/werkzeug",
@@ -257,6 +259,7 @@ def get_projects() -> list[Project]:
                 "cryptography",
             ],
             expected_mypy_success=True,
+            cost={"pyright": 60},
         ),
         Project(
             location="https://github.com/dropbox/stone",
@@ -298,6 +301,7 @@ def get_projects() -> list[Project]:
                 "SQLAlchemy",
             ],
             expected_mypy_success=True,
+            cost={"pyright": 60},
         ),
         Project(
             location="https://github.com/pallets/itsdangerous",
@@ -369,6 +373,7 @@ def get_projects() -> list[Project]:
             pyright_cmd="{pyright} jax",
             deps=["types-requests", "numpy"],
             expected_mypy_success=True,
+            cost={"mypy": 20, "pyright": 90},
         ),
         Project(
             location="https://github.com/dulwich/dulwich",
@@ -383,6 +388,7 @@ def get_projects() -> list[Project]:
             pyright_cmd="{pyright}",
             deps=["types-PyYAML", "types-redis", "types-setuptools", "SQLAlchemy", "numpy"],
             expected_mypy_success=True,
+            cost={"pyright": 70},
         ),
         Project(
             location="https://github.com/trailofbits/manticore",
@@ -390,6 +396,7 @@ def get_projects() -> list[Project]:
             pyright_cmd="{pyright}",
             deps=["types-protobuf", "types-PyYAML", "types-redis", "types-setuptools"],
             expected_mypy_success=True,
+            cost={"pyright": 75},
         ),
         Project(
             location="https://github.com/aiortc/aiortc",
@@ -424,7 +431,7 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} src tests",
             pyright_cmd=None,
             expected_mypy_success=True,
-            mypy_cost=70,
+            cost={"mypy": 40},
         ),
         Project(
             location="https://github.com/Legrandin/pycryptodome",
@@ -528,7 +535,7 @@ def get_projects() -> list[Project]:
             pyright_cmd="{pyright} python/pyspark",
             deps=["numpy"],
             expected_mypy_success=True,
-            mypy_cost=20,
+            cost={"mypy": 20, "pyright": 110},
         ),
         Project(
             location="https://github.com/laowantong/paroxython",
@@ -634,6 +641,7 @@ def get_projects() -> list[Project]:
                 "types-protobuf",
             ],
             expected_mypy_success=True,
+            cost={"pyright": 75},
         ),
         Project(
             location="https://github.com/systemd/mkosi",
@@ -647,7 +655,7 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} sympy",
             pyright_cmd="{pyright} sympy",
             expected_mypy_success=True,
-            mypy_cost=70,
+            cost={"mypy": 35, "pyright": 240},
         ),
         Project(
             location="https://github.com/nion-software/nionutils",
@@ -753,6 +761,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/pytorch/vision",
             mypy_cmd="{mypy}",
             pyright_cmd="{pyright}",
+            cost={"pyright": 50},
         ),
         Project(
             location="https://github.com/tornadoweb/tornado",
@@ -790,7 +799,7 @@ def get_projects() -> list[Project]:
                 "types-python-slugify",
                 "types-backports",
             ],
-            mypy_cost=70,
+            cost={"mypy": 40, "pyright": 240},
             supported_platforms=["linux", "darwin"],  # hack for sed
         ),
         Project(
@@ -809,6 +818,7 @@ def get_projects() -> list[Project]:
                 "types-pytz",
                 "SQLAlchemy",
             ],
+            cost={"pyright": 60},
         ),
         Project(
             location="https://github.com/streamlit/streamlit",
@@ -846,13 +856,13 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} rotkehlchen/ tools/data_faker",
             pyright_cmd="{pyright}",
             deps=["eth-typing", "types-requests", "types-setuptools"],
+            cost={"pyright": 60},
         ),
         Project(
             location="https://github.com/arviz-devs/arviz",
             mypy_cmd="{mypy} .",
             pyright_cmd="{pyright}",
             deps=["pytest", "types-setuptools", "types-ujson", "numpy", "xarray"],
-            mypy_cost=20,
         ),
         Project(
             location="https://github.com/urllib3/urllib3",
@@ -885,7 +895,7 @@ def get_projects() -> list[Project]:
             pyright_cmd=None,
             pip_cmd="{pip} install $(grep -v mypy mypy-requirements.txt) -r test-requirements.txt",
             expected_mypy_success=True,
-            mypy_cost=20,
+            cost={"mypy": 15},
             supported_platforms=["linux", "darwin"],
         ),
         Project(
@@ -937,7 +947,7 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} discord",
             pyright_cmd="{pyright}",
             deps=["types-requests", "types-setuptools", "aiohttp"],
-            mypy_cost=20,
+            cost={"mypy": 20},
         ),
         Project(
             location="https://github.com/canonical/cloud-init",
@@ -952,7 +962,7 @@ def get_projects() -> list[Project]:
                 "types-requests",
                 "types-setuptools",
             ],
-            mypy_cost=20,
+            cost={"mypy": 15},
         ),
         Project(
             location="https://github.com/mongodb/mongo-python-driver",
@@ -971,7 +981,6 @@ def get_projects() -> list[Project]:
             mypy_cmd="MYPYPATH=$MYPYPATH:misc/python {mypy} ci misc/python",
             pyright_cmd="{pyright}",
             pip_cmd="{pip} install -r ci/builder/requirements.txt",
-            mypy_cost=30,
         ),
         Project(
             location="https://github.com/canonical/operator",
@@ -1029,6 +1038,7 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} src release",
             pyright_cmd="{pyright}",
             deps=["types-boto", "tornado", "numpy", "jinja2", "selenium"],
+            cost={"pyright": 60},
         ),
         Project(
             location="https://github.com/pandas-dev/pandas-stubs",
@@ -1045,7 +1055,7 @@ def get_projects() -> list[Project]:
                 "SQLAlchemy",
             ],
             expected_pyright_success=True,
-            mypy_cost=20,
+            cost={"mypy": 40, "pyright": 75},
         ),
         Project(
             location="https://github.com/enthought/comtypes",
@@ -1058,7 +1068,6 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} src tests/annotations/mypy_checks.py",
             pyright_cmd="{pyright} tests/annotations src",
             deps=["pydantic", "beartype", "hydra-core"],
-            mypy_cost=30,
         ),
         Project(
             location="https://github.com/Toufool/AutoSplit",
@@ -1094,13 +1103,13 @@ def get_projects() -> list[Project]:
                 "types-httplib2",
                 "types-requests",
             ],
-            mypy_cost=30,
         ),
         Project(
             location="https://github.com/pwndbg/pwndbg",
             mypy_cmd="{mypy} pwndbg",
             pyright_cmd="{pyright}",
             deps=["types-gdb"],
+            cost={"pyright": 75},
         ),
         Project(
             location="https://github.com/keithasaurus/koda-validate",

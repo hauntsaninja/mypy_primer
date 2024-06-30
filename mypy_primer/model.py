@@ -37,8 +37,9 @@ class Project:
     expected_mypy_success: bool = False
     expected_pyright_success: bool = False
 
-    # mypy_cost is vaguely proportional to mypy's type check time
-    mypy_cost: int = 3
+    # cost is vaguely proportional to type check time
+    # for mypy we use the compiled times
+    cost: dict[str, int] = field(default_factory=dict)
 
     name_override: str | None = None
 
@@ -61,8 +62,8 @@ class Project:
             result += f", expected_mypy_success={self.expected_mypy_success!r}"
         if self.expected_pyright_success:
             result += f", expected_pyright_success={self.expected_pyright_success!r}"
-        if self.mypy_cost != 3:
-            result += f", mypy_cost={self.mypy_cost!r}"
+        if self.cost:
+            result += f", cost={self.cost!r}"
         if self.revision:
             result += f", revision={self.revision!r}"
         if self.min_python_version:
@@ -91,6 +92,10 @@ class Project:
             return self.expected_pyright_success
         else:
             raise ValueError(f"unknown type checker {type_checker}")
+
+    def cost_for_type_checker(self, type_checker: str) -> int:
+        default_cost = 5
+        return self.cost.get(type_checker, default_cost)
 
     async def setup(self) -> None:
         if Path(self.location).exists():
