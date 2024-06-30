@@ -201,20 +201,28 @@ async def validate_expected_success() -> None:
 
 
 async def measure_project_runtimes() -> None:
-    """Check mypy's runtime over each project."""
+    """Check type checker runtime over each project."""
     ARGS = ctx.get()
-    assert ARGS.type_checker == "mypy"
 
-    mypy_exe = await setup_mypy(
-        ARGS.base_dir / "timer_mypy",
-        ARGS.new or RECENT_MYPYS[0],
-        repo=ARGS.repo,
-        mypyc_compile_level=ARGS.mypyc_compile_level,
-    )
+    if ARGS.type_checker == "mypy":
+        type_checker_exe = await setup_mypy(
+            ARGS.base_dir / "timer_mypy",
+            ARGS.new or RECENT_MYPYS[0],
+            repo=ARGS.repo,
+            mypyc_compile_level=ARGS.mypyc_compile_level,
+        )
+    elif ARGS.type_checker == "pyright":
+        type_checker_exe = await setup_pyright(
+            ARGS.base_dir / "timer_pyright",
+            ARGS.new,
+            repo=ARGS.repo,
+        )
+    else:
+        raise ValueError(f"Unknown type checker {ARGS.type_checker}")
 
     async def inner(project: Project) -> tuple[float, Project]:
         await project.setup()
-        result = await project.run_typechecker(mypy_exe, typeshed_dir=None)
+        result = await project.run_typechecker(type_checker_exe, typeshed_dir=None)
         return (result.runtime, project)
 
     results = sorted(
