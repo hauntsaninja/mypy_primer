@@ -194,40 +194,47 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/more-itertools/more-itertools",
             mypy_cmd="{mypy} more_itertools",
+            pyright_cmd="{pyright} more_itertools",
             expected_mypy_success=True,
         ),
         Project(
             location="https://github.com/pydata/xarray",
             mypy_cmd="{mypy} .",
-            deps=["types-PyYAML", "types-python-dateutil", "types-pytz"],
+            pyright_cmd="{pyright}",
+            deps=["types-PyYAML", "types-python-dateutil", "types-pytz", "numpy"],
             expected_mypy_success=True,
         ),
         Project(
             location="https://github.com/pallets/werkzeug",
             mypy_cmd="{mypy} src/werkzeug tests",
+            pyright_cmd="{pyright}",
             deps=["types-setuptools", "pytest", "markupsafe"],
             expected_mypy_success=True,
         ),
         Project(
             location="https://github.com/pallets/jinja",
             mypy_cmd="{mypy}",
+            pyright_cmd="{pyright}",
             deps=["markupsafe"],
             expected_mypy_success=True,
         ),
         Project(
             location="https://github.com/mystor/git-revise",
             mypy_cmd="{mypy} gitrevise",
+            pyright_cmd="{pyright} gitrevise",
             expected_mypy_success=True,
         ),
         Project(
             location="https://github.com/PyGithub/PyGithub",
             mypy_cmd="{mypy} github tests",
+            pyright_cmd="{pyright}",
             deps=["types-requests", "pyjwt"],
             expected_mypy_success=True,
         ),
         Project(
             location="https://github.com/we-like-parsers/pegen",
             mypy_cmd="{mypy} src/pegen",
+            pyright_cmd="{pyright} src/pegen",
             expected_mypy_success=True,
         ),
         Project(
@@ -235,6 +242,7 @@ def get_projects() -> list[Project]:
             mypy_cmd=(
                 "{mypy} zerver zilencer zproject tools analytics corporate scripts --platform=linux"
             ),
+            pyright_cmd="{pyright}",
             deps=[
                 "types-PyYAML",
                 "types-polib",
@@ -252,12 +260,14 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/dropbox/stone",
             mypy_cmd="{mypy} stone test",
+            pyright_cmd="{pyright}",
             deps=["types-six"],
             expected_mypy_success=True,
         ),
         Project(
             location="https://github.com/yelp/paasta",
             mypy_cmd="{mypy} paasta_tools",
+            pyright_cmd="{pyright} paasta_tools",
             deps=[
                 "types-retry",
                 "types-tzlocal",
@@ -273,6 +283,7 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/PrefectHQ/prefect",
             mypy_cmd="{mypy} src",
+            pyright_cmd="{pyright} src",
             deps=[
                 "types-python-dateutil",
                 "types-requests",
@@ -290,6 +301,7 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/pallets/itsdangerous",
             mypy_cmd="{mypy}",
+            pyright_cmd="{pyright}",
             deps=["pytest"],
             expected_mypy_success=True,
         ),
@@ -302,11 +314,13 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/jaraco/zipp",
             mypy_cmd="{mypy} .",
+            pyright_cmd="{pyright}",
             expected_mypy_success=True,
         ),
         Project(
             location="https://github.com/aaugustin/websockets",
             mypy_cmd="{mypy} --strict src",
+            pyright_cmd="{pyright}",
             expected_mypy_success=True,
         ),
         Project(
@@ -318,16 +332,19 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/aio-libs/aioredis",
             mypy_cmd="{mypy} aioredis --ignore-missing-imports",
+            pyright_cmd="{pyright} aioredis",
             expected_mypy_success=True,
         ),
         Project(
             location="https://github.com/agronholm/anyio",
             mypy_cmd="{mypy} src",
+            pyright_cmd="{pyright} src",
             expected_mypy_success=True,
         ),
         Project(
             location="https://github.com/aio-libs/yarl",
             mypy_cmd="{mypy} --show-error-codes yarl tests",
+            pyright_cmd="{pyright}",
             deps=["multidict"],
             expected_mypy_success=True,
         ),
@@ -347,48 +364,56 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/google/jax",
             mypy_cmd="{mypy} jax",
-            deps=["types-requests"],
+            pyright_cmd="{pyright} jax",
+            deps=["types-requests", "numpy"],
             expected_mypy_success=True,
         ),
         Project(
             location="https://github.com/dulwich/dulwich",
             mypy_cmd="{mypy} dulwich",
+            pyright_cmd="{pyright} dulwich",
             deps=["types-certifi", "types-paramiko"],
             expected_mypy_success=True,
         ),
         Project(
             location="https://github.com/optuna/optuna",
             mypy_cmd="{mypy} .",
-            deps=["types-PyYAML", "types-redis", "types-setuptools", "SQLAlchemy"],
+            pyright_cmd="{pyright}",
+            deps=["types-PyYAML", "types-redis", "types-setuptools", "SQLAlchemy", "numpy"],
             expected_mypy_success=True,
         ),
         Project(
             location="https://github.com/trailofbits/manticore",
             mypy_cmd="{mypy}",
+            pyright_cmd="{pyright}",
             deps=["types-protobuf", "types-PyYAML", "types-redis", "types-setuptools"],
             expected_mypy_success=True,
         ),
         Project(
             location="https://github.com/aiortc/aiortc",
             mypy_cmd="{mypy} src",
+            pyright_cmd="{pyright} src",
             deps=["cryptography"],
             expected_mypy_success=True,
         ),
         Project(
             location="https://github.com/Textualize/rich",
             mypy_cmd="{mypy} -p rich --ignore-missing-imports --warn-unreachable",
+            pyright_cmd="{pyright}",
             deps=["attrs"],
             expected_mypy_success=True,
         ),
         Project(
             location="https://github.com/dedupeio/dedupe",
             mypy_cmd="{mypy} --ignore-missing-imports dedupe",
+            pyright_cmd="{pyright}",
             expected_mypy_success=True,
         ),
         Project(
             location="https://github.com/schemathesis/schemathesis",
             mypy_cmd="{mypy} src/schemathesis",
-            deps=["attrs", "types-requests", "types-PyYAML"],
+            pyright_cmd="{pyright} src/schemathesis",
+            deps=["attrs", "types-requests", "types-PyYAML", "hypothesis"],
             expected_mypy_success=True,
             supported_platforms=["linux", "darwin"],
         ),
@@ -401,21 +426,25 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/Legrandin/pycryptodome",
             mypy_cmd="{mypy} lib",
+            pyright_cmd="{pyright}",
             expected_mypy_success=True,
         ),
         Project(
             location="https://github.com/niklasf/python-chess",
             mypy_cmd="{mypy} --strict chess",
+            pyright_cmd="{pyright} chess",
             expected_mypy_success=True,
         ),
         Project(
             location="https://github.com/pytorch/ignite",
             mypy_cmd="{mypy}",
+            pyright_cmd="{pyright}",
             expected_mypy_success=True,
         ),
         Project(
             location="https://github.com/pypa/packaging",
             mypy_cmd="{mypy} packaging",
+            pyright_cmd="{pyright}",
             expected_mypy_success=True,
         ),
         Project(
@@ -428,23 +457,27 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/encode/starlette",
             mypy_cmd="{mypy} starlette tests",
+            pyright_cmd="{pyright}",
             deps=["types-requests", "types-PyYAML"],
             expected_mypy_success=True,
         ),
         Project(
             location="https://github.com/aio-libs/janus",
             mypy_cmd="{mypy} janus --disallow-untyped-calls --disallow-incomplete-defs --strict",
+            pyright_cmd="{pyright}",
             expected_mypy_success=True,
         ),
         Project(
             location="https://github.com/alerta/alerta",
             mypy_cmd="{mypy} alerta tests",
+            pyright_cmd="{pyright}",
             deps=["types-PyYAML", "types-setuptools", "types-requests", "types-pytz"],
             expected_mypy_success=True,
         ),
         Project(
             location="https://github.com/nolar/kopf",
             mypy_cmd="{mypy} kopf",
+            pyright_cmd="{pyright}",
             deps=["types-setuptools", "types-PyYAML"],
             expected_mypy_success=True,
         ),
