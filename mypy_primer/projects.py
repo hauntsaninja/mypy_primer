@@ -128,7 +128,8 @@ def get_projects() -> list[Project]:
             location="https://github.com/aio-libs/aiohttp",
             mypy_cmd="{mypy} aiohttp",
             pyright_cmd="{pyright} aiohttp",
-            pip_cmd="AIOHTTP_NO_EXTENSIONS=1 {pip} install -e . pytest",
+            deps=["pytest"],
+            pip_cmd="AIOHTTP_NO_EXTENSIONS=1 {pip} install -e .",
             expected_mypy_success=True,
             supported_platforms=["linux", "darwin"],
         ),
@@ -1191,7 +1192,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/mhammond/pywin32",
             mypy_cmd="{mypy} .",
             pyright_cmd="{pyright}",
-            pip_cmd="{pip} install types-pywin32 types-regex types-setuptools",
+            deps=["types-pywin32", "types-regex", "types-setuptools"],
         ),
     ]
     assert len(projects) == len({p.name for p in projects})
