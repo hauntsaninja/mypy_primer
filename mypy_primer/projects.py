@@ -1172,6 +1172,7 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/pypa/setuptools",
             mypy_cmd="{mypy} setuptools pkg_resources",
+            pyright_cmd="{pyright}",
             deps=[
                 "pytest",
                 "filelock",
