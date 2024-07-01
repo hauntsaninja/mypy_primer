@@ -237,7 +237,7 @@ class Project:
         if typeshed_dir is not None:
             additional_flags.append(f"--typeshedpath {quote_path(typeshed_dir)}")
         pyright_cmd = self.get_pyright_cmd(pyright, additional_flags)
-        pyright_cmd = f"{self.venv.activate}; {pyright_cmd}"
+        pyright_cmd = f"source {self.venv.activate}; {pyright_cmd}"
         proc, runtime = await run(
             pyright_cmd,
             shell=True,
