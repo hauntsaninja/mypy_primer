@@ -64,7 +64,9 @@ async def setup_mypy(
         # pth file that lets us let mypy import plugins from another venv
         # importantly, this puts the plugin paths at the back of sys.path, so they cannot
         # clobber mypy or its dependencies
-        f.write(r"""import os; import sys; exec('''env = os.environ.get("MYPY_PRIMER_PLUGIN_SITE_PACKAGES")\nif env: sys.path.extend(env.split(os.pathsep))''')""")
+        f.write(
+            r"""import os; import sys; exec('''env = os.environ.get("MYPY_PRIMER_PLUGIN_SITE_PACKAGES")\nif env: sys.path.extend(env.split(os.pathsep))''')"""
+        )
 
     mypy_exe = venv.script("mypy")
     if sys.platform == "darwin":
