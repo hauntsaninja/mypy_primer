@@ -290,7 +290,7 @@ def get_projects() -> list[Project]:
         ),
         Project(
             location="https://github.com/PrefectHQ/prefect",
-            mypy_cmd="{mypy} src",
+            mypy_cmd="{mypy} src/prefect --exclude conftest.py",
             pyright_cmd="{pyright} src",
             deps=[
                 "types-python-dateutil",
