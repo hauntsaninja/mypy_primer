@@ -140,9 +140,13 @@ def select_projects() -> list[Project]:
         assert ARGS.shard_index is not None
         shard_costs = [0] * ARGS.num_shards
         shard_projects: list[list[Project]] = [[] for _ in range(ARGS.num_shards)]
-        for p in sorted(projects, key=lambda p: (p.mypy_cost, p.location), reverse=True):
+        for p in sorted(
+            projects,
+            key=lambda p: (p.cost_for_type_checker(ARGS.type_checker), p.location),
+            reverse=True,
+        ):
             min_shard = min(range(ARGS.num_shards), key=lambda i: shard_costs[i])
-            shard_costs[min_shard] += p.mypy_cost
+            shard_costs[min_shard] += p.cost_for_type_checker(ARGS.type_checker)
             shard_projects[min_shard].append(p)
         return shard_projects[ARGS.shard_index]
     return projects
@@ -152,7 +156,7 @@ def select_projects() -> list[Project]:
 # hidden entrypoint logic
 # ==============================
 
-RECENT_MYPYS = ["0.991", "0.982", "0.971", "0.961"]
+RECENT_MYPYS = ["1.10.1"]
 
 
 async def validate_expected_success() -> None:
@@ -201,27 +205,42 @@ async def validate_expected_success() -> None:
 
 
 async def measure_project_runtimes() -> None:
-    """Check mypy's runtime over each project."""
+    """Check type checker runtime over each project."""
     ARGS = ctx.get()
-    assert ARGS.type_checker == "mypy"
 
-    mypy_exe = await setup_mypy(
-        ARGS.base_dir / "timer_mypy",
-        ARGS.new or RECENT_MYPYS[0],
-        repo=ARGS.repo,
-        mypyc_compile_level=ARGS.mypyc_compile_level,
-    )
+    if ARGS.type_checker == "mypy":
+        type_checker_exe = await setup_mypy(
+            ARGS.base_dir / "timer_mypy",
+            ARGS.new or RECENT_MYPYS[0],
+            repo=ARGS.repo,
+            mypyc_compile_level=ARGS.mypyc_compile_level,
+        )
+    elif ARGS.type_checker == "pyright":
+        type_checker_exe = await setup_pyright(
+            ARGS.base_dir / "timer_pyright",
+            ARGS.new,
+            repo=ARGS.repo,
+        )
+    else:
+        raise ValueError(f"Unknown type checker {ARGS.type_checker}")
 
     async def inner(project: Project) -> tuple[float, Project]:
         await project.setup()
-        result = await project.run_mypy(mypy_exe, typeshed_dir=None)
+        result = await project.run_typechecker(type_checker_exe, typeshed_dir=None)
         return (result.runtime, project)
 
-    results = sorted(
-        (await asyncio.gather(*[inner(project) for project in select_projects()])), reverse=True
-    )
+    projects = select_projects()
+    results = []
+    for fut in asyncio.as_completed([inner(project) for project in projects]):
+        time_taken, project = await fut
+        results.append((time_taken, project))
+        print(f"[{len(results)}/{len(projects)}] {time_taken:6.2f}s  {project.location}")
+
+    results.sort(reverse=True)
+    print("\n" * 5)
+    print("Results:")
     for time_taken, project in results:
-        print(f"{time_taken:6.2f}  {project.location}")
+        print(f"{time_taken:6.2f}s  {project.location}")
 
 
 # ==============================
@@ -251,7 +270,7 @@ async def bisect() -> None:
     await asyncio.gather(*[project.setup() for project in projects])
 
     async def run_wrapper(project: Project) -> tuple[str, TypeCheckResult]:
-        return project.name, (await project.run_mypy(str(mypy_exe), typeshed_dir=None))
+        return project.name, (await project.run_mypy(mypy_exe, typeshed_dir=None))
 
     results_fut = await asyncio.gather(*(run_wrapper(project) for project in projects))
     old_results: dict[str, TypeCheckResult] = dict(results_fut)
@@ -355,8 +374,8 @@ async def primer() -> int:
 
     results = [
         project.primer_result(
-            new_type_checker=str(new_type_checker),
-            old_type_checker=str(old_type_checker),
+            new_type_checker=new_type_checker,
+            old_type_checker=old_type_checker,
             new_typeshed=new_typeshed_dir,
             old_typeshed=old_typeshed_dir,
         )

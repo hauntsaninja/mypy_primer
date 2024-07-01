@@ -6,10 +6,9 @@ import os
 import re
 import shlex
 import shutil
+import string
 import subprocess
-import sys
 import textwrap
-import venv
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -17,49 +16,60 @@ from typing import Sequence
 
 from mypy_primer.git_utils import ensure_repo_at_revision
 from mypy_primer.globals import ctx
-from mypy_primer.utils import BIN_DIR, Style, debug_print, quote_path, run
-
-extra_dataclass_args = {"kw_only": True} if sys.version_info >= (3, 10) else {}
+from mypy_primer.utils import Style, Venv, debug_print, has_uv, quote_path, run
 
 
-@dataclass(frozen=True, **extra_dataclass_args)
+@dataclass(frozen=True, kw_only=True)
 class Project:
     location: str
-    mypy_cmd: str
-    revision: str | None = None
-    min_python_version: tuple[int, int] | None = None
-    pip_cmd: str | None = None
-    # if expected_success, there is a recent version of mypy which passes cleanly
-    expected_mypy_success: bool = False
-    # mypy_cost is vaguely proportional to mypy's type check time
-    mypy_cost: int = 3
-
-    pyright_cmd: str | None = None
-    expected_pyright_success: bool = False
-
     name_override: str | None = None
 
+    mypy_cmd: str
+    pyright_cmd: str | None
+
+    pip_cmd: str | None = None
+    deps: list[str] | None = None
+    needs_mypy_plugins: bool = False
+
+    # if expected_success, there is a recent version of mypy which passes cleanly
+    expected_mypy_success: bool = False
+    expected_pyright_success: bool = False
+
+    # cost is vaguely proportional to type check time
+    # for mypy we use the compiled times
+    cost: dict[str, int] = field(default_factory=dict)
+
+    revision: str | None = None
+    min_python_version: tuple[int, int] | None = None
     supported_platforms: list[str] | None = None
+
+    def __post_init__(self) -> None:
+        if self.deps:
+            assert all(d[0] in string.ascii_letters for d in self.deps)
 
     # custom __repr__ that omits defaults.
     def __repr__(self) -> str:
         result = f"Project(location={self.location!r}, mypy_cmd={self.mypy_cmd!r}"
+        if self.name_override:
+            result += f", name_override={self.name_override!r}"
         if self.pyright_cmd:
             result += f", pyright_cmd={self.pyright_cmd!r}"
         if self.pip_cmd:
             result += f", pip_cmd={self.pip_cmd!r}"
+        if self.deps:
+            result += f", deps={self.deps!r}"
+        if self.needs_mypy_plugins:
+            result += f", needs_mypy_plugins={self.needs_mypy_plugins!r}"
         if self.expected_mypy_success:
             result += f", expected_mypy_success={self.expected_mypy_success!r}"
         if self.expected_pyright_success:
             result += f", expected_pyright_success={self.expected_pyright_success!r}"
-        if self.mypy_cost != 3:
-            result += f", mypy_cost={self.mypy_cost!r}"
+        if self.cost:
+            result += f", cost={self.cost!r}"
         if self.revision:
             result += f", revision={self.revision!r}"
         if self.min_python_version:
             result += f", min_python_version={self.min_python_version!r}"
-        if self.name_override:
-            result += f", name_override={self.name_override!r}"
         if self.supported_platforms:
             result += f", supported_platforms={self.supported_platforms!r}"
         result += ")"
@@ -72,8 +82,8 @@ class Project:
         return Path(self.location).name
 
     @property
-    def venv_dir(self) -> Path:
-        return ctx.get().projects_dir / f"_{self.name}_venv"
+    def venv(self) -> Venv:
+        return Venv(ctx.get().projects_dir / f"_{self.name}_venv")
 
     def expected_success(self, type_checker: str) -> bool:
         if type_checker == "mypy":
@@ -82,6 +92,10 @@ class Project:
             return self.expected_pyright_success
         else:
             raise ValueError(f"unknown type checker {type_checker}")
+
+    def cost_for_type_checker(self, type_checker: str) -> int:
+        default_cost = 5
+        return self.cost.get(type_checker, default_cost)
 
     async def setup(self) -> None:
         if Path(self.location).exists():
@@ -104,12 +118,12 @@ class Project:
                 name_override=self.name_override,
             )
         assert repo_dir == ctx.get().projects_dir / self.name
+        await self.venv.make_venv()
         if self.pip_cmd:
             assert "{pip}" in self.pip_cmd
-            venv.create(self.venv_dir, with_pip=True, clear=True)
             try:
                 await run(
-                    self.pip_cmd.format(pip=quote_path(self.venv_dir / BIN_DIR / "pip")),
+                    self.pip_cmd.format(pip=quote_path(self.venv.script("pip"))),
                     shell=True,
                     cwd=repo_dir,
                     output=True,
@@ -120,15 +134,28 @@ class Project:
                 if e.stderr:
                     print(e.stderr)
                 raise RuntimeError(f"pip install failed for {self.name}") from e
+        if self.deps:
+            if has_uv():
+                install_base = f"uv pip install --python {quote_path(self.venv.python)}"
+            else:
+                install_base = f"{quote_path(self.venv.python)} -m pip install"
+            install_cmd = f"{install_base} {' '.join(self.deps)}"
+            try:
+                await run(install_cmd, shell=True, cwd=repo_dir, output=True)
+            except subprocess.CalledProcessError as e:
+                if e.output:
+                    print(e.output)
+                if e.stderr:
+                    print(e.stderr)
+                raise RuntimeError(f"dependency install failed for {self.name}") from e
 
     def get_mypy_cmd(self, mypy: str | Path, additional_flags: Sequence[str] = ()) -> str:
         mypy_cmd = self.mypy_cmd
         assert "{mypy}" in self.mypy_cmd
         mypy_cmd = mypy_cmd.format(mypy=mypy)
 
-        if self.pip_cmd:
-            python_exe = self.venv_dir / BIN_DIR / "python"
-            mypy_cmd += f" --python-executable={quote_path(python_exe)}"
+        python_exe = self.venv.python
+        mypy_cmd += f" --python-executable={quote_path(python_exe)}"
         if additional_flags:
             mypy_cmd += " " + " ".join(additional_flags)
         if ctx.get().output == "concise":
@@ -140,7 +167,7 @@ class Project:
         )
         return mypy_cmd
 
-    async def run_mypy(self, mypy: str | Path, typeshed_dir: Path | None) -> TypeCheckResult:
+    async def run_mypy(self, mypy: Path, typeshed_dir: Path | None) -> TypeCheckResult:
         additional_flags = ctx.get().additional_flags.copy()
         env = os.environ.copy()
         env["MYPY_FORCE_COLOR"] = "1"
@@ -153,6 +180,8 @@ class Project:
         if "MYPYPATH" in env:
             mypy_path = env["MYPYPATH"].split(os.pathsep) + mypy_path
         env["MYPYPATH"] = os.pathsep.join(mypy_path)
+        if self.needs_mypy_plugins:
+            env["MYPY_PRIMER_PLUGIN_SITE_PACKAGES"] = str(self.venv.site_packages)
 
         mypy_cmd = self.get_mypy_cmd(mypy, additional_flags)
         proc, runtime = await run(
@@ -195,7 +224,7 @@ class Project:
             mypy_cmd, output, not bool(proc.returncode), self.expected_mypy_success, runtime
         )
 
-    def get_pyright_cmd(self, pyright: str | Path, additional_flags: Sequence[str] = ()) -> str:
+    def get_pyright_cmd(self, pyright: Path, additional_flags: Sequence[str] = ()) -> str:
         pyright_cmd = self.pyright_cmd or "{pyright}"
         assert "{pyright}" in pyright_cmd
         if additional_flags:
@@ -203,18 +232,12 @@ class Project:
         pyright_cmd = pyright_cmd.format(pyright=pyright)
         return pyright_cmd
 
-    async def run_pyright(self, pyright: str | Path, typeshed_dir: Path | None) -> TypeCheckResult:
+    async def run_pyright(self, pyright: Path, typeshed_dir: Path | None) -> TypeCheckResult:
         additional_flags: list[str] = []
         if typeshed_dir is not None:
             additional_flags.append(f"--typeshedpath {quote_path(typeshed_dir)}")
         pyright_cmd = self.get_pyright_cmd(pyright, additional_flags)
-        if self.pip_cmd:
-            activate = (
-                f"source {shlex.quote(str(self.venv_dir / BIN_DIR / 'activate'))}"
-                if sys.platform != "win32"
-                else str(self.venv_dir / BIN_DIR / "activate.bat")
-            )
-            pyright_cmd = f"{activate}; {pyright_cmd}"
+        pyright_cmd = f"{self.venv.activate}; {pyright_cmd}"
         proc, runtime = await run(
             pyright_cmd,
             shell=True,
@@ -231,7 +254,7 @@ class Project:
         )
 
     async def run_typechecker(
-        self, type_checker: str | Path, typeshed_dir: Path | None
+        self, type_checker: Path, typeshed_dir: Path | None
     ) -> TypeCheckResult:
         if ctx.get().type_checker == "mypy":
             return await self.run_mypy(type_checker, typeshed_dir)
@@ -242,8 +265,8 @@ class Project:
 
     async def primer_result(
         self,
-        new_type_checker: str,
-        old_type_checker: str,
+        new_type_checker: Path,
+        old_type_checker: Path,
         new_typeshed: Path | None,
         old_typeshed: Path | None,
     ) -> PrimerResult:
@@ -269,7 +292,7 @@ for source in sources:
 """
         # the extra shell stuff here makes sure we expand globs in mypy_cmd
         proc, _ = await run(
-            f"{mypy_python} -c {quote_path(program)} {mypy_cmd}",
+            f"{mypy_python} -c {shlex.quote(program)} {mypy_cmd}",
             output=True,
             cwd=ctx.get().projects_dir / self.name,
             shell=True,
@@ -284,7 +307,9 @@ for source in sources:
                 header = f.readline().strip()
                 if header.startswith("# flags:"):
                     additional_flags = header[len("# flags:") :]
-        return Project(location=location, mypy_cmd=f"{{mypy}} {location} {additional_flags}")
+        return Project(
+            location=location, mypy_cmd=f"{{mypy}} {location} {additional_flags}", pyright_cmd=None
+        )
 
 
 @dataclass(frozen=True)
