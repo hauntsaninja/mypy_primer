@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import asyncio
+import functools
 import re
 import shlex
+import shutil
 import subprocess
 import sys
 import time
+import venv
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -15,12 +18,8 @@ from mypy_primer.globals import ctx
 if sys.platform == "win32":
     import tempfile
 
-    BIN_DIR = "scripts"
-    MYPY_EXE_NAME = "mypy.exe"
     TEMP_DIR = tempfile.gettempdir()
 else:
-    BIN_DIR = "bin"
-    MYPY_EXE_NAME = "mypy"
     TEMP_DIR = "/tmp"
 
 
@@ -29,7 +28,7 @@ if sys.platform == "win32":
 
     ILLEGAL_PATH_CHARS = set('*?"<>')
 
-    def quote_path(path: Path | str) -> str:
+    def quote_path(path: Path) -> str:
         path = str(path)
         if set(path) & ILLEGAL_PATH_CHARS:
             raise ValueError(
@@ -39,7 +38,7 @@ if sys.platform == "win32":
 
 else:
 
-    def quote_path(path: Path | str) -> str:
+    def quote_path(path: Path) -> str:
         return shlex.quote(str(path))
 
 
@@ -90,7 +89,7 @@ async def run(
         _semaphore = asyncio.BoundedSemaphore(ctx.get().concurrency)
     async with _semaphore:
         if ctx.get().debug:
-            log = cmd if shell else " ".join(map(shlex.quote, cmd))
+            log = cmd if shell else shlex.join(cmd)
             log = f"{Style.BLUE}{log}"
             if "cwd" in kwargs:
                 log += f"\t{Style.DIM} in {kwargs['cwd']}"
@@ -113,6 +112,55 @@ async def run(
     if check and proc.returncode:
         raise subprocess.CalledProcessError(proc.returncode, cmd, output=stdout, stderr=stderr)
     return subprocess.CompletedProcess(cmd, proc.returncode, stdout, stderr), end_t - start_t
+
+
+@functools.cache
+def has_uv() -> bool:
+    return bool(shutil.which("uv"))
+
+
+class Venv:
+    def __init__(self, dir: Path) -> None:
+        self.dir = dir
+
+    @property
+    def bin(self) -> Path:
+        if sys.platform == "win32":
+            BIN_DIR = "scripts"
+        else:
+            BIN_DIR = "bin"
+        return self.dir / BIN_DIR
+
+    def script(self, name: str) -> Path:
+        if sys.platform == "win32":
+            return self.bin / f"{name}.exe"
+        else:
+            return self.bin / name
+
+    @property
+    def python(self) -> Path:
+        return self.script("python")
+
+    @property
+    def site_packages(self) -> Path:
+        if sys.platform == "win32":
+            return self.dir / "Lib" / "site-packages"
+        else:
+            pyname = f"python{sys.version_info.major}.{sys.version_info.minor}"
+            return self.dir / "lib" / pyname / "site-packages"
+
+    @property
+    def activate(self) -> Path:
+        if sys.platform == "win32":
+            return self.bin / "activate.bat"
+        else:
+            return self.bin / "activate"
+
+    async def make_venv(self) -> None:
+        if has_uv():
+            await run(["uv", "venv", str(self.dir), "--python", sys.executable, "--seed"])
+        else:
+            venv.create(self.dir, with_pip=True, clear=True)
 
 
 def line_count(path: Path) -> int:
