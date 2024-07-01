@@ -155,7 +155,7 @@ def get_projects() -> list[Project]:
             pyright_cmd="{pyright} sklearn",
             deps=["numpy"],
             expected_mypy_success=True,
-            cost={"mypy": 15, "pyright": 240}
+            cost={"mypy": 15, "pyright": 240},
         ),
         Project(
             location="https://github.com/pypa/bandersnatch",
@@ -985,7 +985,9 @@ def get_projects() -> list[Project]:
         ),
         Project(
             location="https://github.com/MaterializeInc/materialize",
-            mypy_cmd="MYPYPATH=$MYPYPATH:misc/python {mypy} --explicit-package-bases ci misc/python",
+            mypy_cmd=(
+                "MYPYPATH=$MYPYPATH:misc/python {mypy} --explicit-package-bases ci misc/python"
+            ),
             pyright_cmd="{pyright}",
             pip_cmd="{pip} install -r ci/builder/requirements.txt",
         ),
@@ -1033,7 +1035,14 @@ def get_projects() -> list[Project]:
             location="https://github.com/pyodide/pyodide",
             mypy_cmd="{mypy} src pyodide-build --exclude 'setup.py|^src/tests|conftest.py'",
             pyright_cmd="{pyright} src pyodide-build",
-            deps=["packaging", "types-docutils", "types-pyyaml", "types-setuptools", "numpy", "pydantic"],
+            deps=[
+                "packaging",
+                "types-docutils",
+                "types-pyyaml",
+                "types-setuptools",
+                "numpy",
+                "pydantic",
+            ],
         ),
         Project(
             location="https://github.com/bokeh/bokeh",
