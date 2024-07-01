@@ -258,7 +258,6 @@ def get_projects() -> list[Project]:
                 "types-orjson",
                 "cryptography",
                 "django-stubs",
-                "django-auth-ldap",
             ],
             # TODO: the plugin here is a little involved and might only work on linux
             # figure out what it would take to make it actually work
