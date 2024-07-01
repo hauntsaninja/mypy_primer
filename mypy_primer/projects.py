@@ -508,8 +508,9 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/davidhalter/parso",
             mypy_cmd="{mypy} parso",
-            pyright_cmd=None,
+            pyright_cmd="{pyright} parso",
             expected_mypy_success=True,
+            cost={"pyright": 75},
         ),
         Project(
             location="https://github.com/konradhalas/dacite",
