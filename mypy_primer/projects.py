@@ -241,6 +241,7 @@ def get_projects() -> list[Project]:
             expected_mypy_success=True,
         ),
         Project(
+            # TODO: fix for mypy_django_plugin, sqlalchemy plugin
             location="https://github.com/zulip/zulip",
             mypy_cmd=(
                 "{mypy} zerver zilencer zproject tools analytics corporate scripts --platform=linux"
@@ -355,6 +356,7 @@ def get_projects() -> list[Project]:
             expected_mypy_success=True,
         ),
         Project(
+            # TODO: fix for pydantic plugin
             location="https://github.com/freqtrade/freqtrade",
             mypy_cmd="{mypy} freqtrade scripts",
             pyright_cmd="{pyright}",
@@ -364,6 +366,7 @@ def get_projects() -> list[Project]:
                 "types-python-dateutil",
                 "types-tabulate",
                 "types-filelock",
+                "pydantic",
             ],
             expected_mypy_success=True,
         ),
@@ -413,6 +416,7 @@ def get_projects() -> list[Project]:
             expected_mypy_success=True,
         ),
         Project(
+            # TODO: fix for numpy plugin
             location="https://github.com/dedupeio/dedupe",
             mypy_cmd="{mypy} --ignore-missing-imports dedupe",
             pyright_cmd="{pyright}",
@@ -629,6 +633,7 @@ def get_projects() -> list[Project]:
             expected_mypy_success=True,
         ),
         Project(
+            # TODO: fix for envier plugin
             location="https://github.com/DataDog/dd-trace-py",
             mypy_cmd="{mypy}",
             pyright_cmd="{pyright}",
@@ -770,6 +775,7 @@ def get_projects() -> list[Project]:
             deps=["types-contextvars", "types-pycurl"],
         ),
         Project(
+            # TODO: fix for numpy plugin
             location="https://github.com/scipy/scipy",
             mypy_cmd="{mypy} scipy",
             pyright_cmd=None,
@@ -971,6 +977,7 @@ def get_projects() -> list[Project]:
             deps=["types-requests", "types-pyOpenSSL", "cryptography", "certifi"],
         ),
         Project(
+            # TODO: fix for pydantic plugin
             location="https://github.com/artigraph/artigraph",
             mypy_cmd="{mypy}",
             pyright_cmd="{pyright}",
@@ -978,7 +985,7 @@ def get_projects() -> list[Project]:
         ),
         Project(
             location="https://github.com/MaterializeInc/materialize",
-            mypy_cmd="MYPYPATH=$MYPYPATH:misc/python {mypy} ci misc/python",
+            mypy_cmd="MYPYPATH=$MYPYPATH:misc/python {mypy} --explicit-package-bases ci misc/python",
             pyright_cmd="{pyright}",
             pip_cmd="{pip} install -r ci/builder/requirements.txt",
         ),
@@ -1010,12 +1017,6 @@ def get_projects() -> list[Project]:
             ],
         ),
         Project(
-            location="https://github.com/daveleroy/sublime_debugger",
-            mypy_cmd="{mypy} modules --namespace-packages",
-            pyright_cmd="{pyright} modules",
-            deps=["certifi"],
-        ),
-        Project(
             location="https://github.com/Finistere/antidote",
             mypy_cmd="{mypy} .",
             pyright_cmd="{pyright}",
@@ -1028,10 +1029,11 @@ def get_projects() -> list[Project]:
             deps=["pytest"],
         ),
         Project(
+            # TODO: fix for pydantic plugin
             location="https://github.com/pyodide/pyodide",
             mypy_cmd="{mypy} src pyodide-build --exclude 'setup.py|^src/tests|conftest.py'",
             pyright_cmd="{pyright} src pyodide-build",
-            deps=["packaging", "types-docutils", "types-pyyaml", "types-setuptools", "numpy"],
+            deps=["packaging", "types-docutils", "types-pyyaml", "types-setuptools", "numpy", "pydantic"],
         ),
         Project(
             location="https://github.com/bokeh/bokeh",
