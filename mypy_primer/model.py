@@ -238,7 +238,7 @@ class Project:
             additional_flags.append(f"--typeshedpath {quote_path(typeshed_dir)}")
         pyright_cmd = self.get_pyright_cmd(pyright, additional_flags)
         activate = (
-            f"source {shlex.quote(str(self.venv_dir / BIN_DIR / 'activate'))}"
+            f"source {quote_path(self.venv_dir / BIN_DIR / 'activate')}"
             if sys.platform != "win32"
             else str(self.venv_dir / BIN_DIR / "activate.bat")
         )
@@ -297,7 +297,7 @@ for source in sources:
 """
         # the extra shell stuff here makes sure we expand globs in mypy_cmd
         proc, _ = await run(
-            f"{mypy_python} -c {quote_path(program)} {mypy_cmd}",
+            f"{mypy_python} -c {shlex.quote(program)} {mypy_cmd}",
             output=True,
             cwd=ctx.get().projects_dir / self.name,
             shell=True,

@@ -32,7 +32,7 @@ if sys.platform == "win32":
 
     ILLEGAL_PATH_CHARS = set('*?"<>')
 
-    def quote_path(path: Path | str) -> str:
+    def quote_path(path: Path) -> str:
         path = str(path)
         if set(path) & ILLEGAL_PATH_CHARS:
             raise ValueError(
@@ -42,7 +42,7 @@ if sys.platform == "win32":
 
 else:
 
-    def quote_path(path: Path | str) -> str:
+    def quote_path(path: Path) -> str:
         return shlex.quote(str(path))
 
 
@@ -93,7 +93,7 @@ async def run(
         _semaphore = asyncio.BoundedSemaphore(ctx.get().concurrency)
     async with _semaphore:
         if ctx.get().debug:
-            log = cmd if shell else " ".join(map(shlex.quote, cmd))
+            log = cmd if shell else shlex.join(cmd)
             log = f"{Style.BLUE}{log}"
             if "cwd" in kwargs:
                 log += f"\t{Style.DIM} in {kwargs['cwd']}"
