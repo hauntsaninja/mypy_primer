@@ -86,7 +86,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/psf/black",
             mypy_cmd="{mypy} src",
             pyright_cmd="{pyright} src",
-            deps=["aiohttp", "click", "pathspec", "tomli", "platformdirs"],
+            deps=["aiohttp", "click", "pathspec", "tomli", "platformdirs", "packaging"],
             expected_mypy_success=True,
         ),
         Project(
@@ -129,7 +129,7 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} aiohttp",
             pyright_cmd="{pyright} aiohttp",
             deps=["pytest"],
-            pip_cmd="AIOHTTP_NO_EXTENSIONS=1 {pip} install -e .",
+            install_cmd="AIOHTTP_NO_EXTENSIONS=1 {install} -e .",
             expected_mypy_success=True,
             supported_platforms=["linux", "darwin"],
         ),
@@ -767,7 +767,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/pyppeteer/pyppeteer",
             mypy_cmd="{mypy} pyppeteer --config-file tox.ini",
             pyright_cmd="{pyright}",
-            pip_cmd="{pip} install .",
+            install_cmd="{install} .",
         ),
         Project(
             location="https://github.com/pypa/pip",
@@ -904,9 +904,9 @@ def get_projects() -> list[Project]:
             location="https://github.com/common-workflow-language/schema_salad",
             mypy_cmd="MYPYPATH=$MYPYPATH:mypy-stubs {mypy} schema_salad",
             pyright_cmd=None,
-            pip_cmd=(
-                "{pip} install $(grep -v mypy mypy-requirements.txt) -r test-requirements.txt"
-                " -rrequirements.txt"
+            install_cmd=(
+                "{install} $(grep -v mypy mypy-requirements.txt)"
+                " -r requirements.txt"
             ),
             expected_mypy_success=True,
             supported_platforms=["linux", "darwin"],
@@ -915,7 +915,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/common-workflow-language/cwltool",
             mypy_cmd="MYPYPATH=$MYPYPATH:mypy-stubs {mypy} cwltool tests/*.py setup.py",
             pyright_cmd=None,
-            pip_cmd="{pip} install $(grep -v mypy mypy-requirements.txt) -r test-requirements.txt",
+            install_cmd="{install} $(grep -v mypy mypy-requirements.txt) -r requirements.txt",
             expected_mypy_success=True,
             cost={"mypy": 15},
             supported_platforms=["linux", "darwin"],
@@ -1005,7 +1005,7 @@ def get_projects() -> list[Project]:
                 "MYPYPATH=$MYPYPATH:misc/python {mypy} --explicit-package-bases ci misc/python"
             ),
             pyright_cmd="{pyright}",
-            pip_cmd="{pip} install -r ci/builder/requirements.txt",
+            install_cmd="{install} -r ci/builder/requirements.txt",
             cost={"mypy": 20},
         ),
         Project(
