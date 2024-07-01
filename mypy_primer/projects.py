@@ -1176,7 +1176,7 @@ def get_projects() -> list[Project]:
         ),
         Project(
             location="https://github.com/mhammond/pywin32",
-            mypy_cmd="{mypy}",
+            mypy_cmd="{mypy} .",
             pyright_cmd="{pyright}",
             pip_cmd="{pip} install types-pywin32 types-regex types-setuptools",
         ),
