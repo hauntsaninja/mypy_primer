@@ -60,6 +60,12 @@ async def setup_mypy(
         targets.append("tomli")
         await pip_install(*targets)
 
+    with open(venv.site_packages / "primer_plugin.pth", "w") as f:
+        # pth file that lets us let mypy import plugins from another venv
+        # importantly, this puts the plugin paths at the back of sys.path, so they cannot
+        # clobber mypy or its dependencies
+        f.write(r"""import os; import sys; exec('''env = os.environ.get("MYPY_PRIMER_PLUGIN_SITE_PACKAGES")\nif env: sys.path.extend(env.split(os.pathsep))''')""")
+
     mypy_exe = venv.script("mypy")
     if sys.platform == "darwin":
         # warm up mypy on macos to avoid the first run being slow

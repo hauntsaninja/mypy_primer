@@ -139,7 +139,15 @@ class Venv:
 
     @property
     def python(self) -> Path:
-        return self.bin / "python"
+        return self.script("python")
+
+    @property
+    def site_packages(self) -> Path:
+        if sys.platform == "win32":
+            return self.dir / "Lib" / "site-packages"
+        else:
+            pyname = f"python{sys.version_info.major}.{sys.version_info.minor}"
+            return self.dir / "lib" / pyname / "site-packages"
 
     @property
     def activate(self) -> Path:

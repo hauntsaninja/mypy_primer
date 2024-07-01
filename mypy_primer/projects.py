@@ -241,7 +241,6 @@ def get_projects() -> list[Project]:
             expected_mypy_success=True,
         ),
         Project(
-            # TODO: fix for mypy_django_plugin, sqlalchemy plugin
             location="https://github.com/zulip/zulip",
             mypy_cmd=(
                 "{mypy} zerver zilencer zproject tools analytics corporate scripts --platform=linux"
@@ -258,7 +257,12 @@ def get_projects() -> list[Project]:
                 "types-python-dateutil",
                 "types-orjson",
                 "cryptography",
+                "django-stubs",
+                "django-auth-ldap",
             ],
+            # TODO: the plugin here is a little involved and might only work on linux
+            # figure out what it would take to make it actually work
+            # needs_mypy_plugins=True,
             expected_mypy_success=True,
             cost={"pyright": 60},
         ),
@@ -356,7 +360,6 @@ def get_projects() -> list[Project]:
             expected_mypy_success=True,
         ),
         Project(
-            # TODO: fix for pydantic plugin
             location="https://github.com/freqtrade/freqtrade",
             mypy_cmd="{mypy} freqtrade scripts",
             pyright_cmd="{pyright}",
@@ -367,7 +370,9 @@ def get_projects() -> list[Project]:
                 "types-tabulate",
                 "types-filelock",
                 "pydantic",
+                "sqlalchemy",
             ],
+            needs_mypy_plugins=True,
             expected_mypy_success=True,
         ),
         Project(
@@ -416,10 +421,11 @@ def get_projects() -> list[Project]:
             expected_mypy_success=True,
         ),
         Project(
-            # TODO: fix for numpy plugin
             location="https://github.com/dedupeio/dedupe",
             mypy_cmd="{mypy} --ignore-missing-imports dedupe",
             pyright_cmd="{pyright}",
+            deps=["numpy"],
+            needs_mypy_plugins=True,
             expected_mypy_success=True,
         ),
         Project(
@@ -633,7 +639,6 @@ def get_projects() -> list[Project]:
             expected_mypy_success=True,
         ),
         Project(
-            # TODO: fix for envier plugin
             location="https://github.com/DataDog/dd-trace-py",
             mypy_cmd="{mypy}",
             pyright_cmd="{pyright}",
@@ -644,7 +649,9 @@ def get_projects() -> list[Project]:
                 "types-docutils",
                 "types-PyYAML",
                 "types-protobuf",
+                "envier",
             ],
+            needs_mypy_plugins=True,
             expected_mypy_success=True,
             cost={"pyright": 75},
         ),
@@ -775,11 +782,11 @@ def get_projects() -> list[Project]:
             deps=["types-contextvars", "types-pycurl"],
         ),
         Project(
-            # TODO: fix for numpy plugin
             location="https://github.com/scipy/scipy",
             mypy_cmd="{mypy} scipy",
             pyright_cmd=None,
-            deps=["numpy"],
+            deps=["numpy", "pytest", "hypothesis", "types-psutil"],
+            needs_mypy_plugins=True,
         ),
         Project(
             location="https://github.com/pycqa/flake8",
@@ -977,11 +984,11 @@ def get_projects() -> list[Project]:
             deps=["types-requests", "types-pyOpenSSL", "cryptography", "certifi"],
         ),
         Project(
-            # TODO: fix for pydantic plugin
             location="https://github.com/artigraph/artigraph",
             mypy_cmd="{mypy}",
             pyright_cmd="{pyright}",
             deps=["pydantic", "numpy", "pytest"],
+            needs_mypy_plugins=True,
         ),
         Project(
             location="https://github.com/MaterializeInc/materialize",
@@ -1031,7 +1038,6 @@ def get_projects() -> list[Project]:
             deps=["pytest"],
         ),
         Project(
-            # TODO: fix for pydantic plugin
             location="https://github.com/pyodide/pyodide",
             mypy_cmd="{mypy} src pyodide-build --exclude 'setup.py|^src/tests|conftest.py'",
             pyright_cmd="{pyright} src pyodide-build",
@@ -1043,6 +1049,7 @@ def get_projects() -> list[Project]:
                 "numpy",
                 "pydantic",
             ],
+            needs_mypy_plugins=True,
         ),
         Project(
             location="https://github.com/bokeh/bokeh",

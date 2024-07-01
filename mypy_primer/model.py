@@ -8,7 +8,6 @@ import shlex
 import shutil
 import string
 import subprocess
-import sys
 import textwrap
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -23,15 +22,14 @@ from mypy_primer.utils import Style, Venv, debug_print, has_uv, quote_path, run
 @dataclass(frozen=True, kw_only=True)
 class Project:
     location: str
+    name_override: str | None = None
 
     mypy_cmd: str
     pyright_cmd: str | None
 
-    revision: str | None = None
-    min_python_version: tuple[int, int] | None = None
-
     pip_cmd: str | None = None
     deps: list[str] | None = None
+    needs_mypy_plugins: bool = False
 
     # if expected_success, there is a recent version of mypy which passes cleanly
     expected_mypy_success: bool = False
@@ -41,8 +39,8 @@ class Project:
     # for mypy we use the compiled times
     cost: dict[str, int] = field(default_factory=dict)
 
-    name_override: str | None = None
-
+    revision: str | None = None
+    min_python_version: tuple[int, int] | None = None
     supported_platforms: list[str] | None = None
 
     def __post_init__(self) -> None:
@@ -52,12 +50,16 @@ class Project:
     # custom __repr__ that omits defaults.
     def __repr__(self) -> str:
         result = f"Project(location={self.location!r}, mypy_cmd={self.mypy_cmd!r}"
+        if self.name_override:
+            result += f", name_override={self.name_override!r}"
         if self.pyright_cmd:
             result += f", pyright_cmd={self.pyright_cmd!r}"
         if self.pip_cmd:
             result += f", pip_cmd={self.pip_cmd!r}"
         if self.deps:
             result += f", deps={self.deps!r}"
+        if self.needs_mypy_plugins:
+            result += f", needs_mypy_plugins={self.needs_mypy_plugins!r}"
         if self.expected_mypy_success:
             result += f", expected_mypy_success={self.expected_mypy_success!r}"
         if self.expected_pyright_success:
@@ -68,8 +70,6 @@ class Project:
             result += f", revision={self.revision!r}"
         if self.min_python_version:
             result += f", min_python_version={self.min_python_version!r}"
-        if self.name_override:
-            result += f", name_override={self.name_override!r}"
         if self.supported_platforms:
             result += f", supported_platforms={self.supported_platforms!r}"
         result += ")"
@@ -180,6 +180,8 @@ class Project:
         if "MYPYPATH" in env:
             mypy_path = env["MYPYPATH"].split(os.pathsep) + mypy_path
         env["MYPYPATH"] = os.pathsep.join(mypy_path)
+        if self.needs_mypy_plugins:
+            env["MYPY_PRIMER_PLUGIN_SITE_PACKAGES"] = str(self.venv.site_packages)
 
         mypy_cmd = self.get_mypy_cmd(mypy, additional_flags)
         proc, runtime = await run(
