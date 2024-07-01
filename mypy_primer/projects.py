@@ -1170,6 +1170,19 @@ def get_projects() -> list[Project]:
             ],
         ),
         Project(
+            location="https://github.com/pypa/setuptools",
+            mypy_cmd="{mypy} setuptools pkg_resources",
+            pyright_cmd="{pyright}",
+            deps=[
+                "pytest",
+                "filelock",
+                "ini2toml",
+                "packaging",
+                "tomli",
+                "tomli-w",
+            ],
+        ),
+        Project(
             location="https://github.com/detachhead/pytest-robotframework",
             mypy_cmd="{mypy} -p pytest_robotframework",
             pyright_cmd="{pyright}",
