@@ -1174,7 +1174,6 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} -p pytest_robotframework",
             pyright_cmd="{pyright}",
         ),
-        # pywin32 is itself the biggest user of types-pywin32 C-module extension stubs
         Project(
             location="https://github.com/mhammond/pywin32",
             mypy_cmd="{mypy}",
