@@ -74,7 +74,7 @@ def get_projects() -> list[Project]:
             pyright_cmd="{pyright} mypy mypyc",
             deps=["pytest", "types-psutil", "types-setuptools", "filelock", "tomli"],
             expected_mypy_success=True,
-            cost={"mypy": 15},
+            cost={"mypy": 15, "pyright": 50},
         ),
         Project(
             location="https://github.com/hauntsaninja/mypy_primer",
@@ -206,7 +206,7 @@ def get_projects() -> list[Project]:
             pyright_cmd="{pyright}",
             deps=["types-PyYAML", "types-python-dateutil", "types-pytz", "numpy"],
             expected_mypy_success=True,
-            cost={"mypy": 15, "pyright": 170},
+            cost={"mypy": 25, "pyright": 170},
         ),
         Project(
             location="https://github.com/pallets/werkzeug",
@@ -376,6 +376,7 @@ def get_projects() -> list[Project]:
             ],
             needs_mypy_plugins=True,
             expected_mypy_success=True,
+            cost={"mypy": 15},
         ),
         Project(
             location="https://github.com/google/jax",
@@ -383,7 +384,7 @@ def get_projects() -> list[Project]:
             pyright_cmd="{pyright} jax",
             deps=["types-requests", "numpy"],
             expected_mypy_success=True,
-            cost={"mypy": 20, "pyright": 90},
+            cost={"mypy": 30, "pyright": 90},
         ),
         Project(
             location="https://github.com/dulwich/dulwich",
@@ -398,7 +399,7 @@ def get_projects() -> list[Project]:
             pyright_cmd="{pyright}",
             deps=["types-PyYAML", "types-redis", "types-setuptools", "SQLAlchemy", "numpy"],
             expected_mypy_success=True,
-            cost={"pyright": 70},
+            cost={"mypy": 25, "pyright": 70},
         ),
         Project(
             location="https://github.com/trailofbits/manticore",
@@ -406,7 +407,7 @@ def get_projects() -> list[Project]:
             pyright_cmd="{pyright}",
             deps=["types-protobuf", "types-PyYAML", "types-redis", "types-setuptools"],
             expected_mypy_success=True,
-            cost={"pyright": 75},
+            cost={"mypy": 15, "pyright": 75},
         ),
         Project(
             location="https://github.com/aiortc/aiortc",
@@ -462,6 +463,7 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy}",
             pyright_cmd="{pyright}",
             expected_mypy_success=True,
+            cost={"pyright": 50},
         ),
         Project(
             location="https://github.com/pypa/packaging",
@@ -770,6 +772,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/pypa/pip",
             mypy_cmd="{mypy} src",
             pyright_cmd="{pyright}",
+            cost={"pyright": 45},
         ),
         Project(
             location="https://github.com/pytorch/vision",
@@ -789,6 +792,7 @@ def get_projects() -> list[Project]:
             pyright_cmd=None,
             deps=["numpy", "pytest", "hypothesis", "types-psutil"],
             needs_mypy_plugins=True,
+            cost={"mypy": 25},
         ),
         Project(
             location="https://github.com/pycqa/flake8",
@@ -853,6 +857,7 @@ def get_projects() -> list[Project]:
                 "click",
                 "pytest",
             ],
+            cost={"pyright": 50},
         ),
         Project(
             location="https://github.com/dragonchain/dragonchain",
@@ -878,6 +883,7 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} .",
             pyright_cmd="{pyright}",
             deps=["pytest", "types-setuptools", "types-ujson", "numpy", "xarray"],
+            cost={"pyright": 45},
         ),
         Project(
             location="https://github.com/urllib3/urllib3",
@@ -977,7 +983,7 @@ def get_projects() -> list[Project]:
                 "types-requests",
                 "types-setuptools",
             ],
-            cost={"mypy": 15},
+            cost={"mypy": 15, "pyright": 50},
         ),
         Project(
             location="https://github.com/mongodb/mongo-python-driver",
@@ -999,6 +1005,7 @@ def get_projects() -> list[Project]:
             ),
             pyright_cmd="{pyright}",
             pip_cmd="{pip} install -r ci/builder/requirements.txt",
+            cost={"mypy": 20},
         ),
         Project(
             location="https://github.com/canonical/operator",
