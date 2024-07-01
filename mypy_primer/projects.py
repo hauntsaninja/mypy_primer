@@ -71,7 +71,7 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/python/mypy",
             mypy_cmd="{mypy} --config-file mypy_self_check.ini -p mypy -p mypyc",
-            pyright_cmd=None,
+            pyright_cmd="{pyright} mypy mypyc",
             deps=["pytest", "types-psutil", "types-setuptools", "filelock", "tomli"],
             expected_mypy_success=True,
             cost={"mypy": 15},
@@ -338,7 +338,7 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/pycqa/isort",
             mypy_cmd="{mypy} --ignore-missing-imports isort",
-            pyright_cmd=None,
+            pyright_cmd="{pyright} isort",
             deps=["types-setuptools"],
             expected_mypy_success=True,
         ),
@@ -441,7 +441,7 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/graphql-python/graphql-core",
             mypy_cmd="{mypy} src tests",
-            pyright_cmd=None,
+            pyright_cmd="{pyright} src tests",
             expected_mypy_success=True,
             cost={"mypy": 40},
         ),
