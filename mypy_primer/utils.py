@@ -18,12 +18,8 @@ from mypy_primer.globals import ctx
 if sys.platform == "win32":
     import tempfile
 
-    BIN_DIR = "scripts"
-    MYPY_EXE_NAME = "mypy.exe"
     TEMP_DIR = tempfile.gettempdir()
 else:
-    BIN_DIR = "bin"
-    MYPY_EXE_NAME = "mypy"
     TEMP_DIR = "/tmp"
 
 
@@ -123,12 +119,40 @@ def has_uv() -> bool:
     return bool(shutil.which("uv"))
 
 
-async def make_venv(venv_dir: Path) -> Path:
-    if has_uv():
-        await run(["uv", "venv", str(venv_dir), "--python", sys.executable, "--seed"])
-    else:
-        venv.create(venv_dir, with_pip=True, clear=True)
-    return venv_dir
+class Venv:
+    def __init__(self, dir: Path) -> None:
+        self.dir = dir
+
+    @property
+    def bin(self) -> Path:
+        if sys.platform == "win32":
+            BIN_DIR = "scripts"
+        else:
+            BIN_DIR = "bin"
+        return self.dir / BIN_DIR
+
+    def script(self, name: str) -> Path:
+        if sys.platform == "win32":
+            return self.bin / f"{name}.exe"
+        else:
+            return self.bin / name
+
+    @property
+    def python(self) -> Path:
+        return self.bin / "python"
+
+    @property
+    def activate(self) -> Path:
+        if sys.platform == "win32":
+            return self.bin / "activate.bat"
+        else:
+            return self.bin / "activate"
+
+    async def make_venv(self) -> None:
+        if has_uv():
+            await run(["uv", "venv", str(self.dir), "--python", sys.executable, "--seed"])
+        else:
+            venv.create(self.dir, with_pip=True, clear=True)
 
 
 def line_count(path: Path) -> int:

@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 from mypy_primer.git_utils import RevisionLike, ensure_repo_at_revision
-from mypy_primer.utils import BIN_DIR, MYPY_EXE_NAME, has_uv, make_venv, run
+from mypy_primer.utils import Venv, has_uv, run
 
 
 async def setup_mypy(
@@ -19,17 +19,14 @@ async def setup_mypy(
     editable: bool = False,
 ) -> Path:
     mypy_dir.mkdir(exist_ok=True)
-    venv_dir = mypy_dir / "venv"
-
-    await make_venv(venv_dir)
+    venv = Venv(mypy_dir / "venv")
+    await venv.make_venv()
 
     async def pip_install(*targets: str) -> None:
         if has_uv():
-            await run(
-                ["uv", "pip", "install", "--python", str(venv_dir / BIN_DIR / "python"), *targets]
-            )
+            await run(["uv", "pip", "install", "--python", str(venv.python), *targets])
         else:
-            await run([str(venv_dir / BIN_DIR / "pip"), "install", *targets])
+            await run([str(venv.python), "-m", "pip", "install", *targets])
 
     if mypyc_compile_level is not None:
         editable = True
@@ -50,10 +47,9 @@ async def setup_mypy(
         if mypyc_compile_level is not None:
             env = os.environ.copy()
             env["MYPYC_OPT_LEVEL"] = str(mypyc_compile_level)
-            python_exe = str(venv_dir / BIN_DIR / "python")
             await pip_install("typing_extensions", "mypy_extensions")
             await run(
-                [python_exe, "setup.py", "--use-mypyc", "build_ext", "--inplace"],
+                [str(venv.python), "setup.py", "--use-mypyc", "build_ext", "--inplace"],
                 cwd=repo_dir,
                 env=env,
             )
@@ -64,7 +60,7 @@ async def setup_mypy(
         targets.append("tomli")
         await pip_install(*targets)
 
-    mypy_exe = venv_dir / BIN_DIR / MYPY_EXE_NAME
+    mypy_exe = venv.script("mypy")
     if sys.platform == "darwin":
         # warm up mypy on macos to avoid the first run being slow
         await run([str(mypy_exe), "--version"])

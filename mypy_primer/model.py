@@ -17,7 +17,7 @@ from typing import Sequence
 
 from mypy_primer.git_utils import ensure_repo_at_revision
 from mypy_primer.globals import ctx
-from mypy_primer.utils import BIN_DIR, Style, debug_print, has_uv, make_venv, quote_path, run
+from mypy_primer.utils import Style, Venv, debug_print, has_uv, quote_path, run
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -82,8 +82,8 @@ class Project:
         return Path(self.location).name
 
     @property
-    def venv_dir(self) -> Path:
-        return ctx.get().projects_dir / f"_{self.name}_venv"
+    def venv(self) -> Venv:
+        return Venv(ctx.get().projects_dir / f"_{self.name}_venv")
 
     def expected_success(self, type_checker: str) -> bool:
         if type_checker == "mypy":
@@ -118,12 +118,12 @@ class Project:
                 name_override=self.name_override,
             )
         assert repo_dir == ctx.get().projects_dir / self.name
-        await make_venv(self.venv_dir)
+        await self.venv.make_venv()
         if self.pip_cmd:
             assert "{pip}" in self.pip_cmd
             try:
                 await run(
-                    self.pip_cmd.format(pip=quote_path(self.venv_dir / BIN_DIR / "pip")),
+                    self.pip_cmd.format(pip=quote_path(self.venv.script("pip"))),
                     shell=True,
                     cwd=repo_dir,
                     output=True,
@@ -136,11 +136,9 @@ class Project:
                 raise RuntimeError(f"pip install failed for {self.name}") from e
         if self.deps:
             if has_uv():
-                install_base = (
-                    f"uv pip install --python {quote_path(self.venv_dir / BIN_DIR / 'python')}"
-                )
+                install_base = f"uv pip install --python {quote_path(self.venv.python)}"
             else:
-                install_base = f"{quote_path(self.venv_dir / BIN_DIR / 'pip')} install"
+                install_base = f"{quote_path(self.venv.python)} -m pip install"
             install_cmd = f"{install_base} {' '.join(self.deps)}"
             try:
                 await run(install_cmd, shell=True, cwd=repo_dir, output=True)
@@ -156,7 +154,7 @@ class Project:
         assert "{mypy}" in self.mypy_cmd
         mypy_cmd = mypy_cmd.format(mypy=mypy)
 
-        python_exe = self.venv_dir / BIN_DIR / "python"
+        python_exe = self.venv.python
         mypy_cmd += f" --python-executable={quote_path(python_exe)}"
         if additional_flags:
             mypy_cmd += " " + " ".join(additional_flags)
@@ -237,12 +235,7 @@ class Project:
         if typeshed_dir is not None:
             additional_flags.append(f"--typeshedpath {quote_path(typeshed_dir)}")
         pyright_cmd = self.get_pyright_cmd(pyright, additional_flags)
-        activate = (
-            f"source {quote_path(self.venv_dir / BIN_DIR / 'activate')}"
-            if sys.platform != "win32"
-            else str(self.venv_dir / BIN_DIR / "activate.bat")
-        )
-        pyright_cmd = f"{activate}; {pyright_cmd}"
+        pyright_cmd = f"{self.venv.activate}; {pyright_cmd}"
         proc, runtime = await run(
             pyright_cmd,
             shell=True,
