@@ -467,8 +467,8 @@ def get_projects() -> list[Project]:
         ),
         Project(
             location="https://github.com/pypa/packaging",
-            mypy_cmd="{mypy} packaging",
-            pyright_cmd="{pyright}",
+            mypy_cmd="{mypy} src",
+            pyright_cmd="{pyright} src",
             expected_mypy_success=True,
         ),
         Project(
@@ -618,7 +618,7 @@ def get_projects() -> list[Project]:
         ),
         Project(
             location="https://gitlab.com/cki-project/cki-lib",
-            mypy_cmd="{mypy} --strict",
+            mypy_cmd="{mypy} --strict .",
             pyright_cmd="{pyright}",
             deps=["types-PyYAML", "types-requests"],
             expected_mypy_success=True,
@@ -677,7 +677,7 @@ def get_projects() -> list[Project]:
         ),
         Project(
             location="https://github.com/nion-software/nionutils",
-            mypy_cmd="{mypy} --namespace-packages --strict -p nion.utils",
+            mypy_cmd="{mypy} --strict -p nion.utils",
             pyright_cmd="{pyright}",
             expected_mypy_success=True,
         ),
@@ -948,8 +948,9 @@ def get_projects() -> list[Project]:
         ),
         Project(
             location="https://github.com/yurijmikhalevich/rclip",
-            mypy_cmd="{mypy} rclip",
+            mypy_cmd="{mypy} rclip --explicit-package-bases",
             pyright_cmd="{pyright}",
+            deps=["numpy", "types-Pillow", "types-requests", "types-tqdm"],
         ),
         Project(
             location="https://github.com/psycopg/psycopg",
