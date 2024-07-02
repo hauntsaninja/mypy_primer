@@ -308,7 +308,7 @@ def get_projects() -> list[Project]:
             ],
             needs_mypy_plugins=True,
             expected_mypy_success=True,
-            cost={"pyright": 60},
+            cost={"mypy": 10, "pyright": 60},
         ),
         Project(
             location="https://github.com/pallets/itsdangerous",
@@ -576,6 +576,7 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} -p spack -p llnl",
             pyright_cmd=None,
             expected_mypy_success=True,
+            cost={"mypy": 20},
         ),
         Project(
             location="https://github.com/johtso/httpx-caching",
@@ -838,7 +839,7 @@ def get_projects() -> list[Project]:
                 "types-pytz",
                 "SQLAlchemy",
             ],
-            cost={"pyright": 60},
+            cost={"mypy": 15, "pyright": 60},
         ),
         Project(
             location="https://github.com/streamlit/streamlit",
@@ -858,7 +859,7 @@ def get_projects() -> list[Project]:
                 "click",
                 "pytest",
             ],
-            cost={"pyright": 50},
+            cost={"mypy": 10, "pyright": 50},
         ),
         Project(
             location="https://github.com/dragonchain/dragonchain",
@@ -904,10 +905,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/common-workflow-language/schema_salad",
             mypy_cmd="MYPYPATH=$MYPYPATH:mypy-stubs {mypy} schema_salad",
             pyright_cmd=None,
-            install_cmd=(
-                "{install} $(grep -v mypy mypy-requirements.txt)"
-                " -r requirements.txt"
-            ),
+            install_cmd=("{install} $(grep -v mypy mypy-requirements.txt)" " -r requirements.txt"),
             expected_mypy_success=True,
             supported_platforms=["linux", "darwin"],
         ),
@@ -1096,6 +1094,7 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} src tests/annotations/mypy_checks.py",
             pyright_cmd="{pyright} tests/annotations src",
             deps=["pydantic", "beartype", "hydra-core"],
+            cost={"mypy": 10},
         ),
         Project(
             location="https://github.com/Toufool/AutoSplit",
@@ -1137,7 +1136,7 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} pwndbg",
             pyright_cmd="{pyright}",
             deps=["types-gdb"],
-            cost={"pyright": 75},
+            cost={"mypy": 10, "pyright": 75},
         ),
         Project(
             location="https://github.com/keithasaurus/koda-validate",
