@@ -176,11 +176,11 @@ class Project:
         return mypy_cmd
 
     async def run_mypy(self, mypy: Path, typeshed_dir: Path | None) -> TypeCheckResult:
-        additional_flags = ctx.get().additional_flags.copy()
         env = os.environ.copy()
         env["MYPY_FORCE_COLOR"] = "1"
 
         mypy_path = []  # TODO: this used to be exposed, could be useful to expose it again
+        additional_flags = ctx.get().additional_flags.copy()
         if typeshed_dir is not None:
             additional_flags.append(f"--custom-typeshed-dir={quote_path(typeshed_dir)}")
             mypy_path += list(map(str, typeshed_dir.glob("stubs/*")))
@@ -241,7 +241,7 @@ class Project:
         return pyright_cmd
 
     async def run_pyright(self, pyright: Path, typeshed_dir: Path | None) -> TypeCheckResult:
-        additional_flags: list[str] = []
+        additional_flags = ctx.get().additional_flags.copy()
         if typeshed_dir is not None:
             additional_flags.append(f"--typeshedpath {quote_path(typeshed_dir)}")
         pyright_cmd = self.get_pyright_cmd(pyright, additional_flags)

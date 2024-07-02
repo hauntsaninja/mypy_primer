@@ -905,7 +905,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/common-workflow-language/schema_salad",
             mypy_cmd="MYPYPATH=$MYPYPATH:mypy-stubs {mypy} schema_salad",
             pyright_cmd=None,
-            install_cmd=("{install} $(grep -v mypy mypy-requirements.txt)" " -r requirements.txt"),
+            install_cmd="{install} $(grep -v mypy mypy-requirements.txt)" " -r requirements.txt",
             expected_mypy_success=True,
             supported_platforms=["linux", "darwin"],
         ),

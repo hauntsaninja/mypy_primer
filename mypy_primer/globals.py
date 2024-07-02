@@ -110,7 +110,7 @@ def parse_options(argv: list[str]) -> _Args:
 
     type_checker_group.add_argument(
         "--additional-flags",
-        help="additional flags to pass to mypy",
+        help="additional flags to pass to the type checker",
         nargs="*",
         default=[],
     )
@@ -131,8 +131,7 @@ def parse_options(argv: list[str]) -> _Args:
         "--expected-success",
         action="store_true",
         help=(
-            "filter to hardcoded subset of projects where some recent mypy version succeeded "
-            "aka are committed to the mypy way of life. also look at: --old-success"
+            "filter to hardcoded subset of projects marked as having had a recent mypy version succeed"
         ),
     )
     proj_group.add_argument(
@@ -160,7 +159,7 @@ def parse_options(argv: list[str]) -> _Args:
     output_group.add_argument(
         "--old-success",
         action="store_true",
-        help="only output a result for a project if the old mypy run was successful",
+        help="only output a result for a project if the old type checker run was successful",
     )
 
     modes_group = parser.add_argument_group("modes")
@@ -174,10 +173,12 @@ def parse_options(argv: list[str]) -> _Args:
         "--bisect-output", help="find first mypy revision with output matching given regex"
     )
     modes_group.add_argument(
-        "--validate-expected-success", action="store_true", help=argparse.SUPPRESS
+        "--validate-expected-success",
+        action="store_true",
+        help="check if projects marked as expected success pass cleanly",
     )
     modes_group.add_argument(
-        "--measure-project-runtimes", action="store_true", help=argparse.SUPPRESS
+        "--measure-project-runtimes", action="store_true", help="measure project runtimes"
     )
 
     primer_group = parser.add_argument_group("primer")
