@@ -184,13 +184,7 @@ If you add a project, you can test it with
 mypy_primer -k new_project --debug
 ```
 
-If you want to install the dependencies to run `test.sh`, simply:
-```
-pip install isort black flake8 mypy
-```
-
 Some other things that could be done are:
-- add support for mypy plugins
 - add bisection for typeshed
 - make it possibe to dump structured output
 - multiple mypy invocations for the same project
