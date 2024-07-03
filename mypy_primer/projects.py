@@ -574,9 +574,9 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/spack/spack",
             mypy_cmd="{mypy} -p spack -p llnl",
-            pyright_cmd=None,
+            pyright_cmd="{pyright}",
             expected_mypy_success=True,
-            cost={"mypy": 20},
+            cost={"mypy": 20, "pyright": 100},
         ),
         Project(
             location="https://github.com/johtso/httpx-caching",
