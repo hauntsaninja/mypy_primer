@@ -13,5 +13,5 @@ jobs:
         with:
           python-version: 3.x
       - run: |
-          pip install isort black flake8 mypy
+          which uv || python -m pip install uv
           ./test.sh
