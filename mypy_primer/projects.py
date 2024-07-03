@@ -1206,7 +1206,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/beartype/beartype",
             mypy_cmd="{mypy} beartype",
             pyright_cmd="{pyright}",
-        )
+        ),
     ]
     assert len(projects) == len({p.name for p in projects})
     for p in projects:

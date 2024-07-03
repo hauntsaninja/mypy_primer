@@ -1,6 +1,6 @@
 set -ex
 
-uv pip install isort black flake8 mypy
+uv pip install isort black flake8 mypy --python $(which python)
 isort --diff --check --quiet .
 black --diff --check --quiet .
 flake8 --max-line-length=100 --ignore=E203,E501,W503 $(git ls-files | grep "py$")
