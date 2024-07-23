@@ -17,6 +17,7 @@ from mypy_primer.model import Project
 # - https://github.com/NeilGirdhar/efax
 # - https://github.com/google/duet
 # - https://github.com/RobertCraigie/prisma-client-py
+# - https://github.com/typeddjango/django-stubs
 
 
 def update_projects(projects: list[Project], check: bool = False) -> None:
@@ -1206,6 +1207,21 @@ def get_projects() -> list[Project]:
             location="https://github.com/beartype/beartype",
             mypy_cmd="{mypy} beartype",
             pyright_cmd="{pyright}",
+        ),
+        Project(
+            location="https://github.com/typeddjango/django-stubs",
+            mypy_cmd="{mypy} django-stubs",
+            pyright_cmd=None,
+            deps=[
+                "django",
+                "asgiref",
+                "django-stubs-ext",
+                "tomli",
+                "types-PyYAML",
+            ],
+            needs_mypy_plugins=True,
+            expected_mypy_success=True,
+            install_cmd="{install} .",
         ),
     ]
     assert len(projects) == len({p.name for p in projects})
