@@ -1220,6 +1220,8 @@ def get_projects() -> list[Project]:
                 "types-PyYAML",
             ],
             needs_mypy_plugins=True,
+            expected_mypy_success=True,
+            install_cmd="{install} .",
         ),
     ]
     assert len(projects) == len({p.name for p in projects})
