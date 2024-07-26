@@ -1221,7 +1221,7 @@ def get_projects() -> list[Project]:
             ],
             needs_mypy_plugins=True,
             expected_mypy_success=True,
-            install_cmd="{install} .",
+            install_cmd="{install} . ./ext",
         ),
     ]
     assert len(projects) == len({p.name for p in projects})
