@@ -805,9 +805,7 @@ def get_projects() -> list[Project]:
         ),
         Project(
             location="https://github.com/home-assistant/core",
-            mypy_cmd=(
-                "sed -i.bak '/^plugins = pydantic.mypy$/s/^/#/' mypy.ini; {mypy} homeassistant"
-            ),
+            mypy_cmd="{mypy} homeassistant",
             pyright_cmd="{pyright} homeassistant",
             deps=[
                 "attrs",
@@ -821,8 +819,8 @@ def get_projects() -> list[Project]:
                 "types-python-slugify",
                 "types-backports",
             ],
+            needs_mypy_plugins=True,
             cost={"mypy": 40, "pyright": 240},
-            supported_platforms=["linux", "darwin"],  # hack for sed
         ),
         Project(
             location="https://github.com/kornia/kornia",
