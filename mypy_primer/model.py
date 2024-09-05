@@ -355,22 +355,28 @@ class PrimerResult:
         old_lines = old_output.splitlines()
         new_lines = new_output.splitlines()
 
+        def canonicalise(line: str) -> str:
+            # Replace type variable IDs, see https://github.com/hauntsaninja/mypy_primer/issues/126
+            return re.sub(r"`\d+", "", line[2:])
+
         # mypy's output appears to be nondeterministic for some same line errors, e.g. on pypa/pip
         # Work around that by ignoring identical removal and addition pairs, e.g.
         # "- a.py:1: error xyz" and "+ a.py:1: error xyz"
         diff_lines = [line for line in d.compare(old_lines, new_lines) if line[0] in ("+", "-")]
         net_change: dict[str, int] = defaultdict(int)
         for line in diff_lines:
-            net_change[line[2:]] += 1 if line[0] == "+" else -1
+            cline = canonicalise(line)
+            net_change[cline] += 1 if line[0] == "+" else -1
 
         output_lines: list[str] = []
         for line in diff_lines:
-            if line[0] == "+" and net_change[line[2:]] > 0:
+            cline = canonicalise(line)
+            if line[0] == "+" and net_change[cline] > 0:
                 output_lines.append(line)
-                net_change[line[2:]] -= 1
-            elif line[0] == "-" and net_change[line[2:]] < 0:
+                net_change[cline] -= 1
+            elif line[0] == "-" and net_change[cline] < 0:
                 output_lines.append(line)
-                net_change[line[2:]] += 1
+                net_change[cline] += 1
 
         return "\n".join(output_lines)
 
