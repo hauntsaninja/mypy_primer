@@ -16,8 +16,11 @@ from mypy_primer.model import Project
 # - https://github.com/r-spacex/submanager
 # - https://github.com/NeilGirdhar/efax
 # - https://github.com/google/duet
-# - https://github.com/RobertCraigie/prisma-client-py
 # - https://github.com/typeddjango/django-stubs
+
+# repos with issues
+# - https://github.com/RobertCraigie/prisma-client-py
+#   has a codegen build step that provides a lot of the regression check value
 
 
 def update_projects(projects: list[Project], check: bool = False) -> None:
@@ -64,7 +67,7 @@ def get_projects() -> list[Project]:
     # Project(
     #     location="https://github.com/ZettaAI/zetta_utils",
     #     mypy_cmd="{mypy} .",
-    #     pip_cmd="{pip} install types-Pillow types-cachetools types-requests attrs",
+    #     install_cmd="{install} types-Pillow types-cachetools types-requests attrs",
     #     expected_mypy_success=True,
     #     supported_platforms=["linux", "darwin"],
     # ),
@@ -1221,6 +1224,13 @@ def get_projects() -> list[Project]:
             expected_mypy_success=True,
             install_cmd="{install} . ./ext",
         ),
+        Project(
+            location="https://github.com/colour-science/colour",
+            mypy_cmd="{mypy} colour",
+            pyright_cmd="{pyright}",
+            deps=["numpy", "pytest", "matplotlib", "pandas-stubs"],
+            cost={"mypy": 45, "pyright": 180},
+        )
     ]
     assert len(projects) == len({p.name for p in projects})
     for p in projects:
