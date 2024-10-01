@@ -1230,7 +1230,13 @@ def get_projects() -> list[Project]:
             pyright_cmd="{pyright}",
             deps=["numpy", "pytest", "matplotlib", "pandas-stubs"],
             cost={"mypy": 45, "pyright": 180},
-        )
+        ),
+        Project(
+            location="https://github.com/vega/altair",
+            mypy_cmd="{mypy} altair tests",
+            pyright_cmd="{pyright}",
+            deps=["types-jsonschema", "pandas-stubs", "pytest", "narwhals", "packaging", "jinja2"],
+        ),
     ]
     assert len(projects) == len({p.name for p in projects})
     for p in projects:
