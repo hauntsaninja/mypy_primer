@@ -229,14 +229,19 @@ async def measure_project_runtimes() -> None:
         result = await project.run_typechecker(type_checker_exe, typeshed_dir=None)
         return (result.runtime, project)
 
-    projects = select_projects()
-    results = []
-    for fut in asyncio.as_completed([inner(project) for project in projects]):
-        time_taken, project = await fut
-        results.append((time_taken, project))
-        print(f"[{len(results)}/{len(projects)}] {time_taken:6.2f}s  {project.location}")
+    import collections, statistics, random
 
-    results.sort(reverse=True)
+    projects = select_projects()
+    results = collections.defaultdict(list)
+    for _ in range(5):
+        random.shuffle(projects)
+        for i, fut in enumerate(asyncio.as_completed([inner(project) for project in projects])):
+            time_taken, project = await fut
+            results[project].append(time_taken)
+            print(f"[{i}/{len(projects)}] {time_taken:6.2f}s  {project.location}")
+
+    results = [(statistics.mean(times), project) for project, times in results.items()]
+    results.sort(key=lambda x: x[0], reverse=True)
     print("\n" * 5)
     print("Results:")
     for time_taken, project in results:
