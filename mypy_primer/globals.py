@@ -185,7 +185,7 @@ def parse_options(argv: list[str]) -> _Args:
     primer_group.add_argument(
         "-j",
         "--concurrency",
-        default=multiprocessing.cpu_count(),
+        default=multiprocessing.cpu_count() - 8,
         type=int,
         help="number of subprocesses to use at a time",
     )
