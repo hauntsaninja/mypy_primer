@@ -209,8 +209,9 @@ async def measure_project_runtimes() -> None:
     ARGS = ctx.get()
 
     if ARGS.type_checker == "mypy":
+        base_name = "timer_mypy" if ARGS.new is None else f"timer_mypy_{ARGS.new}"
         type_checker_exe = await setup_mypy(
-            ARGS.base_dir / "timer_mypy",
+            ARGS.base_dir / base_name,
             ARGS.new or RECENT_MYPYS[0],
             repo=ARGS.repo,
             mypyc_compile_level=ARGS.mypyc_compile_level,
