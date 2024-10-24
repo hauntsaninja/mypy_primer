@@ -48,7 +48,9 @@ async def setup_mypy(
             env = os.environ.copy()
             env["MYPY_USE_MYPYC"] = "1"
             env["MYPYC_OPT_LEVEL"] = str(mypyc_compile_level)  # can be zero
-            await pip_install("typing_extensions", "mypy_extensions", "tomli", "types-psutil", "types-setuptools")
+            await pip_install(
+                "typing_extensions", "mypy_extensions", "tomli", "types-psutil", "types-setuptools"
+            )
             await run(
                 [str(venv.python), "-m", "pip", "install", ".", "--no-build-isolation"],
                 cwd=repo_dir,
