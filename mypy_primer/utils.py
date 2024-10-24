@@ -58,7 +58,7 @@ class Style(str, Enum):
 
 
 def strip_colour_code(text: str) -> str:
-    return re.sub("\033\\[\\d+?m", "", text)
+    return re.sub("\x1b(\\[\\d*?m|\\(.)", "", text)
 
 
 def debug_print(obj: Any) -> None:
