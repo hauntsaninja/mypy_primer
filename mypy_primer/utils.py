@@ -170,6 +170,6 @@ def line_count(path: Path) -> int:
     try:
         with open(path, "rb") as f:
             buf_iter = iter(lambda: f.raw.read(buf_size), b"")
-            return sum(buf.count(b"\n") for buf in buf_iter)  # type: ignore
+            return sum(buf.count(b"\n") for buf in buf_iter)
     except FileNotFoundError:
         return 0
