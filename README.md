@@ -13,10 +13,13 @@ know if I can help you!
 mypy_primer was inspired by Rust's [crater](https://github.com/rust-lang/crater) and the name
 was inspired by [black](https://github.com/psf/black).
 
+mypy_primer is currently used in the CI of pyright, mypy and typeshed, and has inspired similar
+tooling for other projects in the code quality ecosystem.
+
 ## Explanation
 
 Here's what mypy_primer does:
-- Clones a copy of mypy (potentially from a fork you specified)
+- Clones a copy of mypy (or another supported type checker, potentially from a fork you specified)
 - Checks out a "new" and "old" revision of mypy
 - Clones a hardcoded list of projects (potentially filtered by you)
 - Installs necessary stubs and dependencies per project
