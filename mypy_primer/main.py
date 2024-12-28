@@ -123,6 +123,10 @@ def select_projects() -> list[Project]:
         project_iter = iter(
             p for p in project_iter if re.search(ARGS.project_selector, p.location, flags=re.I)
         )
+    if ARGS.known_dependency_selector:
+        project_iter = iter(
+            p for p in project_iter if ARGS.known_dependency_selector in (p.deps or [])
+        )
     if ARGS.expected_success:
         project_iter = (p for p in project_iter if p.expected_success(ARGS.type_checker))
     if ARGS.project_date:
@@ -181,7 +185,7 @@ async def validate_expected_success() -> None:
         await project.setup()
         success = None
         for mypy_exe in recent_mypy_exes:
-            mypy_result = await project.run_mypy(mypy_exe, typeshed_dir=None)
+            mypy_result = await project.run_mypy(mypy_exe, typeshed_dir=None, prepend_path=None)
             if ARGS.debug:
                 debug_print(format(Style.BLUE))
                 debug_print(mypy_result)
@@ -227,7 +231,9 @@ async def measure_project_runtimes() -> None:
 
     async def inner(project: Project) -> tuple[float, Project]:
         await project.setup()
-        result = await project.run_typechecker(type_checker_exe, typeshed_dir=None)
+        result = await project.run_typechecker(
+            type_checker_exe, typeshed_dir=None, prepend_path=None
+        )
         return (result.runtime, project)
 
     projects = select_projects()
@@ -271,7 +277,9 @@ async def bisect() -> None:
     await asyncio.gather(*[project.setup() for project in projects])
 
     async def run_wrapper(project: Project) -> tuple[str, TypeCheckResult]:
-        return project.name, (await project.run_mypy(mypy_exe, typeshed_dir=None))
+        return project.name, (
+            await project.run_mypy(mypy_exe, typeshed_dir=None, prepend_path=None)
+        )
 
     results_fut = await asyncio.gather(*(run_wrapper(project) for project in projects))
     old_results: dict[str, TypeCheckResult] = dict(results_fut)
@@ -379,6 +387,8 @@ async def primer() -> int:
             old_type_checker=old_type_checker,
             new_typeshed=new_typeshed_dir,
             old_typeshed=old_typeshed_dir,
+            new_prepend_path=ARGS.new_prepend_path,
+            old_prepend_path=ARGS.old_prepend_path,
         )
         for project in projects
     ]

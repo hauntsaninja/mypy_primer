@@ -119,6 +119,13 @@ class Project:
             )
         assert repo_dir == ctx.get().projects_dir / self.name
         await self.venv.make_venv()
+
+        with open(self.venv.site_packages / "primer_prepend.pth", "w") as f:
+            # pth file that lets us put something at the *front* of sys.path
+            f.write(
+                r"""import os; import sys; exec('''env = os.environ.get("MYPY_PRIMER_PREPEND_PATH")\nif env: sys.path = env.split(os.pathsep) + sys.path''')"""
+            )
+
         if self.install_cmd:
             assert "{install}" in self.install_cmd
             try:
@@ -175,7 +182,9 @@ class Project:
         )
         return mypy_cmd
 
-    async def run_mypy(self, mypy: Path, typeshed_dir: Path | None) -> TypeCheckResult:
+    async def run_mypy(
+        self, mypy: Path, typeshed_dir: Path | None, prepend_path: Path | None
+    ) -> TypeCheckResult:
         env = os.environ.copy()
         env["MYPY_FORCE_COLOR"] = "1"
 
@@ -188,6 +197,9 @@ class Project:
         if "MYPYPATH" in env:
             mypy_path = env["MYPYPATH"].split(os.pathsep) + mypy_path
         env["MYPYPATH"] = os.pathsep.join(mypy_path)
+        if prepend_path is not None:
+            env["MYPY_PRIMER_PREPEND_PATH"] = str(prepend_path)
+
         if self.needs_mypy_plugins:
             env["MYPY_PRIMER_PLUGIN_SITE_PACKAGES"] = str(self.venv.site_packages)
 
@@ -240,10 +252,16 @@ class Project:
         pyright_cmd = pyright_cmd.format(pyright=pyright)
         return pyright_cmd
 
-    async def run_pyright(self, pyright: Path, typeshed_dir: Path | None) -> TypeCheckResult:
+    async def run_pyright(
+        self, pyright: Path, typeshed_dir: Path | None, prepend_path: Path | None
+    ) -> TypeCheckResult:
+        env = os.environ.copy()
         additional_flags = ctx.get().additional_flags.copy()
         if typeshed_dir is not None:
             additional_flags.append(f"--typeshedpath {quote_path(typeshed_dir)}")
+        if prepend_path is not None:
+            env["MYPY_PRIMER_PREPEND_PATH"] = str(prepend_path)
+
         pyright_cmd = self.get_pyright_cmd(pyright, additional_flags)
         pyright_cmd = f"source {self.venv.activate}; {pyright_cmd}"
         proc, runtime = await run(
@@ -252,6 +270,7 @@ class Project:
             output=True,
             check=False,
             cwd=ctx.get().projects_dir / self.name,
+            env=env,
         )
         if ctx.get().debug:
             debug_print(f"{Style.BLUE}{pyright} on {self.name} took {runtime:.2f}s{Style.RESET}")
@@ -262,12 +281,12 @@ class Project:
         )
 
     async def run_typechecker(
-        self, type_checker: Path, typeshed_dir: Path | None
+        self, type_checker: Path, typeshed_dir: Path | None, *, prepend_path: Path | None
     ) -> TypeCheckResult:
         if ctx.get().type_checker == "mypy":
-            return await self.run_mypy(type_checker, typeshed_dir)
+            return await self.run_mypy(type_checker, typeshed_dir, prepend_path)
         elif ctx.get().type_checker == "pyright":
-            return await self.run_pyright(type_checker, typeshed_dir)
+            return await self.run_pyright(type_checker, typeshed_dir, prepend_path)
         else:
             raise ValueError(f"Unknown type checker: {ctx.get().type_checker}")
 
@@ -277,11 +296,13 @@ class Project:
         old_type_checker: Path,
         new_typeshed: Path | None,
         old_typeshed: Path | None,
+        new_prepend_path: Path | None,
+        old_prepend_path: Path | None,
     ) -> PrimerResult:
         await self.setup()
         new_result, old_result = await asyncio.gather(
-            self.run_typechecker(new_type_checker, new_typeshed),
-            self.run_typechecker(old_type_checker, old_typeshed),
+            self.run_typechecker(new_type_checker, new_typeshed, prepend_path=new_prepend_path),
+            self.run_typechecker(old_type_checker, old_typeshed, prepend_path=old_prepend_path),
         )
         return PrimerResult(self, new_result, old_result)
 

@@ -21,11 +21,14 @@ class _Args:
     custom_typeshed_repo: str
     new_typeshed: str | None
     old_typeshed: str | None
+    new_prepend_path: Path | None
+    old_prepend_path: Path | None
 
     additional_flags: list[str]
 
     # project group
     project_selector: str | None
+    known_dependency_selector: str | None
     local_project: str | None
     expected_success: bool
     project_date: str | None
@@ -107,6 +110,16 @@ def parse_options(argv: list[str]) -> _Args:
         "--old-typeshed",
         help="old typeshed version, defaults to vendored (commit-ish, or isoformatted date)",
     )
+    type_checker_group.add_argument(
+        "--new-prepend-path",
+        type=lambda s: Path(s).absolute(),
+        help="a path to prepend to sys.path for new run",
+    )
+    type_checker_group.add_argument(
+        "--old-prepend-path",
+        type=lambda s: Path(s).absolute(),
+        help="a path to prepend to sys.path for old run",
+    )
 
     type_checker_group.add_argument(
         "--additional-flags",
@@ -118,6 +131,10 @@ def parse_options(argv: list[str]) -> _Args:
     proj_group = parser.add_argument_group("project selection")
     proj_group.add_argument(
         "-k", "--project-selector", help="regex to filter projects (matches against location)"
+    )
+    proj_group.add_argument(
+        "--known-dependency-selector",
+        help="select all projects that depend on a given known project",
     )
     proj_group.add_argument(
         "-p",
