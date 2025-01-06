@@ -560,6 +560,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/laowantong/paroxython",
             mypy_cmd="{mypy} paroxython",
             pyright_cmd="{pyright} paroxython",
+            deps=["setuptools>=71.1"],
             expected_mypy_success=True,
         ),
         Project(
@@ -796,7 +797,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/scipy/scipy",
             mypy_cmd="{mypy} scipy",
             pyright_cmd=None,
-            deps=["numpy", "pytest", "hypothesis", "types-psutil"],
+            deps=["numpy", "pytest", "hypothesis", "setuptools>=71.1", "types-psutil"],
             needs_mypy_plugins=True,
             cost={"mypy": 25},
         ),
@@ -1138,7 +1139,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/pwndbg/pwndbg",
             mypy_cmd="{mypy} pwndbg",
             pyright_cmd="{pyright}",
-            deps=["types-gdb"],
+            deps=["setuptools>=71.1", "types-gdb"],
             cost={"mypy": 10, "pyright": 75},
         ),
         Project(
