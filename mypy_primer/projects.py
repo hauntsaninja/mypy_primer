@@ -796,7 +796,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/scipy/scipy",
             mypy_cmd="{mypy} scipy",
             pyright_cmd=None,
-            deps=["numpy", "pytest", "hypothesis", "types-psutil"],
+            deps=["setuptools", "numpy", "pytest", "hypothesis", "types-psutil"],
             needs_mypy_plugins=True,
             cost={"mypy": 25},
         ),
@@ -1138,7 +1138,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/pwndbg/pwndbg",
             mypy_cmd="{mypy} pwndbg",
             pyright_cmd="{pyright}",
-            deps=["types-gdb"],
+            deps=["setuptools", "types-gdb"],
             cost={"mypy": 10, "pyright": 75},
         ),
         Project(
