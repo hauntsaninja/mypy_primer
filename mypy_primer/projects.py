@@ -560,7 +560,6 @@ def get_projects() -> list[Project]:
             location="https://github.com/laowantong/paroxython",
             mypy_cmd="{mypy} paroxython",
             pyright_cmd="{pyright} paroxython",
-            deps=["setuptools>=71.1"],
             expected_mypy_success=True,
         ),
         Project(
