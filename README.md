@@ -13,8 +13,8 @@ know if I can help you!
 mypy_primer was inspired by Rust's [crater](https://github.com/rust-lang/crater) and the name
 was inspired by [black](https://github.com/psf/black).
 
-mypy_primer is currently used in the CI of pyright, mypy and typeshed, and has inspired similar
-tooling for other projects in the code quality ecosystem.
+mypy_primer is currently used in the CI of pyright, mypy, typeshed, numpy and
+has inspired similar tooling for other projects in the code quality ecosystem.
 
 ## Explanation
 
@@ -28,7 +28,7 @@ Here's what mypy_primer does:
 - Lets you bisect to find the mypy commit that causes a given change
 
 mypy_primer contains a hardcoded list of open source projects and their respective mypy setups (to
-which contributions are gladly accepted). The list is visible at the bottom of `mypy_primer.py` and
+which contributions are gladly accepted). The list is visible at `mypy_primer/projects.py` and
 many of them should be recognisable names.
 
 I used https://grep.app / https://cs.github.com / issue reports to help me build this. For example,
