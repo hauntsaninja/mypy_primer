@@ -415,12 +415,14 @@ class PrimerResult:
         else:
             speed = "slower"
 
-        has_runtime_diff = runtime_diff > 10 and runtime_ratio > 1.4
+        # TODO: this is disabled because it has gotten noisy again
+        has_runtime_diff = runtime_diff > 10 and runtime_ratio > 1.4 and False
+
         if not self.diff and not has_runtime_diff:
             return ""
 
         ret = f"{self.project.name} ({self.project.location})"
-        if has_runtime_diff and False:  # TODO: this has gotten noisy again
+        if has_runtime_diff:
             ret += (
                 f": {runtime_ratio:.2f}x {speed} "
                 f"({self.old_result.runtime:.1f}s -> {self.new_result.runtime:.1f}s "
