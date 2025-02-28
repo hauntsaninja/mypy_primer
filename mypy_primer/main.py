@@ -259,18 +259,28 @@ async def measure_project_runtimes() -> None:
 async def bisect() -> None:
     ARGS = ctx.get()
 
-    assert ARGS.type_checker == "mypy"
     assert not ARGS.new_typeshed
     assert not ARGS.old_typeshed
 
-    mypy_exe = await setup_mypy(
-        ARGS.base_dir / "bisect_mypy",
-        revision_or_recent_tag_fn(ARGS.old),
-        repo=ARGS.repo,
-        mypyc_compile_level=ARGS.mypyc_compile_level,
-        editable=True,
-    )
-    repo_dir = ARGS.base_dir / "bisect_mypy" / "mypy"
+    if ARGS.type_checker == "mypy":
+        type_checker_exe = await setup_mypy(
+            ARGS.base_dir / "bisect_mypy",
+            revision_or_recent_tag_fn(ARGS.old),
+            repo=ARGS.repo,
+            mypyc_compile_level=ARGS.mypyc_compile_level,
+            editable=True,
+        )
+        repo_dir = ARGS.base_dir / "bisect_mypy" / "mypy"
+    elif ARGS.type_checker == "pyright":
+        type_checker_exe = await setup_pyright(
+            ARGS.base_dir / "bisect_pyright",
+            revision_or_recent_tag_fn(ARGS.old),
+            repo=ARGS.repo,
+        )
+        repo_dir = ARGS.base_dir / "bisect_pyright" / "pyright"
+    else:
+        raise ValueError(f"Unknown type checker {ARGS.type_checker}")
+
     assert repo_dir.is_dir()
 
     projects = select_projects()
@@ -278,7 +288,7 @@ async def bisect() -> None:
 
     async def run_wrapper(project: Project) -> tuple[str, TypeCheckResult]:
         return project.name, (
-            await project.run_mypy(mypy_exe, typeshed_dir=None, prepend_path=None)
+            await project.run_typechecker(type_checker_exe, typeshed_dir=None, prepend_path=None)
         )
 
     results_fut = await asyncio.gather(*(run_wrapper(project) for project in projects))
@@ -307,6 +317,11 @@ async def bisect() -> None:
 
     while True:
         await run(["git", "submodule", "update", "--init"], cwd=repo_dir)
+
+        if ARGS.type_checker == "pyright":
+            await run(["npm", "run", "install:all"], cwd=repo_dir)
+            await run(["npm", "run", "build"], cwd=repo_dir / "packages" / "pyright")
+
         results_fut = await asyncio.gather(*(run_wrapper(project) for project in projects))
         results: dict[str, TypeCheckResult] = dict(results_fut)
 
