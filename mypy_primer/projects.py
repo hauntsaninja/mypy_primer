@@ -1252,6 +1252,12 @@ def get_projects() -> list[Project]:
             pyright_cmd="{pyright}",
             deps=["numpy", "arraykit"],
         ),
+        Project(
+            location="https://github.com/arrow-py/arrow",
+            mypy_cmd="{mypy} arrow",
+            pyright_cmd="{pyright}",
+            knot_paths=["arrow"],
+        ),
     ]
     assert len(projects) == len({p.name for p in projects})
     for p in projects:
