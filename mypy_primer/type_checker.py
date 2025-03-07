@@ -119,7 +119,18 @@ async def setup_knot(
     cargo_target_dir = base_dir / subdir / "target"
     env["CARGO_TARGET_DIR"] = cargo_target_dir.as_posix()
 
-    await run(["cargo", "build", "--release", "--bin", "red_knot"], cwd=repo_dir, env=env)
+    try:
+        await run(
+            ["cargo", "build", "--release", "--bin", "red_knot"],
+            cwd=repo_dir,
+            env=env,
+            output=True,
+        )
+    except subprocess.CalledProcessError as e:
+        print("Error while building 'knot'")
+        print(e.stdout)
+        print(e.stderr)
+        raise e
 
     knot_exe = cargo_target_dir / "release" / "red_knot"
     assert knot_exe.exists()
