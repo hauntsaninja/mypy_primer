@@ -100,6 +100,32 @@ async def setup_pyright(
     return pyright_exe
 
 
+async def setup_knot(
+    base_dir: Path,
+    subdir: str,
+    revision_like: RevisionLike,
+    *,
+    repo: str | None,
+) -> Path:
+    knot_dir = base_dir / subdir / "src"
+
+    knot_dir.mkdir(parents=True, exist_ok=True)
+
+    if repo is None:
+        repo = "https://github.com/astral-sh/ruff"
+    repo_dir = await ensure_repo_at_revision(repo, knot_dir, revision_like)
+
+    env = os.environ.copy()
+    cargo_target_dir = base_dir / subdir / "target"
+    env["CARGO_TARGET_DIR"] = cargo_target_dir.as_posix()
+
+    await run(["cargo", "build", "--release", "--bin", "red_knot"], cwd=repo_dir, env=env)
+
+    knot_exe = cargo_target_dir / "release" / "red_knot"
+    assert knot_exe.exists()
+    return knot_exe
+
+
 async def setup_typeshed(parent_dir: Path, *, repo: str, revision_like: RevisionLike) -> Path:
     if parent_dir.exists():
         shutil.rmtree(parent_dir)

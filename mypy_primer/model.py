@@ -26,6 +26,7 @@ class Project:
 
     mypy_cmd: str
     pyright_cmd: str | None
+    knot_paths: list[str] | None = None
 
     install_cmd: str | None = None
     deps: list[str] | None = None
@@ -34,6 +35,7 @@ class Project:
     # if expected_success, there is a recent version of mypy which passes cleanly
     expected_mypy_success: bool = False
     expected_pyright_success: bool = False
+    expected_knot_success: bool = False
 
     # cost is vaguely proportional to type check time
     # for mypy we use the compiled times
@@ -280,6 +282,51 @@ class Project:
             pyright_cmd, output, not bool(proc.returncode), self.expected_pyright_success, runtime
         )
 
+    async def run_knot(
+        self, knot: Path, typeshed_dir: Path | None, prepend_path: Path | None
+    ) -> TypeCheckResult:
+        env = os.environ.copy()
+        additional_flags = ctx.get().additional_flags.copy()
+        if typeshed_dir is not None:
+            additional_flags += ["--typeshed", typeshed_dir.as_posix()]
+
+        path_arguments = self.knot_paths or []
+
+        env = os.environ.copy()
+        env["CLICOLOR_FORCE"] = "1"
+
+        knot_cmd = (
+            [
+                knot.as_posix(),
+                "check",
+                "--python",
+                self.venv.dir.as_posix(),
+                "--python-version",
+                "3.13",
+            ]
+            + path_arguments
+            + additional_flags
+        )
+
+        proc, runtime = await run(
+            knot_cmd,
+            output=True,
+            check=False,
+            cwd=ctx.get().projects_dir / self.name,
+            env=env,
+        )
+        if ctx.get().debug:
+            debug_print(f"{Style.BLUE}{knot} on {self.name} took {runtime:.2f}s{Style.RESET}")
+
+        output = proc.stderr + proc.stdout
+        return TypeCheckResult(
+            shlex.join(knot_cmd),
+            output,
+            not bool(proc.returncode),
+            self.expected_knot_success,
+            runtime,
+        )
+
     async def run_typechecker(
         self, type_checker: Path, typeshed_dir: Path | None, *, prepend_path: Path | None
     ) -> TypeCheckResult:
@@ -287,6 +334,8 @@ class Project:
             return await self.run_mypy(type_checker, typeshed_dir, prepend_path)
         elif ctx.get().type_checker == "pyright":
             return await self.run_pyright(type_checker, typeshed_dir, prepend_path)
+        elif ctx.get().type_checker == "knot":
+            return await self.run_knot(type_checker, typeshed_dir, prepend_path)
         else:
             raise ValueError(f"Unknown type checker: {ctx.get().type_checker}")
 
