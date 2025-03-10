@@ -84,6 +84,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/hauntsaninja/mypy_primer",
             mypy_cmd="{mypy} -p mypy_primer --strict",
             pyright_cmd="{pyright}",
+            deps=["types-setuptools"],
             expected_mypy_success=True,
         ),
         Project(
@@ -98,6 +99,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/hauntsaninja/pyp",
             mypy_cmd="{mypy} --strict -m pyp",
             pyright_cmd="{pyright}",
+            deps=["pytest"],
             expected_mypy_success=True,
         ),
         Project(
@@ -233,6 +235,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/mystor/git-revise",
             mypy_cmd="{mypy} gitrevise",
             pyright_cmd="{pyright} gitrevise",
+            deps=["pytest"],
             expected_mypy_success=True,
         ),
         Project(
@@ -334,6 +337,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/jaraco/zipp",
             mypy_cmd="{mypy} .",
             pyright_cmd="{pyright}",
+            knot_paths=["zipp"],
             expected_mypy_success=True,
         ),
         Project(
@@ -1257,6 +1261,7 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} arrow",
             pyright_cmd="{pyright}",
             knot_paths=["arrow"],
+            deps=["python-dateutil"],
         ),
     ]
     assert len(projects) == len({p.name for p in projects})
