@@ -1,3 +1,34 @@
+[project]
+name = "mypy_primer"
+version = "0.1.0"
+authors = [{ name = "Shantanu Jain" }, { email = "hauntsaninja@gmail.com" }]
+description = "Run mypy over millions of lines of code"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {file = "LICENSE"}
+classifiers = [
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Topic :: Software Development",
+]
+
+[project.urls]
+homepage = "https://github.com/hauntsaninja/mypy_primer"
+repository = "https://github.com/hauntsaninja/mypy_primer"
+
+[project.scripts]
+mypy_primer = "mypy_primer.main:main"
+
+[dependency-groups]
+dev = [
+    "black>=25.1.0",
+    "flake8>=7.1.2",
+    "isort>=6.0.1",
+    "mypy>=1.15.0",
+]
+
 [tool.black]
 line-length = 100
 
@@ -5,3 +36,7 @@ line-length = 100
 profile = "black"
 line_length = 100
 skip_gitignore = true
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
