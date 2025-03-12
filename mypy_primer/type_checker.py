@@ -115,22 +115,24 @@ async def setup_knot(
         repo = "https://github.com/astral-sh/ruff"
     repo_dir = await ensure_repo_at_revision(repo, knot_dir, revision_like)
 
-    env = os.environ.copy()
     cargo_target_dir = base_dir / subdir / "target"
-    env["CARGO_TARGET_DIR"] = cargo_target_dir.as_posix()
 
-    try:
-        await run(
-            ["cargo", "build", "--release", "--bin", "red_knot"],
-            cwd=repo_dir,
-            env=env,
-            output=True,
-        )
-    except subprocess.CalledProcessError as e:
-        print("Error while building 'knot'")
-        print(e.stdout)
-        print(e.stderr)
-        raise e
+    if not os.environ.get("MYPY_PRIMER_NO_REBUILD", False):
+        env = os.environ.copy()
+        env["CARGO_TARGET_DIR"] = cargo_target_dir.as_posix()
+
+        try:
+            await run(
+                ["cargo", "build", "--release", "--bin", "red_knot"],
+                cwd=repo_dir,
+                env=env,
+                output=True,
+            )
+        except subprocess.CalledProcessError as e:
+            print("Error while building 'knot'")
+            print(e.stdout)
+            print(e.stderr)
+            raise e
 
     knot_exe = cargo_target_dir / "release" / "red_knot"
     assert knot_exe.exists()
