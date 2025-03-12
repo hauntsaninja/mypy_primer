@@ -118,7 +118,7 @@ def select_projects() -> list[Project]:
         if not (p.min_python_version and sys.version_info < p.min_python_version)
     )
     if ARGS.type_checker == "pyright":
-        project_iter = iter(p for p in project_iter if p.pyright_cmd is not None)
+        project_iter = iter(p for p in project_iter if not p.pyright_skip)
     if ARGS.project_selector:
         project_iter = iter(
             p for p in project_iter if re.search(ARGS.project_selector, p.location, flags=re.I)
