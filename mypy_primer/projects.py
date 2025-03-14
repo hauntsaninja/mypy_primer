@@ -804,7 +804,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/scipy/scipy-stubs",
             mypy_cmd="{mypy}",
             pyright_cmd="{pyright}",
-            deps=["scipy", "optype"],
+            deps=["scipy", "optype", "numpy"],
             expected_mypy_success=True,
             expected_pyright_success=True,
         ),
