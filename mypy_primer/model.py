@@ -25,7 +25,12 @@ class Project:
     name_override: str | None = None
 
     mypy_cmd: str
-    pyright_cmd: str | None
+
+    # Whether or not to run pyright on this project
+    pyright_skip: bool = False
+
+    # A list of explicit paths that are passed to the type checker (currently only used for pyright)
+    paths: list[str] | None = None
 
     install_cmd: str | None = None
     deps: list[str] | None = None
@@ -52,8 +57,8 @@ class Project:
         result = f"Project(location={self.location!r}, mypy_cmd={self.mypy_cmd!r}"
         if self.name_override:
             result += f", name_override={self.name_override!r}"
-        if self.pyright_cmd:
-            result += f", pyright_cmd={self.pyright_cmd!r}"
+        if self.paths:
+            result += f", paths={self.paths!r}"
         if self.install_cmd:
             result += f", install_cmd={self.install_cmd!r}"
         if self.deps:
@@ -245,8 +250,9 @@ class Project:
         )
 
     def get_pyright_cmd(self, pyright: Path, additional_flags: Sequence[str] = ()) -> str:
-        pyright_cmd = self.pyright_cmd or "{pyright}"
-        assert "{pyright}" in pyright_cmd
+        paths = self.paths or []
+        pyright_cmd = "{pyright} " + " ".join(paths)
+
         if additional_flags:
             pyright_cmd += " " + " ".join(additional_flags)
         pyright_cmd = pyright_cmd.format(pyright=pyright)
@@ -337,7 +343,7 @@ for source in sources:
                 if header.startswith("# flags:"):
                     additional_flags = header[len("# flags:") :]
         return Project(
-            location=location, mypy_cmd=f"{{mypy}} {location} {additional_flags}", pyright_cmd=None
+            location=location, mypy_cmd=f"{{mypy}} {location} {additional_flags}", paths=None
         )
 
 
