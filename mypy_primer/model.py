@@ -303,6 +303,8 @@ class Project:
                 self.venv.dir.as_posix(),
                 "--python-version",
                 "3.13",
+                "--output-format",
+                "concise",
             ]
             + path_arguments
             + additional_flags
