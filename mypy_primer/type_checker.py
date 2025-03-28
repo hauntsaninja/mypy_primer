@@ -123,7 +123,7 @@ async def setup_knot(
 
         try:
             await run(
-                ["cargo", "build", "--release", "--bin", "red_knot"],
+                ["cargo", "build", "--bin", "red_knot"],
                 cwd=repo_dir,
                 env=env,
                 output=True,
@@ -134,7 +134,7 @@ async def setup_knot(
             print(e.stderr)
             raise e
 
-    knot_exe = cargo_target_dir / "release" / "red_knot"
+    knot_exe = cargo_target_dir / "debug" / "red_knot"
     assert knot_exe.exists()
     return knot_exe
 
