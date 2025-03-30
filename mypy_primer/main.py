@@ -71,8 +71,8 @@ async def setup_new_and_old_pyright(
 
     if ctx.get().debug:
         (new_version, _), (old_version, _) = await asyncio.gather(
-            run([str(new_pyright), "--version"], output=True),
-            run([str(old_pyright), "--version"], output=True),
+            run(["node", str(new_pyright), "--version"], output=True),
+            run(["node", str(old_pyright), "--version"], output=True),
         )
         debug_print(f"{Style.BLUE}new pyright version: {new_version.stdout.strip()}{Style.RESET}")
         debug_print(f"{Style.BLUE}old pyright version: {old_version.stdout.strip()}{Style.RESET}")
