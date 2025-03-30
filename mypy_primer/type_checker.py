@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 from mypy_primer.git_utils import RevisionLike, ensure_repo_at_revision
-from mypy_primer.utils import Venv, has_uv, run
+from mypy_primer.utils import Venv, get_npm, has_uv, run
 
 
 async def setup_mypy(
@@ -92,8 +92,9 @@ async def setup_pyright(
         repo = "https://github.com/microsoft/pyright"
     repo_dir = await ensure_repo_at_revision(repo, pyright_dir, revision_like)
 
-    await run(["npm", "run", "install:all"], cwd=repo_dir)
-    await run(["npm", "run", "build"], cwd=repo_dir / "packages" / "pyright")
+    npm = get_npm()
+    await run([npm, "run", "install:all"], cwd=repo_dir)
+    await run([npm, "run", "build"], cwd=repo_dir / "packages" / "pyright")
 
     pyright_exe = repo_dir / "packages" / "pyright" / "index.js"
     assert pyright_exe.exists()
