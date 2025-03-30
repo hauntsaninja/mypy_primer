@@ -150,11 +150,11 @@ class Venv:
             return self.dir / "lib" / pyname / "site-packages"
 
     @property
-    def activate(self) -> Path:
+    def activate_cmd(self) -> str:
         if sys.platform == "win32":
-            return self.bin / "activate.bat"
+            return str(self.bin / "activate.bat")
         else:
-            return self.bin / "activate"
+            return f"source {self.bin / 'activate'}"
 
     async def make_venv(self) -> None:
         if has_uv():
