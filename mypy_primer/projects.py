@@ -812,6 +812,14 @@ def get_projects() -> list[Project]:
             cost={"mypy": 25},
         ),
         Project(
+            location="https://github.com/scipy/scipy-stubs",
+            mypy_cmd="{mypy} .",
+            pyright_cmd="{pyright}",
+            deps=["numpy", "optype", "packaging", "scipy"],
+            expected_mypy_success=True,
+            expected_pyright_success=True,
+        ),
+        Project(
             location="https://github.com/pycqa/flake8",
             mypy_cmd="{mypy} src tests",
             pyright_cmd="{pyright}",
