@@ -1314,7 +1314,13 @@ def get_projects() -> list[Project]:
             location="https://github.com/hydpy-dev/hydpy",
             mypy_cmd="{mypy} hydpy",
             pyright_cmd="{pyright}",
-            deps=["numpy", "types-docutils"],
+            deps=[
+                "numpy",
+                "pandas-stubs",
+                "scipy-stubs",
+                "types-docutils",
+                "types-networkx",
+            ],
         ),
         Project(
             location="https://github.com/static-frame/static-frame",
