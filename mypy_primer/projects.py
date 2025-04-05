@@ -518,7 +518,12 @@ def get_projects() -> list[Project]:
             location="https://github.com/pydantic/pydantic",
             mypy_cmd="{mypy} pydantic",
             pyright_cmd="{pyright}",
-            deps=["types-toml"],
+            deps=[
+                "annotated-types",
+                "pydantic-core",
+                "typing-extensions",
+                "typing-inspection",
+            ],
             expected_mypy_success=True,
         ),
         Project(
