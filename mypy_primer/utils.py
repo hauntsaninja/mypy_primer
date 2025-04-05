@@ -175,6 +175,7 @@ def line_count(path: Path) -> int:
         return 0
 
 
+@functools.cache
 def get_npm() -> str:
     npm_path = shutil.which("npm")
     if npm_path is None:
