@@ -173,3 +173,16 @@ def line_count(path: Path) -> int:
             return sum(buf.count(b"\n") for buf in buf_iter)
     except FileNotFoundError:
         return 0
+
+
+@functools.cache
+def get_npm() -> str:
+    npm_path = shutil.which("npm")
+    if npm_path is None:
+        raise RuntimeError("'npm' is not found.")
+    if sys.platform == "win32":
+        # On Windows, npm is typically installed as 'npm.cmd'
+        # and `subprocess` requires full name for it to run.
+        return Path(npm_path).name
+    else:
+        return "npm"

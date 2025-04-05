@@ -249,7 +249,7 @@ class Project:
         assert "{pyright}" in pyright_cmd
         if additional_flags:
             pyright_cmd += " " + " ".join(additional_flags)
-        pyright_cmd = pyright_cmd.format(pyright=pyright)
+        pyright_cmd = pyright_cmd.format(pyright=f"node {pyright}")
         return pyright_cmd
 
     async def run_pyright(
