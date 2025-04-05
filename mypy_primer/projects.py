@@ -484,6 +484,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/Legrandin/pycryptodome",
             mypy_cmd="{mypy} lib",
             pyright_cmd="{pyright}",
+            deps=["pycryptodome-test-vectors"],
             expected_mypy_success=True,
         ),
         Project(
