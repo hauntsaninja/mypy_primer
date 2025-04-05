@@ -1172,6 +1172,7 @@ def get_projects() -> list[Project]:
                 "packaging",
                 "PyWinCtl",
                 "PySide6-Essentials",
+                "scipy",
                 "types-D3DShot",
                 "types-keyboard",
                 "types-Pillow",
