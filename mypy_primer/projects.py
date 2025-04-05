@@ -700,7 +700,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/rpdelaney/downforeveryone",
             mypy_cmd="{mypy} .",
             pyright_cmd="{pyright}",
-            deps=["types-requests", "types-requests", "pytest"],
+            deps=["types-requests", "pytest"],
             expected_mypy_success=True,
         ),
         Project(
