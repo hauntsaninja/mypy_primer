@@ -1291,7 +1291,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/colour-science/colour",
             mypy_cmd="{mypy} colour",
             pyright_cmd="{pyright}",
-            deps=["numpy", "pytest", "matplotlib", "pandas-stubs"],
+            deps=["matplotlib", "numpy", "pandas-stubs", "pytest", "scipy-stubs"],
             cost={"mypy": 45, "pyright": 180},
         ),
         Project(
