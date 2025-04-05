@@ -1298,7 +1298,17 @@ def get_projects() -> list[Project]:
             location="https://github.com/vega/altair",
             mypy_cmd="{mypy} altair tests",
             pyright_cmd="{pyright}",
-            deps=["types-jsonschema", "pandas-stubs", "pytest", "narwhals", "packaging", "jinja2"],
+            deps=[
+                "jinja2",
+                "narwhals",
+                "numpy",
+                "packaging",
+                "pandas-stubs",
+                "pyarrow-stubs",
+                "pytest",
+                "scipy-stubs",
+                "types-jsonschema",
+            ],
         ),
         Project(
             location="https://github.com/hydpy-dev/hydpy",
