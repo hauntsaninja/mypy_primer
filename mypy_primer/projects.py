@@ -731,6 +731,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/sympy/sympy",
             mypy_cmd="{mypy} sympy",
             pyright_cmd="{pyright} sympy",
+            deps=["mpmath"],
             expected_mypy_success=True,
             cost={"mypy": 35, "pyright": 240},
         ),
