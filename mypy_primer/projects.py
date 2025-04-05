@@ -497,7 +497,15 @@ def get_projects() -> list[Project]:
             location="https://github.com/pytorch/ignite",
             mypy_cmd="{mypy}",
             pyright_cmd="{pyright}",
+            deps=["packaging"],
             expected_mypy_success=True,
+            cost={"pyright": 50},
+        ),
+        Project(
+            location="https://github.com/pytorch/vision",
+            mypy_cmd="{mypy}",
+            pyright_cmd="{pyright}",
+            deps=["numpy", "pillow"],
             cost={"pyright": 50},
         ),
         Project(
@@ -810,12 +818,6 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} src",
             pyright_cmd="{pyright}",
             cost={"pyright": 45},
-        ),
-        Project(
-            location="https://github.com/pytorch/vision",
-            mypy_cmd="{mypy}",
-            pyright_cmd="{pyright}",
-            cost={"pyright": 50},
         ),
         Project(
             location="https://github.com/tornadoweb/tornado",
