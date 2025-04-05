@@ -263,7 +263,7 @@ class Project:
             env["MYPY_PRIMER_PREPEND_PATH"] = str(prepend_path)
 
         pyright_cmd = self.get_pyright_cmd(pyright, additional_flags)
-        pyright_cmd = f"source {self.venv.activate}; {pyright_cmd}"
+        pyright_cmd = f"{self.venv.activate_cmd}; {pyright_cmd}"
         proc, runtime = await run(
             pyright_cmd,
             shell=True,
