@@ -154,7 +154,7 @@ class Venv:
         if sys.platform == "win32":
             return str(self.bin / "activate.bat")
         else:
-            return f"source {self.bin / 'activate'}"
+            return f". {self.bin / 'activate'}"
 
     async def make_venv(self) -> None:
         if has_uv():
