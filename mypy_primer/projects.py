@@ -948,7 +948,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/arviz-devs/arviz",
             mypy_cmd="{mypy} .",
             pyright_cmd="{pyright}",
-            deps=["pytest", "types-setuptools", "types-ujson", "numpy", "xarray"],
+            deps=["numpy", "pytest", "scipy", "types-setuptools", "types-ujson", "xarray"],
             cost={"pyright": 45},
         ),
         Project(
@@ -969,7 +969,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/common-workflow-language/schema_salad",
             mypy_cmd="MYPYPATH=$MYPYPATH:mypy-stubs {mypy} schema_salad",
             pyright_cmd=None,
-            install_cmd="{install} $(grep -v mypy mypy-requirements.txt)" " -r requirements.txt",
+            install_cmd="{install} $(grep -v mypy mypy-requirements.txt) -r requirements.txt",
             expected_mypy_success=True,
             supported_platforms=["linux", "darwin"],
         ),
