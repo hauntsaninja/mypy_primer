@@ -158,7 +158,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/scikit-learn/scikit-learn",
             mypy_cmd="{mypy} sklearn",
             pyright_cmd="{pyright} sklearn",
-            deps=["numpy"],
+            deps=["numpy", "scipy", "joblib", "threadpoolctl"],
             expected_mypy_success=True,
             cost={"mypy": 15, "pyright": 240},
         ),
