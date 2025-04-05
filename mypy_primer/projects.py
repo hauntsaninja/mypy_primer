@@ -765,7 +765,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/JohannesBuchner/imagehash",
             mypy_cmd="{mypy} imagehash",
             pyright_cmd="{pyright}",
-            deps=["numpy", "types-Pillow"],
+            deps=["PyWavelets", "numpy", "scipy", "types-Pillow"],
             expected_mypy_success=True,
         ),
         Project(
