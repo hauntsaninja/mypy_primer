@@ -406,7 +406,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/google/jax",
             mypy_cmd="{mypy} jax",
             pyright_cmd="{pyright} jax",
-            deps=["types-requests", "numpy"],
+            deps=["ml_dtypes", "numpy", "scipy", "types-requests"],
             expected_mypy_success=True,
             cost={"mypy": 30, "pyright": 90},
         ),
