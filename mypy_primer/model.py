@@ -8,6 +8,7 @@ import shlex
 import shutil
 import string
 import subprocess
+import sys
 import textwrap
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -263,7 +264,10 @@ class Project:
             env["MYPY_PRIMER_PREPEND_PATH"] = str(prepend_path)
 
         pyright_cmd = self.get_pyright_cmd(pyright, additional_flags)
-        pyright_cmd = f"{self.venv.activate_cmd}; {pyright_cmd}"
+        if sys.platform == "win32":
+            pyright_cmd = f"{self.venv.activate_cmd} && {pyright_cmd}"
+        else:
+            pyright_cmd = f"{self.venv.activate_cmd}; {pyright_cmd}"
         proc, runtime = await run(
             pyright_cmd,
             shell=True,
