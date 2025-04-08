@@ -1275,6 +1275,11 @@ def get_projects() -> list[Project]:
             knot_paths=["arrow"],
             deps=["python-dateutil"],
         ),
+        Project(
+            location="https://github.com/mikeshardmind/async-utils",
+            mypy_cmd="{mypy} src",
+            pyright_cmd="{pyright}",
+        ),
     ]
     assert len(projects) == len({p.name for p in projects})
     for p in projects:
