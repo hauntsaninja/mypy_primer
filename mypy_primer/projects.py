@@ -1249,6 +1249,11 @@ def get_projects() -> list[Project]:
             pyright_cmd="{pyright}",
             deps=["numpy", "arraykit"],
         ),
+        Project(
+            location="https://github.com/mikeshardmind/async-utils",
+            mypy_cmd="{mypy} src",
+            pyright_cmd="{pyright}",
+        ),
     ]
     assert len(projects) == len({p.name for p in projects})
     for p in projects:
