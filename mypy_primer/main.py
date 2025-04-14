@@ -19,7 +19,7 @@ from mypy_primer.globals import ctx, parse_options_and_set_ctx
 from mypy_primer.model import Project, TypeCheckResult
 from mypy_primer.projects import get_projects
 from mypy_primer.type_checker import setup_mypy, setup_pyright, setup_typeshed
-from mypy_primer.utils import Style, debug_print, line_count, run, strip_colour_code
+from mypy_primer.utils import Style, debug_print, get_npm, line_count, run, strip_colour_code
 
 T = TypeVar("T")
 
@@ -71,8 +71,8 @@ async def setup_new_and_old_pyright(
 
     if ctx.get().debug:
         (new_version, _), (old_version, _) = await asyncio.gather(
-            run([str(new_pyright), "--version"], output=True),
-            run([str(old_pyright), "--version"], output=True),
+            run(["node", str(new_pyright), "--version"], output=True),
+            run(["node", str(old_pyright), "--version"], output=True),
         )
         debug_print(f"{Style.BLUE}new pyright version: {new_version.stdout.strip()}{Style.RESET}")
         debug_print(f"{Style.BLUE}old pyright version: {old_version.stdout.strip()}{Style.RESET}")
@@ -123,6 +123,10 @@ def select_projects() -> list[Project]:
         project_iter = iter(
             p for p in project_iter if re.search(ARGS.project_selector, p.location, flags=re.I)
         )
+    if ARGS.known_dependency_selector:
+        project_iter = iter(
+            p for p in project_iter if ARGS.known_dependency_selector in (p.deps or [])
+        )
     if ARGS.expected_success:
         project_iter = (p for p in project_iter if p.expected_success(ARGS.type_checker))
     if ARGS.project_date:
@@ -140,9 +144,13 @@ def select_projects() -> list[Project]:
         assert ARGS.shard_index is not None
         shard_costs = [0] * ARGS.num_shards
         shard_projects: list[list[Project]] = [[] for _ in range(ARGS.num_shards)]
-        for p in sorted(projects, key=lambda p: (p.mypy_cost, p.location), reverse=True):
+        for p in sorted(
+            projects,
+            key=lambda p: (p.cost_for_type_checker(ARGS.type_checker), p.location),
+            reverse=True,
+        ):
             min_shard = min(range(ARGS.num_shards), key=lambda i: shard_costs[i])
-            shard_costs[min_shard] += p.mypy_cost
+            shard_costs[min_shard] += p.cost_for_type_checker(ARGS.type_checker)
             shard_projects[min_shard].append(p)
         return shard_projects[ARGS.shard_index]
     return projects
@@ -152,7 +160,7 @@ def select_projects() -> list[Project]:
 # hidden entrypoint logic
 # ==============================
 
-RECENT_MYPYS = ["0.991", "0.982", "0.971", "0.961"]
+RECENT_MYPYS = ["1.10.1"]
 
 
 async def validate_expected_success() -> None:
@@ -177,7 +185,7 @@ async def validate_expected_success() -> None:
         await project.setup()
         success = None
         for mypy_exe in recent_mypy_exes:
-            mypy_result = await project.run_mypy(mypy_exe, typeshed_dir=None)
+            mypy_result = await project.run_mypy(mypy_exe, typeshed_dir=None, prepend_path=None)
             if ARGS.debug:
                 debug_print(format(Style.BLUE))
                 debug_print(mypy_result)
@@ -201,27 +209,45 @@ async def validate_expected_success() -> None:
 
 
 async def measure_project_runtimes() -> None:
-    """Check mypy's runtime over each project."""
+    """Check type checker runtime over each project."""
     ARGS = ctx.get()
-    assert ARGS.type_checker == "mypy"
 
-    mypy_exe = await setup_mypy(
-        ARGS.base_dir / "timer_mypy",
-        ARGS.new or RECENT_MYPYS[0],
-        repo=ARGS.repo,
-        mypyc_compile_level=ARGS.mypyc_compile_level,
-    )
+    if ARGS.type_checker == "mypy":
+        base_name = "timer_mypy" if ARGS.new is None else f"timer_mypy_{ARGS.new}"
+        type_checker_exe = await setup_mypy(
+            ARGS.base_dir / base_name,
+            ARGS.new or RECENT_MYPYS[0],
+            repo=ARGS.repo,
+            mypyc_compile_level=ARGS.mypyc_compile_level,
+        )
+    elif ARGS.type_checker == "pyright":
+        type_checker_exe = await setup_pyright(
+            ARGS.base_dir / "timer_pyright",
+            ARGS.new,
+            repo=ARGS.repo,
+        )
+    else:
+        raise ValueError(f"Unknown type checker {ARGS.type_checker}")
 
     async def inner(project: Project) -> tuple[float, Project]:
         await project.setup()
-        result = await project.run_mypy(mypy_exe, typeshed_dir=None)
+        result = await project.run_typechecker(
+            type_checker_exe, typeshed_dir=None, prepend_path=None
+        )
         return (result.runtime, project)
 
-    results = sorted(
-        (await asyncio.gather(*[inner(project) for project in select_projects()])), reverse=True
-    )
+    projects = select_projects()
+    results = []
+    for fut in asyncio.as_completed([inner(project) for project in projects]):
+        time_taken, project = await fut
+        results.append((time_taken, project))
+        print(f"[{len(results)}/{len(projects)}] {time_taken:6.2f}s  {project.location}")
+
+    results.sort(reverse=True)
+    print("\n" * 5)
+    print("Results:")
     for time_taken, project in results:
-        print(f"{time_taken:6.2f}  {project.location}")
+        print(f"{time_taken:6.2f}s  {project.location}")
 
 
 # ==============================
@@ -233,25 +259,37 @@ async def measure_project_runtimes() -> None:
 async def bisect() -> None:
     ARGS = ctx.get()
 
-    assert ARGS.type_checker == "mypy"
     assert not ARGS.new_typeshed
     assert not ARGS.old_typeshed
 
-    mypy_exe = await setup_mypy(
-        ARGS.base_dir / "bisect_mypy",
-        revision_or_recent_tag_fn(ARGS.old),
-        repo=ARGS.repo,
-        mypyc_compile_level=ARGS.mypyc_compile_level,
-        editable=True,
-    )
-    repo_dir = ARGS.base_dir / "bisect_mypy" / "mypy"
+    if ARGS.type_checker == "mypy":
+        type_checker_exe = await setup_mypy(
+            ARGS.base_dir / "bisect_mypy",
+            revision_or_recent_tag_fn(ARGS.old),
+            repo=ARGS.repo,
+            mypyc_compile_level=ARGS.mypyc_compile_level,
+            editable=True,
+        )
+        repo_dir = ARGS.base_dir / "bisect_mypy" / "mypy"
+    elif ARGS.type_checker == "pyright":
+        type_checker_exe = await setup_pyright(
+            ARGS.base_dir / "bisect_pyright",
+            revision_or_recent_tag_fn(ARGS.old),
+            repo=ARGS.repo,
+        )
+        repo_dir = ARGS.base_dir / "bisect_pyright" / "pyright"
+    else:
+        raise ValueError(f"Unknown type checker {ARGS.type_checker}")
+
     assert repo_dir.is_dir()
 
     projects = select_projects()
     await asyncio.gather(*[project.setup() for project in projects])
 
     async def run_wrapper(project: Project) -> tuple[str, TypeCheckResult]:
-        return project.name, (await project.run_mypy(str(mypy_exe), typeshed_dir=None))
+        return project.name, (
+            await project.run_typechecker(type_checker_exe, typeshed_dir=None, prepend_path=None)
+        )
 
     results_fut = await asyncio.gather(*(run_wrapper(project) for project in projects))
     old_results: dict[str, TypeCheckResult] = dict(results_fut)
@@ -279,6 +317,12 @@ async def bisect() -> None:
 
     while True:
         await run(["git", "submodule", "update", "--init"], cwd=repo_dir)
+
+        if ARGS.type_checker == "pyright":
+            npm = get_npm()
+            await run([npm, "run", "install:all"], cwd=repo_dir)
+            await run([npm, "run", "build"], cwd=repo_dir / "packages" / "pyright")
+
         results_fut = await asyncio.gather(*(run_wrapper(project) for project in projects))
         results: dict[str, TypeCheckResult] = dict(results_fut)
 
@@ -355,10 +399,12 @@ async def primer() -> int:
 
     results = [
         project.primer_result(
-            new_type_checker=str(new_type_checker),
-            old_type_checker=str(old_type_checker),
+            new_type_checker=new_type_checker,
+            old_type_checker=old_type_checker,
             new_typeshed=new_typeshed_dir,
             old_typeshed=old_typeshed_dir,
+            new_prepend_path=ARGS.new_prepend_path,
+            old_prepend_path=ARGS.old_prepend_path,
         )
         for project in projects
     ]

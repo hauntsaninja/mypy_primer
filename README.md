@@ -13,10 +13,13 @@ know if I can help you!
 mypy_primer was inspired by Rust's [crater](https://github.com/rust-lang/crater) and the name
 was inspired by [black](https://github.com/psf/black).
 
+mypy_primer is currently used in the CI of pyright, mypy, typeshed, numpy and
+has inspired similar tooling for other projects in the code quality ecosystem.
+
 ## Explanation
 
 Here's what mypy_primer does:
-- Clones a copy of mypy (potentially from a fork you specified)
+- Clones a copy of mypy (or another supported type checker, potentially from a fork you specified)
 - Checks out a "new" and "old" revision of mypy
 - Clones a hardcoded list of projects (potentially filtered by you)
 - Installs necessary stubs and dependencies per project
@@ -25,7 +28,7 @@ Here's what mypy_primer does:
 - Lets you bisect to find the mypy commit that causes a given change
 
 mypy_primer contains a hardcoded list of open source projects and their respective mypy setups (to
-which contributions are gladly accepted). The list is visible at the bottom of `mypy_primer.py` and
+which contributions are gladly accepted). The list is visible at `mypy_primer/projects.py` and
 many of them should be recognisable names.
 
 I used https://grep.app / https://cs.github.com / issue reports to help me build this. For example,
@@ -46,7 +49,8 @@ usage: mypy_primer [-h] [--new NEW] [--old OLD] [--type-checker {mypy,pyright}] 
                    [-k PROJECT_SELECTOR] [-p LOCAL_PROJECT] [--expected-success]
                    [--project-date PROJECT_DATE] [--num-shards NUM_SHARDS]
                    [--shard-index SHARD_INDEX] [-o {full,diff,concise}] [--old-success]
-                   [--coverage] [--bisect] [--bisect-output BISECT_OUTPUT] [-j CONCURRENCY]
+                   [--coverage] [--bisect] [--bisect-output BISECT_OUTPUT]
+                   [--validate-expected-success] [--measure-project-runtimes] [-j CONCURRENCY]
                    [--debug] [--base-dir BASE_DIR] [--clear]
 
 options:
@@ -72,7 +76,7 @@ type checker:
                         old typeshed version, defaults to vendored (commit-ish, or isoformatted
                         date)
   --additional-flags [ADDITIONAL_FLAGS ...]
-                        additional flags to pass to mypy
+                        additional flags to pass to the type checker
 
 project selection:
   -k PROJECT_SELECTOR, --project-selector PROJECT_SELECTOR
@@ -80,9 +84,8 @@ project selection:
   -p LOCAL_PROJECT, --local-project LOCAL_PROJECT
                         run only on the given file or directory. if a single file, supports a '#
                         flags: ...' comment, like mypy unit tests
-  --expected-success    filter to hardcoded subset of projects where some recent mypy version
-                        succeeded aka are committed to the mypy way of life. also look at: --old-
-                        success
+  --expected-success    filter to hardcoded subset of projects marked as having had a recent mypy
+                        version succeed
   --project-date PROJECT_DATE
                         checkout all projects as they were on a given date, in case of bitrot
   --num-shards NUM_SHARDS
@@ -94,13 +97,18 @@ output:
   -o {full,diff,concise}, --output {full,diff,concise}
                         'full' shows both outputs + diff; 'diff' shows only the diff; 'concise'
                         shows only the diff but very compact
-  --old-success         only output a result for a project if the old mypy run was successful
+  --old-success         only output a result for a project if the old type checker run was
+                        successful
 
 modes:
   --coverage            count files and lines covered
   --bisect              find first mypy revision to introduce a difference
   --bisect-output BISECT_OUTPUT
                         find first mypy revision with output matching given regex
+  --validate-expected-success
+                        check if projects marked as expected success pass cleanly
+  --measure-project-runtimes
+                        measure project runtimes
 
 primer:
   -j CONCURRENCY, --concurrency CONCURRENCY
@@ -160,9 +168,9 @@ mypy_primer --coverage -k pypa
 For the record, the total is currently:
 ```
 λ mypy_primer --coverage
-Checking 120 projects...
-Containing 24729 files...
-Totalling to 6953563 lines...
+Checking 144 projects...
+Containing 36542 files...
+Totalling to 9991544 lines...
 ```
 (We use mypy internals to calculate this, so it's pretty accurate, if fragile)
 
@@ -179,13 +187,7 @@ If you add a project, you can test it with
 mypy_primer -k new_project --debug
 ```
 
-If you want to install the dependencies to run `test.sh`, simply:
-```
-pip install isort black flake8 mypy
-```
-
 Some other things that could be done are:
-- add support for mypy plugins
 - add bisection for typeshed
 - make it possibe to dump structured output
 - multiple mypy invocations for the same project

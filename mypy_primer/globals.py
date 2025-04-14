@@ -21,11 +21,14 @@ class _Args:
     custom_typeshed_repo: str
     new_typeshed: str | None
     old_typeshed: str | None
+    new_prepend_path: Path | None
+    old_prepend_path: Path | None
 
     additional_flags: list[str]
 
     # project group
     project_selector: str | None
+    known_dependency_selector: str | None
     local_project: str | None
     expected_success: bool
     project_date: str | None
@@ -107,10 +110,20 @@ def parse_options(argv: list[str]) -> _Args:
         "--old-typeshed",
         help="old typeshed version, defaults to vendored (commit-ish, or isoformatted date)",
     )
+    type_checker_group.add_argument(
+        "--new-prepend-path",
+        type=lambda s: Path(s).absolute(),
+        help="a path to prepend to sys.path for new run",
+    )
+    type_checker_group.add_argument(
+        "--old-prepend-path",
+        type=lambda s: Path(s).absolute(),
+        help="a path to prepend to sys.path for old run",
+    )
 
     type_checker_group.add_argument(
         "--additional-flags",
-        help="additional flags to pass to mypy",
+        help="additional flags to pass to the type checker",
         nargs="*",
         default=[],
     )
@@ -118,6 +131,10 @@ def parse_options(argv: list[str]) -> _Args:
     proj_group = parser.add_argument_group("project selection")
     proj_group.add_argument(
         "-k", "--project-selector", help="regex to filter projects (matches against location)"
+    )
+    proj_group.add_argument(
+        "--known-dependency-selector",
+        help="select all projects that depend on a given known project",
     )
     proj_group.add_argument(
         "-p",
@@ -131,8 +148,7 @@ def parse_options(argv: list[str]) -> _Args:
         "--expected-success",
         action="store_true",
         help=(
-            "filter to hardcoded subset of projects where some recent mypy version succeeded "
-            "aka are committed to the mypy way of life. also look at: --old-success"
+            "filter to hardcoded subset of projects marked as having had a recent mypy version succeed"
         ),
     )
     proj_group.add_argument(
@@ -160,7 +176,7 @@ def parse_options(argv: list[str]) -> _Args:
     output_group.add_argument(
         "--old-success",
         action="store_true",
-        help="only output a result for a project if the old mypy run was successful",
+        help="only output a result for a project if the old type checker run was successful",
     )
 
     modes_group = parser.add_argument_group("modes")
@@ -174,10 +190,12 @@ def parse_options(argv: list[str]) -> _Args:
         "--bisect-output", help="find first mypy revision with output matching given regex"
     )
     modes_group.add_argument(
-        "--validate-expected-success", action="store_true", help=argparse.SUPPRESS
+        "--validate-expected-success",
+        action="store_true",
+        help="check if projects marked as expected success pass cleanly",
     )
     modes_group.add_argument(
-        "--measure-project-runtimes", action="store_true", help=argparse.SUPPRESS
+        "--measure-project-runtimes", action="store_true", help="measure project runtimes"
     )
 
     primer_group = parser.add_argument_group("primer")

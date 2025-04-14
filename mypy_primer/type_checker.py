@@ -4,11 +4,10 @@ import os
 import shutil
 import subprocess
 import sys
-import venv
 from pathlib import Path
 
 from mypy_primer.git_utils import RevisionLike, ensure_repo_at_revision
-from mypy_primer.utils import BIN_DIR, MYPY_EXE_NAME, run
+from mypy_primer.utils import Venv, get_npm, has_uv, run
 
 
 async def setup_mypy(
@@ -20,9 +19,14 @@ async def setup_mypy(
     editable: bool = False,
 ) -> Path:
     mypy_dir.mkdir(exist_ok=True)
-    venv_dir = mypy_dir / "venv"
-    venv.create(venv_dir, with_pip=True, clear=True)
-    pip_exe = str(venv_dir / BIN_DIR / "pip")
+    venv = Venv(mypy_dir / "venv")
+    await venv.make_venv()
+
+    async def pip_install(*targets: str) -> None:
+        if has_uv():
+            await run(["uv", "pip", "install", "--python", str(venv.python), *targets])
+        else:
+            await run([str(venv.python), "-m", "pip", "install", *targets])
 
     if mypyc_compile_level is not None:
         editable = True
@@ -31,7 +35,7 @@ async def setup_mypy(
     if isinstance(revision_like, str) and not editable and repo is None:
         # optimistically attempt to install the revision of mypy we want from pypi
         try:
-            await run([pip_exe, "install", f"mypy=={revision_like}"])
+            await pip_install(f"mypy=={revision_like}")
             install_from_repo = False
         except subprocess.CalledProcessError:
             install_from_repo = True
@@ -42,22 +46,33 @@ async def setup_mypy(
         repo_dir = await ensure_repo_at_revision(repo, mypy_dir, revision_like)
         if mypyc_compile_level is not None:
             env = os.environ.copy()
-            env["MYPYC_OPT_LEVEL"] = str(mypyc_compile_level)
-            python_exe = str(venv_dir / BIN_DIR / "python")
-            await run([pip_exe, "install", "typing_extensions", "mypy_extensions"])
+            env["MYPY_USE_MYPYC"] = "1"
+            env["MYPYC_OPT_LEVEL"] = str(mypyc_compile_level)  # can be zero
+            await pip_install(
+                "typing_extensions", "mypy_extensions", "tomli", "types-psutil", "types-setuptools"
+            )
             await run(
-                [python_exe, "setup.py", "--use-mypyc", "build_ext", "--inplace"],
+                [str(venv.python), "-m", "pip", "install", ".", "--no-build-isolation"],
                 cwd=repo_dir,
                 env=env,
             )
-        install_cmd = [pip_exe, "install"]
-        if editable:
-            install_cmd.append("--editable")
-        install_cmd.append(str(repo_dir))
-        install_cmd.append("tomli")
-        await run(install_cmd)
+        else:
+            targets = []
+            if editable:
+                targets.append("--editable")
+            targets.append(str(repo_dir))
+            targets.append("tomli")
+            await pip_install(*targets)
 
-    mypy_exe = venv_dir / BIN_DIR / MYPY_EXE_NAME
+    with open(venv.site_packages / "primer_plugin.pth", "w") as f:
+        # pth file that lets us let mypy import plugins from another venv
+        # importantly, this puts the plugin paths at the back of sys.path, so they cannot
+        # clobber mypy or its dependencies
+        f.write(
+            r"""import os; import sys; exec('''env = os.environ.get("MYPY_PRIMER_PLUGIN_SITE_PACKAGES")\nif env: sys.path.extend(env.split(os.pathsep))''')"""
+        )
+
+    mypy_exe = venv.script("mypy")
     if sys.platform == "darwin":
         # warm up mypy on macos to avoid the first run being slow
         await run([str(mypy_exe), "--version"])
@@ -77,8 +92,9 @@ async def setup_pyright(
         repo = "https://github.com/microsoft/pyright"
     repo_dir = await ensure_repo_at_revision(repo, pyright_dir, revision_like)
 
-    await run(["npm", "run", "install:all"], cwd=repo_dir)
-    await run(["npm", "run", "build"], cwd=repo_dir / "packages" / "pyright")
+    npm = get_npm()
+    await run([npm, "run", "install:all"], cwd=repo_dir)
+    await run([npm, "run", "build"], cwd=repo_dir / "packages" / "pyright")
 
     pyright_exe = repo_dir / "packages" / "pyright" / "index.js"
     assert pyright_exe.exists()
