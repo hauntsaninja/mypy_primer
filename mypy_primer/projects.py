@@ -943,12 +943,6 @@ def get_projects() -> list[Project]:
             deps=["types-redis", "types-requests"],
         ),
         Project(
-            location="https://github.com/mikeshardmind/SinbadCogs",
-            mypy_cmd="{mypy} .",
-            pyright_cmd="{pyright}",
-            deps=["attrs", "types-pytz", "types-python-dateutil", "types-PyYAML"],
-        ),
-        Project(
             location="https://github.com/rotki/rotki",
             mypy_cmd="{mypy} rotkehlchen/ tools/data_faker",
             pyright_cmd="{pyright}",
