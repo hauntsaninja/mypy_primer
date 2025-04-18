@@ -8,7 +8,7 @@ import sys
 import traceback
 from dataclasses import replace
 from pathlib import Path
-from typing import Awaitable, Iterator, TypeVar
+from typing import Awaitable, Callable, Iterator, TypeVar
 
 from mypy_primer.git_utils import (
     RevisionLike,
@@ -24,80 +24,66 @@ from mypy_primer.utils import Style, debug_print, get_npm, line_count, run, stri
 T = TypeVar("T")
 
 
-async def setup_new_and_old_mypy(
-    new_mypy_revision: RevisionLike, old_mypy_revision: RevisionLike
-) -> tuple[Path, Path]:
-    new_mypy, old_mypy = await asyncio.gather(
-        setup_mypy(
-            ctx.get().base_dir / "new_mypy",
-            new_mypy_revision,
-            repo=ctx.get().repo,
-            mypyc_compile_level=ctx.get().mypyc_compile_level,
-        ),
-        setup_mypy(
-            ctx.get().base_dir / "old_mypy",
-            old_mypy_revision,
-            repo=ctx.get().repo,
-            mypyc_compile_level=ctx.get().mypyc_compile_level,
-        ),
+def setup_type_checker(*, revision_like: RevisionLike, suffix: str) -> Awaitable[Path]:
+    ARGS = ctx.get()
+
+    setup_fn: Callable[..., Awaitable[Path]]
+    if ARGS.type_checker == "mypy":
+        setup_fn = setup_mypy
+        arg_names = ["repo", "mypyc_compile_level"]
+    elif ARGS.type_checker == "pyright":
+        setup_fn = setup_pyright
+        arg_names = ["repo"]
+    else:
+        raise ValueError(f"Unknown type checker {ARGS.type_checker}")
+
+    kwargs = {arg_name: getattr(ARGS, arg_name) for arg_name in arg_names}
+    return setup_fn(
+        ARGS.base_dir / f"{ARGS.type_checker}_{suffix}", revision_like=revision_like, **kwargs
     )
 
-    if ctx.get().debug:
-        (new_version, _), (old_version, _) = await asyncio.gather(
-            run([str(new_mypy), "--version"], output=True),
-            run([str(old_mypy), "--version"], output=True),
-        )
-        debug_print(f"{Style.BLUE}new mypy version: {new_version.stdout.strip()}{Style.RESET}")
-        debug_print(f"{Style.BLUE}old mypy version: {old_version.stdout.strip()}{Style.RESET}")
 
-    return new_mypy, old_mypy
+async def setup_new_and_old_type_checker() -> tuple[Path, Path]:
+    ARGS = ctx.get()
+    new_revision = ARGS.new
+    old_revision = revision_or_recent_tag_fn(ARGS.old)
 
-
-async def setup_new_and_old_pyright(
-    new_pyright_revision: RevisionLike, old_pyright_revision: RevisionLike
-) -> tuple[Path, Path]:
-    new_pyright, old_pyright = await asyncio.gather(
-        setup_pyright(
-            ctx.get().base_dir / "new_pyright",
-            new_pyright_revision,
-            repo=ctx.get().repo,
-        ),
-        setup_pyright(
-            ctx.get().base_dir / "old_pyright",
-            old_pyright_revision,
-            repo=ctx.get().repo,
-        ),
+    new_exe, old_exe = await asyncio.gather(
+        setup_type_checker(revision_like=new_revision, suffix="new"),
+        setup_type_checker(revision_like=old_revision, suffix="old"),
     )
 
-    if ctx.get().debug:
+    if ARGS.debug:
         (new_version, _), (old_version, _) = await asyncio.gather(
-            run(["node", str(new_pyright), "--version"], output=True),
-            run(["node", str(old_pyright), "--version"], output=True),
+            run([str(new_exe), "--version"], output=True),
+            run([str(old_exe), "--version"], output=True),
         )
-        debug_print(f"{Style.BLUE}new pyright version: {new_version.stdout.strip()}{Style.RESET}")
-        debug_print(f"{Style.BLUE}old pyright version: {old_version.stdout.strip()}{Style.RESET}")
+        debug_print(
+            f"{Style.BLUE}new {ARGS.type_checker} version: {new_version.stdout.strip()}{Style.RESET}"
+        )
+        debug_print(
+            f"{Style.BLUE}old {ARGS.type_checker} version: {old_version.stdout.strip()}{Style.RESET}"
+        )
 
-    return new_pyright, old_pyright
+    return new_exe, old_exe
 
 
-async def setup_new_and_old_typeshed(
-    new_typeshed_revision: RevisionLike, old_typeshed_revision: RevisionLike
-) -> tuple[Path | None, Path | None]:
-    typeshed_repo = ctx.get().custom_typeshed_repo
+async def setup_new_and_old_typeshed() -> tuple[Path | None, Path | None]:
+
+    ARGS = ctx.get()
+    typeshed_repo = ARGS.custom_typeshed_repo
+    new_typeshed_revision = ARGS.new_typeshed
+    old_typeshed_revision = ARGS.old_typeshed
 
     new_typeshed_dir = None
     old_typeshed_dir = None
-    if ctx.get().new_typeshed:
+    if ARGS.new_typeshed:
         new_typeshed_dir = await setup_typeshed(
-            ctx.get().base_dir / "new_typeshed",
-            repo=typeshed_repo,
-            revision_like=new_typeshed_revision,
+            ARGS.base_dir / "new_typeshed", repo=typeshed_repo, revision_like=new_typeshed_revision
         )
-    if ctx.get().old_typeshed:
+    if ARGS.old_typeshed:
         old_typeshed_dir = await setup_typeshed(
-            ctx.get().base_dir / "old_typeshed",
-            repo=typeshed_repo,
-            revision_like=old_typeshed_revision,
+            ARGS.base_dir / "old_typeshed", repo=typeshed_repo, revision_like=old_typeshed_revision
         )
     return new_typeshed_dir, old_typeshed_dir
 
@@ -160,39 +146,19 @@ def select_projects() -> list[Project]:
 # hidden entrypoint logic
 # ==============================
 
-RECENT_VERSIONS = {
-    "mypy": ["1.15.0"],
-    "pyright": ["1.1.399"],
-}
+RECENT_VERSIONS = {"mypy": ["1.15.0"], "pyright": ["1.1.399"]}
 
 
 async def validate_expected_success() -> None:
     """Check correctness of hardcoded Project.expected_success"""
     ARGS = ctx.get()
 
-    if ARGS.type_checker == "mypy":
-        recent_type_checker_exes = await asyncio.gather(
-            *[
-                setup_mypy(
-                    ARGS.base_dir / ("mypy_" + recent_mypy),
-                    recent_mypy,
-                    repo=ARGS.repo,
-                    mypyc_compile_level=ARGS.mypyc_compile_level,
-                )
-                for recent_mypy in RECENT_VERSIONS[ARGS.type_checker]
-            ]
-        )
-    elif ARGS.type_checker == "pyright":
-        recent_type_checker_exes = await asyncio.gather(
-            *[
-                setup_pyright(
-                    ARGS.base_dir / ("pyright_" + recent_pyright), recent_pyright, repo=ARGS.repo
-                )
-                for recent_pyright in RECENT_VERSIONS[ARGS.type_checker]
-            ]
-        )
-    else:
-        raise ValueError(f"Unknown type checker {ARGS.type_checker}")
+    recent_type_checker_exes = await asyncio.gather(
+        *[
+            setup_type_checker(revision_like=recent_type_checker, suffix=recent_type_checker)
+            for recent_type_checker in RECENT_VERSIONS[ARGS.type_checker]
+        ]
+    )
 
     async def inner(project: Project) -> str | None:
         await project.setup()
@@ -233,22 +199,10 @@ async def measure_project_runtimes() -> None:
     """Check type checker runtime over each project."""
     ARGS = ctx.get()
 
-    if ARGS.type_checker == "mypy":
-        base_name = "timer_mypy" if ARGS.new is None else f"timer_mypy_{ARGS.new}"
-        type_checker_exe = await setup_mypy(
-            ARGS.base_dir / base_name,
-            ARGS.new or RECENT_VERSIONS[ARGS.type_checker][0],
-            repo=ARGS.repo,
-            mypyc_compile_level=ARGS.mypyc_compile_level,
-        )
-    elif ARGS.type_checker == "pyright":
-        type_checker_exe = await setup_pyright(
-            ARGS.base_dir / "timer_pyright",
-            ARGS.new or RECENT_VERSIONS[ARGS.type_checker][0],
-            repo=ARGS.repo,
-        )
-    else:
-        raise ValueError(f"Unknown type checker {ARGS.type_checker}")
+    type_checker_exe = await setup_type_checker(
+        revision_like=ARGS.new or RECENT_VERSIONS[ARGS.type_checker][0],
+        suffix="timer_" + (ARGS.new if ARGS.new else ""),
+    )
 
     async def inner(project: Project) -> tuple[float, Project]:
         await project.setup()
@@ -286,16 +240,16 @@ async def bisect() -> None:
     if ARGS.type_checker == "mypy":
         type_checker_exe = await setup_mypy(
             ARGS.base_dir / "bisect_mypy",
-            revision_or_recent_tag_fn(ARGS.old),
+            revision_like=revision_or_recent_tag_fn(ARGS.old),
             repo=ARGS.repo,
             mypyc_compile_level=ARGS.mypyc_compile_level,
-            editable=True,
+            editable=True,  # important
         )
         repo_dir = ARGS.base_dir / "bisect_mypy" / "mypy"
     elif ARGS.type_checker == "pyright":
         type_checker_exe = await setup_pyright(
             ARGS.base_dir / "bisect_pyright",
-            revision_or_recent_tag_fn(ARGS.old),
+            revision_like=revision_or_recent_tag_fn(ARGS.old),
             repo=ARGS.repo,
         )
         repo_dir = ARGS.base_dir / "bisect_pyright" / "pyright"
@@ -363,12 +317,8 @@ async def bisect() -> None:
 async def coverage() -> None:
     ARGS = ctx.get()
     assert ARGS.type_checker == "mypy"
-    mypy_exe = await setup_mypy(
-        ARGS.base_dir / "new_mypy",
-        revision_like=ARGS.new,
-        repo=ARGS.repo,
-        mypyc_compile_level=ARGS.mypyc_compile_level,
-    )
+
+    mypy_exe = await setup_type_checker(revision_like=ARGS.new, suffix="new")
 
     projects = select_projects()
     if sys.platform == "win32":
@@ -401,22 +351,8 @@ async def primer() -> int:
     projects = select_projects()
     ARGS = ctx.get()
 
-    if ARGS.type_checker == "mypy":
-        new_type_checker, old_type_checker = await setup_new_and_old_mypy(
-            new_mypy_revision=ARGS.new,
-            old_mypy_revision=revision_or_recent_tag_fn(ARGS.old),
-        )
-    elif ARGS.type_checker == "pyright":
-        new_type_checker, old_type_checker = await setup_new_and_old_pyright(
-            new_pyright_revision=ARGS.new,
-            old_pyright_revision=revision_or_recent_tag_fn(ARGS.old),
-        )
-    else:
-        raise ValueError(f"Unknown type checker {ARGS.type_checker}")
-
-    new_typeshed_dir, old_typeshed_dir = await setup_new_and_old_typeshed(
-        ARGS.new_typeshed, ARGS.old_typeshed
-    )
+    new_type_checker, old_type_checker = await setup_new_and_old_type_checker()
+    new_typeshed_dir, old_typeshed_dir = await setup_new_and_old_typeshed()
 
     results = [
         project.primer_result(

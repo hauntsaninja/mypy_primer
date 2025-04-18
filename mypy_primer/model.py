@@ -141,12 +141,7 @@ class Project:
                     install_cmd = self.install_cmd.format(
                         install=f"{quote_path(self.venv.python)} -m pip install"
                     )
-                await run(
-                    install_cmd,
-                    shell=True,
-                    cwd=repo_dir,
-                    output=True,
-                )
+                await run(install_cmd, shell=True, cwd=repo_dir, output=True)
             except subprocess.CalledProcessError as e:
                 if e.output:
                     print(e.output)

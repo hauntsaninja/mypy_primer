@@ -12,8 +12,8 @@ from mypy_primer.utils import Venv, get_npm, has_uv, run
 
 async def setup_mypy(
     mypy_dir: Path,
-    revision_like: RevisionLike,
     *,
+    revision_like: RevisionLike,
     repo: str | None,
     mypyc_compile_level: int | None,
     editable: bool = False,
@@ -81,10 +81,7 @@ async def setup_mypy(
 
 
 async def setup_pyright(
-    pyright_dir: Path,
-    revision_like: RevisionLike,
-    *,
-    repo: str | None,
+    pyright_dir: Path, *, revision_like: RevisionLike, repo: str | None
 ) -> Path:
     pyright_dir.mkdir(exist_ok=True)
 
