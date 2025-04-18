@@ -160,7 +160,10 @@ def select_projects() -> list[Project]:
 # hidden entrypoint logic
 # ==============================
 
-RECENT_MYPYS = ["1.10.1"]
+RECENT_VERSIONS = {
+    "mypy": ["1.15.0"],
+    "pyright": ["1.1.399"],
+}
 
 
 async def validate_expected_success() -> None:
@@ -169,17 +172,29 @@ async def validate_expected_success() -> None:
 
     assert ARGS.type_checker == "mypy"
 
-    recent_type_checker_exes = await asyncio.gather(
-        *[
-            setup_mypy(
-                ARGS.base_dir / ("mypy_" + recent_mypy),
-                recent_mypy,
-                repo=ARGS.repo,
-                mypyc_compile_level=ARGS.mypyc_compile_level,
-            )
-            for recent_mypy in RECENT_MYPYS
-        ]
-    )
+    if ARGS.type_checker == "mypy":
+        recent_type_checker_exes = await asyncio.gather(
+            *[
+                setup_mypy(
+                    ARGS.base_dir / ("mypy_" + recent_mypy),
+                    recent_mypy,
+                    repo=ARGS.repo,
+                    mypyc_compile_level=ARGS.mypyc_compile_level,
+                )
+                for recent_mypy in RECENT_VERSIONS[ARGS.type_checker]
+            ]
+        )
+    elif ARGS.type_checker == "pyright":
+        recent_type_checker_exes = await asyncio.gather(
+            *[
+                setup_pyright(
+                    ARGS.base_dir / ("pyright_" + recent_pyright), recent_pyright, repo=ARGS.repo
+                )
+                for recent_pyright in RECENT_VERSIONS[ARGS.type_checker]
+            ]
+        )
+    else:
+        raise ValueError(f"Unknown type checker {ARGS.type_checker}")
 
     async def inner(project: Project) -> str | None:
         await project.setup()
@@ -196,7 +211,13 @@ async def validate_expected_success() -> None:
                 success = type_checker_exe
                 break
 
-        expected_success = project.expected_mypy_success
+        if ARGS.type_checker == "mypy":
+            expected_success = project.expected_mypy_success
+        elif ARGS.type_checker == "pyright":
+            expected_success = project.expected_pyright_success
+        else:
+            raise ValueError(f"Unknown type checker {ARGS.type_checker}")
+
         if bool(success) and not expected_success:
             return (
                 f"Project {project.location} succeeded with {success}, "
@@ -220,14 +241,14 @@ async def measure_project_runtimes() -> None:
         base_name = "timer_mypy" if ARGS.new is None else f"timer_mypy_{ARGS.new}"
         type_checker_exe = await setup_mypy(
             ARGS.base_dir / base_name,
-            ARGS.new or RECENT_MYPYS[0],
+            ARGS.new or RECENT_VERSIONS[ARGS.type_checker][0],
             repo=ARGS.repo,
             mypyc_compile_level=ARGS.mypyc_compile_level,
         )
     elif ARGS.type_checker == "pyright":
         type_checker_exe = await setup_pyright(
             ARGS.base_dir / "timer_pyright",
-            ARGS.new,
+            ARGS.new or RECENT_VERSIONS[ARGS.type_checker][0],
             repo=ARGS.repo,
         )
     else:
