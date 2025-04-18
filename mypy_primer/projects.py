@@ -817,7 +817,7 @@ def get_projects() -> list[Project]:
         ),
         Project(
             location="https://github.com/nion-software/nionutils",
-            mypy_cmd="{mypy} --strict -p nion.utils",
+            mypy_cmd="{mypy} --strict -p nion.utils --config-file=",
             pyright_cmd="{pyright}",
             expected_mypy_success=True,
         ),
