@@ -693,7 +693,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/pybind/pybind11",
             mypy_cmd="{mypy} --exclude '^(tests|docs)/' .",
             pyright_cmd="{pyright}",
-            deps=["nox", "rich"],
+            deps=["nox", "rich", "types-setuptools"],
             expected_mypy_success=True,
         ),
         Project(
