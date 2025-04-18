@@ -5,16 +5,19 @@ mypy_primer is a tool for regression testing Python static type checkers.
 mypy_primer makes it easy to run different versions of a type checker over several million lines
 of open source Python projects with typing for the purpose of evaluating changes.
 
-mypy_primer currently supports [mypy](https://github.com/python/mypy/) and
-[pyright](https://github.com/microsoft/pyright). mypy_primer's code and ideas have been used to
-improve testing of other tools in the code quality ecosystem; if you maintain such a tool, let me
-know if I can help you!
+mypy_primer was inspired by Rust's [crater](https://github.com/rust-lang/crater).
 
-mypy_primer was inspired by Rust's [crater](https://github.com/rust-lang/crater) and the name
-was inspired by [black](https://github.com/psf/black).
+mypy_primer is currently used in the CI of the following projects:
+- mypy
+- pyright
+- basedpyright
+- typeshed
+- red knot
+- numpy
 
-mypy_primer is currently used in the CI of pyright, mypy, typeshed, numpy and
-has inspired similar tooling for other projects in the code quality ecosystem.
+It has also inspired similar tooling for other projects in the code quality ecosystem.
+If you maintain a tool or project that could benefit from similar regression testing, let me know
+if I can help you!
 
 ## Explanation
 
@@ -168,9 +171,9 @@ mypy_primer --coverage -k pypa
 For the record, the total is currently:
 ```
 λ mypy_primer --coverage
-Checking 144 projects...
-Containing 36542 files...
-Totalling to 9991544 lines...
+Checking 149 projects...
+Containing 37531 files...
+Totalling to 10193981 lines...
 ```
 (We use mypy internals to calculate this, so it's pretty accurate, if fragile)
 
