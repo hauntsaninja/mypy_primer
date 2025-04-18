@@ -1340,6 +1340,32 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} src",
             pyright_cmd="{pyright}",
         ),
+        Project(
+            location="https://github.com/pypa/cibuildwheel",
+            mypy_cmd="{mypy} cibuildwheel",
+            pyright_cmd="{pyright}",
+            deps=[
+                "bracex",
+                "certifi",
+                "dependency-groups",
+                "filelock",
+                "packaging",
+                "platformdirs",
+                "uv",
+            ],
+        ),
+        Project(
+            location="https://github.com/pypa/build",
+            mypy_cmd="{mypy}",
+            pyright_cmd="{pyright}",
+            deps=["importlib_metadata", "packaging", "pyproject_hooks", "tomli", "uv"],
+        ),
+        Project(
+            location="https://github.com/pypa/pyproject-metadata",
+            mypy_cmd="{mypy} pyproject_metadata",
+            pyright_cmd="{pyright}",
+            deps=["packaging"],
+        ),
     ]
     assert len(projects) == len({p.name for p in projects})
     for p in projects:
