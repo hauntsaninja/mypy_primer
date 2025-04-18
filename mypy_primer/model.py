@@ -27,6 +27,7 @@ class Project:
 
     mypy_cmd: str
     pyright_cmd: str | None
+    paths: list[str] | None = None
 
     install_cmd: str | None = None
     deps: list[str] | None = None
@@ -55,6 +56,8 @@ class Project:
             result += f", name_override={self.name_override!r}"
         if self.pyright_cmd:
             result += f", pyright_cmd={self.pyright_cmd!r}"
+        if self.paths:
+            result += f", paths={self.paths!r}"
         if self.install_cmd:
             result += f", install_cmd={self.install_cmd!r}"
         if self.deps:
@@ -168,7 +171,7 @@ class Project:
     def get_mypy_cmd(self, mypy: str | Path, additional_flags: Sequence[str] = ()) -> str:
         mypy_cmd = self.mypy_cmd
         assert "{mypy}" in self.mypy_cmd
-        mypy_cmd = mypy_cmd.format(mypy=mypy)
+        mypy_cmd = mypy_cmd.format_map(_FormatMap(mypy=mypy, paths=self.paths))
 
         python_exe = self.venv.python
         mypy_cmd += f" --python-executable={quote_path(python_exe)}"
@@ -250,7 +253,11 @@ class Project:
         assert "{pyright}" in pyright_cmd
         if additional_flags:
             pyright_cmd += " " + " ".join(additional_flags)
-        pyright_cmd = pyright_cmd.format(pyright=f"node {pyright}")
+
+        pyright_cmd = pyright_cmd.format_map(
+            _FormatMap(pyright=f"node {pyright}", paths=self.paths)
+        )
+
         return pyright_cmd
 
     async def run_pyright(
@@ -343,6 +350,21 @@ for source in sources:
         return Project(
             location=location, mypy_cmd=f"{{mypy}} {location} {additional_flags}", pyright_cmd=None
         )
+
+
+class _FormatMap:
+    def __init__(self, **map: str | Path | list[str] | None) -> None:
+        self.map = map
+
+    def __getitem__(self, key: str) -> str | Path:
+        if key not in self.map:
+            raise KeyError(key)
+        value = self.map[key]
+        if value is None:
+            raise ValueError(f"Required {key} to be specified")
+        if isinstance(value, list):
+            value = " ".join(value)
+        return value
 
 
 @dataclass(frozen=True)
