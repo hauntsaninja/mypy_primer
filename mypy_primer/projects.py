@@ -1212,7 +1212,7 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/MaterializeInc/materialize",
             mypy_cmd=(
-                "MYPYPATH=$MYPYPATH:misc/python {mypy} --explicit-package-bases ci misc/python"
+                "MYPYPATH=$MYPYPATH:misc/python {mypy} --explicit-package-bases misc/python"
             ),
             pyright_cmd="{pyright}",
             install_cmd="{install} -r ci/builder/requirements.txt",
