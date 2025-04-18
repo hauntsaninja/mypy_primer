@@ -336,7 +336,12 @@ for source in sources:
             output=True,
             cwd=ctx.get().projects_dir / self.name,
             shell=True,
+            check=False,
         )
+        if proc.returncode:
+            if ctx.get().debug:
+                debug_print(f"{Style.BLUE}failed to find source paths for {self.name}{Style.RESET}")
+            return []
         return [ctx.get().projects_dir / self.name / p for p in proc.stdout.splitlines()]
 
     @classmethod
