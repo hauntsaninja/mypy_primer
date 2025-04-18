@@ -169,7 +169,7 @@ async def validate_expected_success() -> None:
 
     assert ARGS.type_checker == "mypy"
 
-    recent_mypy_exes = await asyncio.gather(
+    recent_type_checker_exes = await asyncio.gather(
         *[
             setup_mypy(
                 ARGS.base_dir / ("mypy_" + recent_mypy),
@@ -184,21 +184,25 @@ async def validate_expected_success() -> None:
     async def inner(project: Project) -> str | None:
         await project.setup()
         success = None
-        for mypy_exe in recent_mypy_exes:
-            mypy_result = await project.run_mypy(mypy_exe, typeshed_dir=None, prepend_path=None)
+        for type_checker_exe in recent_type_checker_exes:
+            result = await project.run_typechecker(
+                type_checker_exe, typeshed_dir=None, prepend_path=None
+            )
             if ARGS.debug:
                 debug_print(format(Style.BLUE))
-                debug_print(mypy_result)
+                debug_print(result)
                 debug_print(format(Style.RESET))
-            if mypy_result.success:
-                success = mypy_exe
+            if result.success:
+                success = type_checker_exe
                 break
-        if bool(success) and not project.expected_mypy_success:
+
+        expected_success = project.expected_mypy_success
+        if bool(success) and not expected_success:
             return (
                 f"Project {project.location} succeeded with {success}, "
                 "but is not marked as expecting success"
             )
-        if not bool(success) and project.expected_mypy_success:
+        if not bool(success) and expected_success:
             return f"Project {project.location} did not succeed, but is marked as expecting success"
         return None
 

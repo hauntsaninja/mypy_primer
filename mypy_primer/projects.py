@@ -686,7 +686,18 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} {paths}",
             pyright_cmd="{pyright} {paths}",
             paths=["nox"],
-            deps=["jinja2", "packaging", "importlib_metadata"],
+            deps=[
+                "jinja2",
+                "packaging",
+                "importlib_metadata",
+                "dependency-groups",
+                "argcomplete",
+                "attrs",
+                "colorlog",
+                "tomli",
+                "importlib_resources",
+                "uv",
+            ],
             expected_mypy_success=True,
         ),
         Project(
@@ -1383,6 +1394,32 @@ def get_projects() -> list[Project]:
             location="https://github.com/mikeshardmind/async-utils",
             mypy_cmd="{mypy} src",
             pyright_cmd="{pyright}",
+        ),
+        Project(
+            location="https://github.com/pypa/cibuildwheel",
+            mypy_cmd="{mypy} cibuildwheel",
+            pyright_cmd="{pyright}",
+            deps=[
+                "bracex",
+                "certifi",
+                "dependency-groups",
+                "filelock",
+                "packaging",
+                "platformdirs",
+                "uv",
+            ],
+        ),
+        Project(
+            location="https://github.com/pypa/build",
+            mypy_cmd="{mypy}",
+            pyright_cmd="{pyright}",
+            deps=["importlib_metadata", "packaging", "pyproject_hooks", "tomli", "uv"],
+        ),
+        Project(
+            location="https://github.com/pypa/pyproject-metadata",
+            mypy_cmd="{mypy} pyproject_metadata",
+            pyright_cmd="{pyright}",
+            deps=["packaging"],
         ),
     ]
     assert len(projects) == len({p.name for p in projects})
