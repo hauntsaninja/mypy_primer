@@ -1365,7 +1365,7 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} pyproject_metadata",
             pyright_cmd="{pyright}",
             deps=["packaging"],
-        )
+        ),
     ]
     assert len(projects) == len({p.name for p in projects})
     for p in projects:
