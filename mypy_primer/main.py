@@ -170,8 +170,6 @@ async def validate_expected_success() -> None:
     """Check correctness of hardcoded Project.expected_success"""
     ARGS = ctx.get()
 
-    assert ARGS.type_checker == "mypy"
-
     if ARGS.type_checker == "mypy":
         recent_type_checker_exes = await asyncio.gather(
             *[
@@ -204,9 +202,7 @@ async def validate_expected_success() -> None:
                 type_checker_exe, typeshed_dir=None, prepend_path=None
             )
             if ARGS.debug:
-                debug_print(format(Style.BLUE))
                 debug_print(result)
-                debug_print(format(Style.RESET))
             if result.success:
                 success = type_checker_exe
                 break

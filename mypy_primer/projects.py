@@ -87,6 +87,7 @@ def get_projects() -> list[Project]:
             pyright_cmd="{pyright} {paths}",
             paths=["."],
             expected_mypy_success=True,
+            expected_pyright_success=True,
         ),
         Project(
             location="https://github.com/psf/black",
@@ -284,7 +285,8 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/zulip/zulip",
             mypy_cmd=(
-                "{mypy} zerver zilencer zproject tools analytics corporate scripts " "--platform=linux --config-file="
+                "{mypy} zerver zilencer zproject tools analytics corporate scripts "
+                "--platform=linux --config-file="
             ),
             pyright_cmd="{pyright}",
             deps=[
@@ -330,7 +332,6 @@ def get_projects() -> list[Project]:
                 "types-tzlocal",
                 "types-ujson",
             ],
-
             supported_platforms=["linux", "darwin"],
         ),
         Project(
@@ -428,6 +429,7 @@ def get_projects() -> list[Project]:
             ],
             needs_mypy_plugins=True,
             expected_mypy_success=True,
+            expected_pyright_success=True,
             cost={"mypy": 15},
         ),
         Project(
@@ -528,6 +530,7 @@ def get_projects() -> list[Project]:
             pyright_cmd="{pyright} {paths}",
             paths=["chess"],
             expected_mypy_success=True,
+            expected_pyright_success=True,
         ),
         Project(
             location="https://github.com/pytorch/ignite",
@@ -578,6 +581,7 @@ def get_projects() -> list[Project]:
             pyright_cmd="{pyright} {paths}",
             paths=["janus"],
             expected_mypy_success=True,
+            expected_pyright_success=True,
         ),
         Project(
             location="https://github.com/alerta/alerta",
@@ -801,6 +805,7 @@ def get_projects() -> list[Project]:
             paths=["mkosi"],
             deps=["cryptography"],
             expected_mypy_success=True,
+            expected_pyright_success=True,
         ),
         Project(
             location="https://github.com/sympy/sympy",
@@ -824,6 +829,7 @@ def get_projects() -> list[Project]:
             paths=["pyi.py"],
             deps=["types-pyflakes"],
             expected_mypy_success=True,
+            expected_pyright_success=True,
         ),
         Project(
             location="https://github.com/internetarchive/openlibrary",
@@ -913,6 +919,7 @@ def get_projects() -> list[Project]:
             paths=["xarray_dataclasses"],
             deps=["numpy", "xarray"],
             expected_mypy_success=True,
+            expected_pyright_success=True,
         ),
         Project(
             location="https://github.com/scipy/scipy-stubs",
@@ -1142,6 +1149,7 @@ def get_projects() -> list[Project]:
             pyright_cmd="{pyright} {paths}",
             paths=["alectryon.py"],
             deps=["types-docutils"],
+            expected_pyright_success=True,
         ),
         Project(
             location="https://github.com/yurijmikhalevich/rclip",
@@ -1161,6 +1169,7 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} --strict {paths}",
             pyright_cmd="{pyright} {paths}",
             paths=["sop"],
+            expected_pyright_success=True,
         ),
         Project(
             location="https://github.com/Rapptz/discord.py",
@@ -1169,6 +1178,7 @@ def get_projects() -> list[Project]:
             paths=["discord"],
             deps=["types-requests", "types-setuptools", "aiohttp"],
             cost={"mypy": 20},
+            expected_pyright_success=True,
         ),
         Project(
             location="https://github.com/canonical/cloud-init",
@@ -1401,6 +1411,7 @@ def get_projects() -> list[Project]:
                 "tomli",
                 "tomli-w",
             ],
+            expected_pyright_success=True,
         ),
         Project(
             location="https://github.com/detachhead/pytest-robotframework",
@@ -1470,6 +1481,7 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} {paths}",
             pyright_cmd="{pyright} {paths}",
             paths=["src"],
+            expected_pyright_success=True,
         ),
         Project(
             location="https://github.com/pypa/cibuildwheel",
@@ -1498,6 +1510,7 @@ def get_projects() -> list[Project]:
             pyright_cmd="{pyright} {paths}",
             paths=["pyproject_metadata"],
             deps=["packaging"],
+            expected_pyright_success=True,
         ),
     ]
     assert len(projects) == len({p.name for p in projects})
