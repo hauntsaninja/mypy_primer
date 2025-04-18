@@ -128,6 +128,11 @@ See the difference between HEAD and latest release with:
 mypy_primer -o diff
 ```
 
+Same thing but with pyright:
+```
+mypy_primer -o diff --type-checker pyright
+```
+
 See the impact of your risky change with:
 ```
 mypy_primer --repo https://github.com/hauntsaninja/mypy.git --new my_risky_change --old master
@@ -196,3 +201,20 @@ Some other things that could be done are:
 - multiple mypy invocations for the same project
 - improve CLI or output formatting
 - ???
+
+## Adding support for a new type checker
+
+This should mostly be just chaining through boilerplate. Feel free to suggest larger refactors
+if they'd make life easier.
+
+Steps should be something like:
+- Add a build process for your type checker to `type_checker.py`
+- Pattern match `primer` entrypoint in `main.py`
+- Add a `type_checker_cmd` field to `Project`
+- Opt-in as many projects as you want by adding `type_checker_cmd` to `projects.py`
+- Add support in other entrypoints as well
+
+You may also wish to add mypy_primer into your type checker's CI. Here is an example for how
+to do so:
+- https://github.com/python/mypy/blob/master/.github/workflows/mypy_primer.yml
+- https://github.com/python/mypy/blob/master/.github/workflows/mypy_primer_comment.yml
