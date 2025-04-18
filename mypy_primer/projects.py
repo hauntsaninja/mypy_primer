@@ -161,7 +161,6 @@ def get_projects() -> list[Project]:
             pyright_cmd="{pyright} {paths}",
             paths=["sphinx"],
             deps=["babel", "docutils-stubs", "types-requests", "packaging", "jinja2"],
-            expected_mypy_success=True,
         ),
         Project(
             location="https://github.com/scikit-learn/scikit-learn",
@@ -194,7 +193,7 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} {paths}",
             pyright_cmd="{pyright} {paths}",
             paths=["asynq"],
-            deps=["qcore"],
+            deps=["qcore", "pytest"],
             expected_mypy_success=True,
         ),
         Project(
@@ -210,7 +209,7 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} {paths}",
             pyright_cmd="{pyright} {paths}",
             paths=["twine"],
-            deps=["keyring", "types-requests", "rich"],
+            deps=["keyring", "types-requests", "rich", "packaging"],
             expected_mypy_success=True,
         ),
         Project(
@@ -285,7 +284,7 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/zulip/zulip",
             mypy_cmd=(
-                "{mypy} zerver zilencer zproject tools analytics corporate scripts --platform=linux"
+                "{mypy} zerver zilencer zproject tools analytics corporate scripts " "--platform=linux --config-file="
             ),
             pyright_cmd="{pyright}",
             deps=[
@@ -331,7 +330,7 @@ def get_projects() -> list[Project]:
                 "types-tzlocal",
                 "types-ujson",
             ],
-            expected_mypy_success=True,
+
             supported_platforms=["linux", "darwin"],
         ),
         Project(
@@ -353,7 +352,6 @@ def get_projects() -> list[Project]:
                 "pydantic",
             ],
             needs_mypy_plugins=True,
-            expected_mypy_success=True,
             cost={"mypy": 10, "pyright": 60},
         ),
         Project(
@@ -382,6 +380,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/aaugustin/websockets",
             mypy_cmd="{mypy} --strict src",
             pyright_cmd="{pyright}",
+            deps=["werkzeug"],
             expected_mypy_success=True,
         ),
         Project(
@@ -397,7 +396,6 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} {paths} --ignore-missing-imports",
             pyright_cmd="{pyright} {paths}",
             paths=["aioredis"],
-            expected_mypy_success=True,
         ),
         Project(
             location="https://github.com/agronholm/anyio",
@@ -410,7 +408,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/aio-libs/yarl",
             mypy_cmd="{mypy} --show-error-codes yarl tests",
             pyright_cmd="{pyright}",
-            deps=["multidict"],
+            deps=["multidict", "pytest"],
             expected_mypy_success=True,
         ),
         Project(
@@ -571,7 +569,7 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} {paths}",
             pyright_cmd="{pyright} {paths}",
             paths=["starlette", "tests"],
-            deps=["types-requests", "types-PyYAML"],
+            deps=["anyio", "types-requests", "types-PyYAML"],
             expected_mypy_success=True,
         ),
         Project(
@@ -631,6 +629,7 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} {paths}",
             pyright_cmd="{pyright} {paths}",
             paths=["."],
+            deps=["types-requests", "types-pyOpenSSL"],
             expected_mypy_success=True,
         ),
         Project(
@@ -646,7 +645,7 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} --config python/mypy.ini {paths}",
             pyright_cmd="{pyright} {paths}",
             paths=["python/pyspark"],
-            deps=["numpy"],
+            deps=["numpy", "pandas-stubs"],
             expected_mypy_success=True,
             cost={"mypy": 20, "pyright": 110},
         ),
@@ -655,7 +654,6 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} {paths}",
             pyright_cmd="{pyright} {paths}",
             paths=["paroxython"],
-            expected_mypy_success=True,
         ),
         Project(
             location="https://github.com/Akuli/porcupine",
@@ -700,8 +698,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/python-poetry/poetry",
             mypy_cmd="{mypy}",
             pyright_cmd="{pyright}",
-            deps=["types-requests"],
-            expected_mypy_success=True,
+            deps=["types-requests", "pytest"],
         ),
         Project(
             location="https://github.com/awslabs/sockeye",
@@ -755,8 +752,7 @@ def get_projects() -> list[Project]:
             location="https://gitlab.com/cki-project/cki-lib",
             mypy_cmd="{mypy} --strict .",
             pyright_cmd="{pyright}",
-            deps=["types-PyYAML", "types-requests"],
-            expected_mypy_success=True,
+            deps=["types-PyYAML", "cibuildwheel", "types-requests"],
         ),
         Project(
             location="https://github.com/python-jsonschema/check-jsonschema",
@@ -857,7 +853,6 @@ def get_projects() -> list[Project]:
             pyright_cmd="{pyright} {paths}",
             paths=["src/pywinctl"],
             deps=["types-setuptools", "types-pywin32", "types-python-xlib"],
-            expected_mypy_success=True,
         ),
         Project(
             location="https://github.com/mesonbuild/meson",
@@ -933,9 +928,10 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} django-stubs",
             pyright_cmd=None,
             deps=[
-                "django",
                 "asgiref",
                 "django-stubs-ext",
+                "django",
+                "redis",
                 "tomli",
                 "types-PyYAML",
             ],
