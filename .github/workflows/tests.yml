@@ -16,3 +16,18 @@ jobs:
       - name: Run tests
         run: |
           ./test.sh
+
+  simple-primer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+      - name: Run tests
+        run: |
+          uv run mypy_primer --debug -k hauntsaninja --coverage
+          uv run mypy_primer --debug -k hauntsaninja --type-checker mypy
+          uv run mypy_primer --debug -k hauntsaninja --type-checker pyright
+          uv run mypy_primer --debug -k hauntsaninja --measure-project-runtimes
