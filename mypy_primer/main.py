@@ -15,7 +15,7 @@ from mypy_primer.git_utils import (
     get_revision_for_revision_or_date,
     revision_or_recent_tag_fn,
 )
-from mypy_primer.globals import ctx, parse_options_and_set_ctx
+from mypy_primer.globals import _Args, parse_options_and_set_ctx
 from mypy_primer.model import Project, TypeCheckResult
 from mypy_primer.projects import get_projects
 from mypy_primer.type_checker import setup_mypy, setup_pyright, setup_typeshed
@@ -24,9 +24,7 @@ from mypy_primer.utils import Style, debug_print, get_npm, line_count, run, stri
 T = TypeVar("T")
 
 
-def setup_type_checker(*, revision_like: RevisionLike, suffix: str) -> Awaitable[Path]:
-    ARGS = ctx.get()
-
+def setup_type_checker(ARGS: _Args, *, revision_like: RevisionLike, suffix: str) -> Awaitable[Path]:
     setup_fn: Callable[..., Awaitable[Path]]
     if ARGS.type_checker == "mypy":
         setup_fn = setup_mypy
@@ -43,14 +41,13 @@ def setup_type_checker(*, revision_like: RevisionLike, suffix: str) -> Awaitable
     )
 
 
-async def setup_new_and_old_type_checker() -> tuple[Path, Path]:
-    ARGS = ctx.get()
+async def setup_new_and_old_type_checker(ARGS: _Args) -> tuple[Path, Path]:
     new_revision = ARGS.new
     old_revision = revision_or_recent_tag_fn(ARGS.old)
 
     new_exe, old_exe = await asyncio.gather(
-        setup_type_checker(revision_like=new_revision, suffix="new"),
-        setup_type_checker(revision_like=old_revision, suffix="old"),
+        setup_type_checker(ARGS, revision_like=new_revision, suffix="new"),
+        setup_type_checker(ARGS, revision_like=old_revision, suffix="old"),
     )
 
     if ARGS.debug:
@@ -68,9 +65,7 @@ async def setup_new_and_old_type_checker() -> tuple[Path, Path]:
     return new_exe, old_exe
 
 
-async def setup_new_and_old_typeshed() -> tuple[Path | None, Path | None]:
-
-    ARGS = ctx.get()
+async def setup_new_and_old_typeshed(ARGS: _Args) -> tuple[Path | None, Path | None]:
     typeshed_repo = ARGS.custom_typeshed_repo
     new_typeshed_revision = ARGS.new_typeshed
     old_typeshed_revision = ARGS.old_typeshed
@@ -93,8 +88,7 @@ async def setup_new_and_old_typeshed() -> tuple[Path | None, Path | None]:
 # ==============================
 
 
-def select_projects() -> list[Project]:
-    ARGS = ctx.get()
+def select_projects(ARGS: _Args) -> list[Project]:
     if ARGS.local_project:
         return [Project.from_location(ARGS.local_project)]
 
@@ -149,13 +143,12 @@ def select_projects() -> list[Project]:
 RECENT_VERSIONS = {"mypy": ["1.15.0"], "pyright": ["1.1.399"]}
 
 
-async def validate_expected_success() -> None:
+async def validate_expected_success(ARGS: _Args) -> None:
     """Check correctness of hardcoded Project.expected_success"""
-    ARGS = ctx.get()
 
     recent_type_checker_exes = await asyncio.gather(
         *[
-            setup_type_checker(revision_like=recent_type_checker, suffix=recent_type_checker)
+            setup_type_checker(ARGS, revision_like=recent_type_checker, suffix=recent_type_checker)
             for recent_type_checker in RECENT_VERSIONS[ARGS.type_checker]
         ]
     )
@@ -189,17 +182,16 @@ async def validate_expected_success() -> None:
             return f"Project {project.location} did not succeed, but is marked as expecting success"
         return None
 
-    results = await asyncio.gather(*[inner(project) for project in select_projects()])
+    results = await asyncio.gather(*[inner(project) for project in select_projects(ARGS)])
     for result in results:
         if result:
             print(result)
 
 
-async def measure_project_runtimes() -> None:
+async def measure_project_runtimes(ARGS: _Args) -> None:
     """Check type checker runtime over each project."""
-    ARGS = ctx.get()
-
     type_checker_exe = await setup_type_checker(
+        ARGS,
         revision_like=ARGS.new or RECENT_VERSIONS[ARGS.type_checker][0],
         suffix="timer_" + (ARGS.new if ARGS.new else ""),
     )
@@ -211,7 +203,7 @@ async def measure_project_runtimes() -> None:
         )
         return (result.runtime, project)
 
-    projects = select_projects()
+    projects = select_projects(ARGS)
     results = []
     for fut in asyncio.as_completed([inner(project) for project in projects]):
         time_taken, project = await fut
@@ -231,9 +223,7 @@ async def measure_project_runtimes() -> None:
 
 
 # TODO: can't bisect over typeshed commits yet
-async def bisect() -> None:
-    ARGS = ctx.get()
-
+async def bisect(ARGS: _Args) -> None:
     assert not ARGS.new_typeshed
     assert not ARGS.old_typeshed
 
@@ -258,7 +248,7 @@ async def bisect() -> None:
 
     assert repo_dir.is_dir()
 
-    projects = select_projects()
+    projects = select_projects(ARGS)
     await asyncio.gather(*[project.setup() for project in projects])
 
     async def run_wrapper(project: Project) -> tuple[str, TypeCheckResult]:
@@ -314,13 +304,12 @@ async def bisect() -> None:
             debug_print(format(Style.RESET))
 
 
-async def coverage() -> None:
-    ARGS = ctx.get()
+async def coverage(ARGS: _Args) -> None:
     assert ARGS.type_checker == "mypy"
 
-    mypy_exe = await setup_type_checker(revision_like=ARGS.new, suffix="new")
+    mypy_exe = await setup_type_checker(ARGS, revision_like=ARGS.new, suffix="new")
 
-    projects = select_projects()
+    projects = select_projects(ARGS)
     if sys.platform == "win32":
         mypy_python = mypy_exe.parent / "python.exe"
     else:
@@ -347,12 +336,11 @@ async def coverage() -> None:
     print(f"Totalling to {sum(project_to_lines.values())} lines...")
 
 
-async def primer() -> int:
-    projects = select_projects()
-    ARGS = ctx.get()
+async def primer(ARGS: _Args) -> int:
+    projects = select_projects(ARGS)
 
-    new_type_checker, old_type_checker = await setup_new_and_old_type_checker()
-    new_typeshed_dir, old_typeshed_dir = await setup_new_and_old_typeshed()
+    new_type_checker, old_type_checker = await setup_new_and_old_type_checker(ARGS)
+    new_typeshed_dir, old_typeshed_dir = await setup_new_and_old_typeshed(ARGS)
 
     results = [
         project.primer_result(
@@ -403,15 +391,15 @@ def main() -> None:
 
         coro: Awaitable[int | None]
         if ARGS.coverage:
-            coro = coverage()
+            coro = coverage(ARGS)
         elif ARGS.bisect or ARGS.bisect_output:
-            coro = bisect()
+            coro = bisect(ARGS)
         elif ARGS.validate_expected_success:
-            coro = validate_expected_success()
+            coro = validate_expected_success(ARGS)
         elif ARGS.measure_project_runtimes:
-            coro = measure_project_runtimes()
+            coro = measure_project_runtimes(ARGS)
         else:
-            coro = primer()
+            coro = primer(ARGS)
 
         try:
             retcode = asyncio.run(coro)

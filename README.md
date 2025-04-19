@@ -209,10 +209,11 @@ if they'd make life easier.
 
 Steps should be something like:
 - Add a build process for your type checker to `type_checker.py`
-- Pattern match `primer` entrypoint in `main.py`
+- Hook it up to `setup_type_checker` in `main.py`
 - Add a `type_checker_cmd` field to `Project`
 - Opt-in as many projects as you want by adding `type_checker_cmd` to `projects.py`
-- Add support in other entrypoints as well
+- At this point the `primer` entrypoint in `main.py` should probably work
+- Optionally add support in other entrypoints as well
 
 You may also wish to add mypy_primer into your type checker's CI. Here is an example for how
 to do so:
