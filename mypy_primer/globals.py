@@ -39,6 +39,7 @@ class _Args:
     # output group
     output: str
     old_success: bool
+    show_speed_regression: bool
 
     # modes group
     coverage: bool
@@ -177,6 +178,11 @@ def parse_options(argv: list[str]) -> _Args:
         "--old-success",
         action="store_true",
         help="only output a result for a project if the old type checker run was successful",
+    )
+    output_group.add_argument(
+        "--show-speed-regression",
+        action="store_true",
+        help="show speed regression for each project",
     )
 
     modes_group = parser.add_argument_group("modes")

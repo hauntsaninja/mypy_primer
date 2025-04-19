@@ -438,8 +438,10 @@ class PrimerResult:
         else:
             speed = "slower"
 
-        # TODO: this is disabled because it has gotten noisy again
-        has_runtime_diff = runtime_diff > 10 and runtime_ratio > 1.4 and False
+        # this is disabled by default because it is pretty noisy in github actions
+        has_runtime_diff = False
+        if ctx.get().show_speed_regression:
+            has_runtime_diff = runtime_ratio > 1.05 and runtime_diff > 4
 
         if not self.diff and not has_runtime_diff:
             return ""
@@ -449,7 +451,7 @@ class PrimerResult:
             ret += (
                 f": {runtime_ratio:.2f}x {speed} "
                 f"({self.old_result.runtime:.1f}s -> {self.new_result.runtime:.1f}s "
-                "in a single noisy sample)"
+                "in single noisy sample)"
             )
         if self.diff:
             ret += "\n" + self.diff
