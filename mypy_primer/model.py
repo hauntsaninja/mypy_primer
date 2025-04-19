@@ -27,6 +27,7 @@ class Project:
 
     mypy_cmd: str
     pyright_cmd: str | None
+    knot_cmd: str | None = None  # TODO: remove this default
     paths: list[str] | None = None
 
     install_cmd: str | None = None
@@ -174,14 +175,14 @@ class Project:
         self, mypy: Path, typeshed_dir: Path | None, prepend_path: Path | None
     ) -> TypeCheckResult:
         env = os.environ.copy()
-        env["MYPY_FORCE_COLOR"] = "1"
+        additional_flags = ctx.get().additional_flags.copy()
 
         mypy_path = []  # TODO: this used to be exposed, could be useful to expose it again
-        additional_flags = ctx.get().additional_flags.copy()
         if typeshed_dir is not None:
             additional_flags.append(f"--custom-typeshed-dir={quote_path(typeshed_dir)}")
             mypy_path += list(map(str, typeshed_dir.glob("stubs/*")))
 
+        env["MYPY_FORCE_COLOR"] = "1"
         if "MYPYPATH" in env:
             mypy_path = env["MYPYPATH"].split(os.pathsep) + mypy_path
         env["MYPYPATH"] = os.pathsep.join(mypy_path)
@@ -253,6 +254,7 @@ class Project:
     ) -> TypeCheckResult:
         env = os.environ.copy()
         additional_flags = ctx.get().additional_flags.copy()
+
         if typeshed_dir is not None:
             additional_flags.append(f"--typeshedpath {quote_path(typeshed_dir)}")
         if prepend_path is not None:
@@ -283,6 +285,61 @@ class Project:
             runtime=runtime,
         )
 
+    def get_knot_cmd(self, knot: Path, additional_flags: Sequence[str] = ()) -> str:
+        knot_cmd = self.knot_cmd or "{knot} check"
+        assert "{knot}" in knot_cmd
+        if additional_flags:
+            knot_cmd += " " + " ".join(additional_flags)
+
+        knot_cmd = knot_cmd.format_map(_FormatMap(knot=knot, paths=self.paths))
+
+        knot_cmd += f" --python {quote_path(self.venv.dir)} --output-format concise"
+        return knot_cmd
+
+    async def run_knot(
+        self, knot: Path, typeshed_dir: Path | None, prepend_path: Path | None
+    ) -> TypeCheckResult:
+        env = os.environ.copy()
+        additional_flags = ctx.get().additional_flags.copy()
+
+        if typeshed_dir is not None:
+            additional_flags += ["--typeshed", quote_path(typeshed_dir)]
+        if prepend_path is not None:
+            env["MYPY_PRIMER_PREPEND_PATH"] = str(prepend_path)
+
+        env["CLICOLOR_FORCE"] = "1"
+
+        knot_cmd = self.get_knot_cmd(knot, additional_flags)
+        proc, runtime = await run(
+            knot_cmd,
+            shell=True,
+            output=True,
+            check=False,
+            cwd=ctx.get().projects_dir / self.name,
+            env=env,
+        )
+        if ctx.get().debug:
+            debug_print(f"{Style.BLUE}{knot} on {self.name} took {runtime:.2f}s{Style.RESET}")
+
+        if proc.returncode not in (0, 1):
+            debug_print(proc.stderr + proc.stdout)
+            if proc.returncode == 2:
+                raise RuntimeError(
+                    "Red Knot exited with code 2 which may indicate an internal problem (e.g. IO error)"
+                )
+            else:
+                raise RuntimeError("Red Knot did not exit with code 0, 1 or 2. Panic?")
+
+        output = proc.stderr + proc.stdout
+
+        return TypeCheckResult(
+            knot_cmd,
+            output=output,
+            success=not bool(proc.returncode),
+            expected_success="knot" in self.expected_success,
+            runtime=runtime,
+        )
+
     async def run_typechecker(
         self, type_checker: Path, typeshed_dir: Path | None, *, prepend_path: Path | None
     ) -> TypeCheckResult:
@@ -290,6 +347,8 @@ class Project:
             return await self.run_mypy(type_checker, typeshed_dir, prepend_path)
         elif ctx.get().type_checker == "pyright":
             return await self.run_pyright(type_checker, typeshed_dir, prepend_path)
+        elif ctx.get().type_checker == "knot":
+            return await self.run_knot(type_checker, typeshed_dir, prepend_path)
         else:
             raise ValueError(f"Unknown type checker: {ctx.get().type_checker}")
 
