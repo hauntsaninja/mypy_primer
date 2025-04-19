@@ -286,7 +286,9 @@ class Project:
         )
 
     def get_knot_cmd(self, knot: Path, additional_flags: Sequence[str] = ()) -> str:
-        knot_cmd = self.knot_cmd or "{knot} check"
+        knot_cmd = self.knot_cmd
+        if knot_cmd is None:
+            knot_cmd = "{knot} check {paths}" if self.paths else "{knot} check"
         assert "{knot}" in knot_cmd
         if additional_flags:
             knot_cmd += " " + " ".join(additional_flags)

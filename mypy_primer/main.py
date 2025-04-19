@@ -104,8 +104,8 @@ def select_projects(ARGS: _Args) -> list[Project]:
 
     if ARGS.type_checker == "pyright":
         project_iter = iter(p for p in project_iter if p.pyright_cmd is not None)
-    if ARGS.type_checker == "knot":
-        project_iter = iter(p for p in project_iter if p.knot_cmd is not None)
+    # if ARGS.type_checker == "knot":
+    #     project_iter = iter(p for p in project_iter if p.knot_cmd is not None)
 
     if ARGS.project_selector:
         project_iter = iter(
