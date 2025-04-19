@@ -33,9 +33,8 @@ class Project:
     deps: list[str] | None = None
     needs_mypy_plugins: bool = False
 
-    # if expected_success, there is a recent version of mypy which passes cleanly
-    expected_mypy_success: bool = False
-    expected_pyright_success: bool = False
+    # if expected_success, there is a recent version of type checker which passes cleanly
+    expected_success: tuple[str, ...] = ()
 
     # cost is vaguely proportional to type check time
     # for mypy we use the compiled times
@@ -64,10 +63,8 @@ class Project:
             result += f", deps={self.deps!r}"
         if self.needs_mypy_plugins:
             result += f", needs_mypy_plugins={self.needs_mypy_plugins!r}"
-        if self.expected_mypy_success:
-            result += f", expected_mypy_success={self.expected_mypy_success!r}"
-        if self.expected_pyright_success:
-            result += f", expected_pyright_success={self.expected_pyright_success!r}"
+        if self.expected_success:
+            result += f", expected_success={self.expected_success!r}"
         if self.cost:
             result += f", cost={self.cost!r}"
         if self.revision:
@@ -88,14 +85,6 @@ class Project:
     @property
     def venv(self) -> Venv:
         return Venv(ctx.get().projects_dir / f"_{self.name}_venv")
-
-    def expected_success(self, type_checker: str) -> bool:
-        if type_checker == "mypy":
-            return self.expected_mypy_success
-        elif type_checker == "pyright":
-            return self.expected_pyright_success
-        else:
-            raise ValueError(f"unknown type checker {type_checker}")
 
     def cost_for_type_checker(self, type_checker: str) -> int:
         default_cost = 5
@@ -240,7 +229,11 @@ class Project:
             output = re.sub('File ".*/mypy', 'File "', output)
 
         return TypeCheckResult(
-            mypy_cmd, output, not bool(proc.returncode), self.expected_mypy_success, runtime
+            mypy_cmd,
+            output=output,
+            success=not bool(proc.returncode),
+            expected_success="mypy" in self.expected_success,
+            runtime=runtime,
         )
 
     def get_pyright_cmd(self, pyright: Path, additional_flags: Sequence[str] = ()) -> str:
@@ -283,7 +276,11 @@ class Project:
 
         output = proc.stderr + proc.stdout
         return TypeCheckResult(
-            pyright_cmd, output, not bool(proc.returncode), self.expected_pyright_success, runtime
+            pyright_cmd,
+            output=output,
+            success=not bool(proc.returncode),
+            expected_success="pyright" in self.expected_success,
+            runtime=runtime,
         )
 
     async def run_typechecker(

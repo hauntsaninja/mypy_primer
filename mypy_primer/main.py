@@ -108,7 +108,7 @@ def select_projects(ARGS: _Args) -> list[Project]:
             p for p in project_iter if ARGS.known_dependency_selector in (p.deps or [])
         )
     if ARGS.expected_success:
-        project_iter = (p for p in project_iter if p.expected_success(ARGS.type_checker))
+        project_iter = (p for p in project_iter if ARGS.type_checker in p.expected_success)
     if ARGS.project_date:
         project_iter = (replace(p, revision=ARGS.project_date) for p in project_iter)
 
@@ -166,13 +166,7 @@ async def validate_expected_success(ARGS: _Args) -> None:
                 success = type_checker_exe
                 break
 
-        if ARGS.type_checker == "mypy":
-            expected_success = project.expected_mypy_success
-        elif ARGS.type_checker == "pyright":
-            expected_success = project.expected_pyright_success
-        else:
-            raise ValueError(f"Unknown type checker {ARGS.type_checker}")
-
+        expected_success = ARGS.type_checker in project.expected_success
         if bool(success) and not expected_success:
             return (
                 f"Project {project.location} succeeded with {success}, "

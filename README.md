@@ -211,6 +211,7 @@ Steps should be something like:
 - Add a build process for your type checker to `type_checker.py`
 - Hook it up to `setup_type_checker` in `main.py`
 - Add a `type_checker_cmd` field to `Project`
+- Hook up `run_typechecker` in `Project`
 - Opt-in as many projects as you want by adding `type_checker_cmd` to `projects.py`
 - At this point the `primer` entrypoint in `main.py` should probably work
 - Optionally add support in other entrypoints as well
