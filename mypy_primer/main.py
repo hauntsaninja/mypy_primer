@@ -8,7 +8,7 @@ import sys
 import traceback
 from dataclasses import replace
 from pathlib import Path
-from typing import Awaitable, Callable, Iterator, TypeVar
+from typing import Any, Awaitable, Callable, Iterator, TypeVar
 
 from mypy_primer.git_utils import (
     RevisionLike,
@@ -18,7 +18,7 @@ from mypy_primer.git_utils import (
 from mypy_primer.globals import _Args, parse_options_and_set_ctx
 from mypy_primer.model import Project, TypeCheckResult
 from mypy_primer.projects import get_projects
-from mypy_primer.type_checker import setup_mypy, setup_pyright, setup_typeshed
+from mypy_primer.type_checker import setup_knot, setup_mypy, setup_pyright, setup_typeshed
 from mypy_primer.utils import Style, debug_print, get_npm, line_count, run, strip_colour_code
 
 T = TypeVar("T")
@@ -26,16 +26,20 @@ T = TypeVar("T")
 
 def setup_type_checker(ARGS: _Args, *, revision_like: RevisionLike, suffix: str) -> Awaitable[Path]:
     setup_fn: Callable[..., Awaitable[Path]]
+    kwargs: dict[str, Any]
+
     if ARGS.type_checker == "mypy":
         setup_fn = setup_mypy
-        arg_names = ["repo", "mypyc_compile_level"]
+        kwargs = {"repo": ARGS.repo, "mypyc_compile_level": ARGS.mypyc_compile_level}
     elif ARGS.type_checker == "pyright":
         setup_fn = setup_pyright
-        arg_names = ["repo"]
+        kwargs = {"repo": ARGS.repo}
+    elif ARGS.type_checker == "knot":
+        setup_fn = setup_knot
+        kwargs = {"repo": ARGS.repo}
     else:
         raise ValueError(f"Unknown type checker {ARGS.type_checker}")
 
-    kwargs = {arg_name: getattr(ARGS, arg_name) for arg_name in arg_names}
     return setup_fn(
         ARGS.base_dir / f"{ARGS.type_checker}_{suffix}", revision_like=revision_like, **kwargs
     )
@@ -97,8 +101,12 @@ def select_projects(ARGS: _Args) -> list[Project]:
         for p in get_projects()
         if not (p.min_python_version and sys.version_info < p.min_python_version)
     )
+
     if ARGS.type_checker == "pyright":
         project_iter = iter(p for p in project_iter if p.pyright_cmd is not None)
+    # if ARGS.type_checker == "knot":
+    #     project_iter = iter(p for p in project_iter if p.knot_cmd is not None)
+
     if ARGS.project_selector:
         project_iter = iter(
             p for p in project_iter if re.search(ARGS.project_selector, p.location, flags=re.I)

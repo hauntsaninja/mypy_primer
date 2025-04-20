@@ -98,6 +98,41 @@ async def setup_pyright(
     return pyright_exe
 
 
+async def setup_knot(
+    knot_dir: Path,
+    revision_like: RevisionLike,
+    *,
+    repo: str | None,
+) -> Path:
+    knot_dir.mkdir(parents=True, exist_ok=True)
+
+    if repo is None:
+        repo = "https://github.com/astral-sh/ruff"
+    repo_dir = await ensure_repo_at_revision(repo, knot_dir, revision_like)
+
+    cargo_target_dir = knot_dir / "target"
+    if not os.environ.get("MYPY_PRIMER_NO_REBUILD", False):
+        env = os.environ.copy()
+        env["CARGO_TARGET_DIR"] = str(cargo_target_dir)
+
+        try:
+            await run(
+                ["cargo", "build", "--bin", "red_knot"],
+                cwd=repo_dir,
+                env=env,
+                output=True,
+            )
+        except subprocess.CalledProcessError as e:
+            print("Error while building 'knot'")
+            print(e.stdout)
+            print(e.stderr)
+            raise e
+
+    knot_exe = cargo_target_dir / "debug" / "red_knot"
+    assert knot_exe.exists()
+    return knot_exe
+
+
 async def setup_typeshed(parent_dir: Path, *, repo: str, revision_like: RevisionLike) -> Path:
     if parent_dir.exists():
         shutil.rmtree(parent_dir)
