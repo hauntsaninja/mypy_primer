@@ -1515,7 +1515,7 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} {paths} --config-file=",
             pyright_cmd="{pyright} {paths}",
             paths=["strawberry"],
-            deps=["graphql-core", "typing-extensions", "python-dateutil", "packaging"],
+            deps=["graphql-core", "python-dateutil", "packaging"],
         ),
     ]
     assert len(projects) == len({p.name for p in projects})
