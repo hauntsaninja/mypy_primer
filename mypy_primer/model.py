@@ -56,6 +56,8 @@ class Project:
             result += f", name_override={self.name_override!r}"
         if self.pyright_cmd:
             result += f", pyright_cmd={self.pyright_cmd!r}"
+        if self.knot_cmd:
+            result += f", knot_cmd={self.knot_cmd!r}"
         if self.paths:
             result += f", paths={self.paths!r}"
         if self.install_cmd:
