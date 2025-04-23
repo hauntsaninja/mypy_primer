@@ -28,6 +28,7 @@ class Project:
     mypy_cmd: str
     pyright_cmd: str | None
     knot_cmd: str | None = None  # TODO: remove this default
+    pyrefly_cmd: str | None = None  # TODO: remove this default
     paths: list[str] | None = None
 
     install_cmd: str | None = None
@@ -58,6 +59,8 @@ class Project:
             result += f", pyright_cmd={self.pyright_cmd!r}"
         if self.knot_cmd:
             result += f", knot_cmd={self.knot_cmd!r}"
+        if self.pyrefly_cmd:
+            result += f", pyrefly_cmd={self.pyrefly_cmd!r}"
         if self.paths:
             result += f", paths={self.paths!r}"
         if self.install_cmd:
@@ -344,6 +347,63 @@ class Project:
             runtime=runtime,
         )
 
+    def get_pyrefly_cmd(self, pyrefly: Path, additional_flags: Sequence[str] = ()) -> str:
+        pyrefly_cmd = self.pyrefly_cmd
+        if pyrefly_cmd is None:
+            pyrefly_cmd = "{pyrefly} check {paths}" if self.paths else "{pyrefly} check"
+        assert "{pyrefly}" in pyrefly_cmd
+        if additional_flags:
+            pyrefly_cmd += " " + " ".join(additional_flags)
+
+        pyrefly_cmd = pyrefly_cmd.format_map(_FormatMap(pyrefly=pyrefly, paths=self.paths))
+
+        pyrefly_cmd += f" --python-interpreter {quote_path(self.venv.dir)}/bin/python"
+        return pyrefly_cmd
+
+    async def run_pyrefly(
+        self, pyrefly: Path, typeshed_dir: Path | None, prepend_path: Path | None
+    ) -> TypeCheckResult:
+        env = os.environ.copy()
+        additional_flags = ctx.get().additional_flags.copy()
+
+        if typeshed_dir is not None:
+            additional_flags += ["--typeshed", quote_path(typeshed_dir)]
+        if prepend_path is not None:
+            env["MYPY_PRIMER_PREPEND_PATH"] = str(prepend_path)
+
+        env["CLICOLOR_FORCE"] = "1"
+
+        pyrefly_cmd = self.get_pyrefly_cmd(pyrefly, additional_flags)
+        proc, runtime = await run(
+            pyrefly_cmd,
+            shell=True,
+            output=True,
+            check=False,
+            cwd=ctx.get().projects_dir / self.name,
+            env=env,
+        )
+        if ctx.get().debug:
+            debug_print(f"{Style.BLUE}{pyrefly} on {self.name} took {runtime:.2f}s{Style.RESET}")
+
+        if proc.returncode not in (0, 1):
+            debug_print(proc.stderr + proc.stdout)
+            if proc.returncode == 2:
+                raise RuntimeError(
+                    "Pyrefly exited with code 2 which may indicate an internal problem (e.g. IO error)"
+                )
+            else:
+                raise RuntimeError("Pyrefly did not exit with code 0, 1 or 2. Panic?")
+
+        output = proc.stderr + proc.stdout
+
+        return TypeCheckResult(
+            pyrefly_cmd,
+            output=output,
+            success=not bool(proc.returncode),
+            expected_success="pyrefly" in self.expected_success,
+            runtime=runtime,
+        )
+
     async def run_typechecker(
         self, type_checker: Path, typeshed_dir: Path | None, *, prepend_path: Path | None
     ) -> TypeCheckResult:
@@ -353,6 +413,8 @@ class Project:
             return await self.run_pyright(type_checker, typeshed_dir, prepend_path)
         elif ctx.get().type_checker == "knot":
             return await self.run_knot(type_checker, typeshed_dir, prepend_path)
+        elif ctx.get().type_checker == "pyrefly":
+            return await self.run_pyrefly(type_checker, typeshed_dir, prepend_path)
         else:
             raise ValueError(f"Unknown type checker: {ctx.get().type_checker}")
 

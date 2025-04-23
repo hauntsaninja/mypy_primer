@@ -81,7 +81,7 @@ def parse_options(argv: list[str]) -> _Args:
     type_checker_group.add_argument(
         "--type-checker",
         default="mypy",
-        choices=["mypy", "pyright", "knot"],
+        choices=["mypy", "pyright", "knot", "pyrefly"],
         help="type checker to use",
     )
     type_checker_group.add_argument(

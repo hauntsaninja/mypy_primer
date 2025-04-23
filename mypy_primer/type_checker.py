@@ -133,6 +133,36 @@ async def setup_knot(
     return knot_exe
 
 
+async def setup_pyrefly(
+    pyrefly_dir: Path,
+    revision_like: RevisionLike,
+    *,
+    repo: str | None,
+) -> Path:
+    pyrefly_dir.mkdir(parents=True, exist_ok=True)
+
+    if repo is None:
+        repo = "https://github.com/facebook/pyrefly"
+    repo_dir = await ensure_repo_at_revision(repo, pyrefly_dir, revision_like)
+
+    if not os.environ.get("MYPY_PRIMER_NO_REBUILD", False):
+        try:
+            await run(
+                ["cargo", "build", "--release"],
+                cwd=repo_dir / "pyrefly",
+                output=True,
+            )
+        except subprocess.CalledProcessError as e:
+            print("Error while building 'pyrefly'", file=sys.stderr)
+            print(e.stdout, file=sys.stderr)
+            print(e.stderr, file=sys.stderr)
+            raise e
+
+    pyrefly_exe = repo_dir / "pyrefly" / "target" / "release" / "pyrefly"
+    assert pyrefly_exe.exists()
+    return pyrefly_exe
+
+
 async def setup_typeshed(parent_dir: Path, *, repo: str, revision_like: RevisionLike) -> Path:
     if parent_dir.exists():
         shutil.rmtree(parent_dir)
