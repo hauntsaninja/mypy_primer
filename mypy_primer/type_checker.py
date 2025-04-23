@@ -123,9 +123,9 @@ async def setup_knot(
                 output=True,
             )
         except subprocess.CalledProcessError as e:
-            print("Error while building 'knot'")
-            print(e.stdout)
-            print(e.stderr)
+            print("Error while building 'knot'", file=sys.stderr)
+            print(e.stdout, file=sys.stderr)
+            print(e.stderr, file=sys.stderr)
             raise e
 
     knot_exe = cargo_target_dir / "debug" / "red_knot"
