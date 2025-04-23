@@ -1510,6 +1510,13 @@ def get_projects() -> list[Project]:
             deps=["packaging"],
             expected_success=("pyright",),
         ),
+        Project(
+            location="https://github.com/strawberry-graphql/strawberry",
+            mypy_cmd="{mypy} {paths} --config-file=",
+            pyright_cmd="{pyright} {paths}",
+            paths=["strawberry"],
+            deps=["graphql-core", "python-dateutil", "packaging"],
+        ),
     ]
     assert len(projects) == len({p.name for p in projects})
     for p in projects:
