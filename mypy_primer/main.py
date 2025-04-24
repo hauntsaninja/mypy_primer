@@ -18,7 +18,13 @@ from mypy_primer.git_utils import (
 from mypy_primer.globals import _Args, parse_options_and_set_ctx
 from mypy_primer.model import Project, TypeCheckResult
 from mypy_primer.projects import get_projects
-from mypy_primer.type_checker import setup_knot, setup_mypy, setup_pyright, setup_pyrefly, setup_typeshed
+from mypy_primer.type_checker import (
+    setup_knot,
+    setup_mypy,
+    setup_pyrefly,
+    setup_pyright,
+    setup_typeshed,
+)
 from mypy_primer.utils import Style, debug_print, get_npm, line_count, run, strip_colour_code
 
 T = TypeVar("T")
