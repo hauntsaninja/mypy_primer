@@ -25,7 +25,7 @@ class Project:
     location: str
     name_override: str | None = None
 
-    mypy_cmd: str
+    mypy_cmd: str | None
     pyright_cmd: str | None
     knot_cmd: str | None = None  # TODO: remove this default
     pyrefly_cmd: str | None = None  # TODO: remove this default
@@ -160,7 +160,9 @@ class Project:
 
     def get_mypy_cmd(self, mypy: str | Path, additional_flags: Sequence[str] = ()) -> str:
         mypy_cmd = self.mypy_cmd
-        assert "{mypy}" in self.mypy_cmd
+        if mypy_cmd is None:
+            mypy_cmd = "{mypy} {paths}" if self.paths else "{mypy} ."
+        assert "{mypy}" in mypy_cmd
         mypy_cmd = mypy_cmd.format_map(_FormatMap(mypy=mypy, paths=self.paths))
 
         python_exe = self.venv.python

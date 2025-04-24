@@ -111,6 +111,8 @@ def select_projects(ARGS: _Args) -> list[Project]:
         if not (p.min_python_version and sys.version_info < p.min_python_version)
     )
 
+    if ARGS.type_checker == "mypy":
+        project_iter = iter(p for p in project_iter if p.mypy_cmd is not None)
     if ARGS.type_checker == "pyright":
         project_iter = iter(p for p in project_iter if p.pyright_cmd is not None)
     # if ARGS.type_checker == "knot":
