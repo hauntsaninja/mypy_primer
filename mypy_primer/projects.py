@@ -547,7 +547,7 @@ def get_projects() -> list[Project]:
         ),
         Project(
             location="https://github.com/pytorch/vision",
-            mypy_cmd="{mypy}",
+            mypy_cmd=None,  # "{mypy}",
             pyright_cmd="{pyright}",
             deps=["numpy", "pillow"],
             cost={"pyright": 50},
