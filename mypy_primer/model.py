@@ -367,11 +367,11 @@ class Project:
         additional_flags = ctx.get().additional_flags.copy()
 
         if typeshed_dir is not None:
-            additional_flags += ["--typeshed", quote_path(typeshed_dir)]
+            # TODO: Typeshed has to be injected into the build of Pyrefly at the moment,
+            # it cannot be overriden at runtime.
+            pass
         if prepend_path is not None:
             env["MYPY_PRIMER_PREPEND_PATH"] = str(prepend_path)
-
-        env["CLICOLOR_FORCE"] = "1"
 
         pyrefly_cmd = self.get_pyrefly_cmd(pyrefly, additional_flags)
         proc, runtime = await run(
