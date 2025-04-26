@@ -30,7 +30,13 @@ from mypy_primer.utils import Style, debug_print, get_npm, line_count, run, stri
 T = TypeVar("T")
 
 
-def setup_type_checker(ARGS: _Args, *, revision_like: RevisionLike, suffix: str) -> Awaitable[Path]:
+def setup_type_checker(
+    ARGS: _Args,
+    *,
+    revision_like: RevisionLike,
+    suffix: str,
+    typeshed_dir: Path | None,
+) -> Awaitable[Path]:
     setup_fn: Callable[..., Awaitable[Path]]
     kwargs: dict[str, Any]
 
@@ -44,8 +50,12 @@ def setup_type_checker(ARGS: _Args, *, revision_like: RevisionLike, suffix: str)
         setup_fn = setup_knot
         kwargs = {"repo": ARGS.repo}
     elif ARGS.type_checker == "pyrefly":
-        setup_fn = setup_pyrefly
-        kwargs = {"repo": ARGS.repo}
+        return setup_pyrefly(
+            ARGS.base_dir / f"{ARGS.type_checker}_{suffix}",
+            revision_like=revision_like,
+            repo=ARGS.repo,
+            typeshed_dir=typeshed_dir,
+        )
     else:
         raise ValueError(f"Unknown type checker {ARGS.type_checker}")
 
@@ -54,13 +64,27 @@ def setup_type_checker(ARGS: _Args, *, revision_like: RevisionLike, suffix: str)
     )
 
 
-async def setup_new_and_old_type_checker(ARGS: _Args) -> tuple[Path, Path]:
+async def setup_new_and_old_type_checker(
+    ARGS: _Args,
+    new_typeshed_dir: Path | None,
+    old_typeshed_dir: Path | None,
+) -> tuple[Path, Path]:
     new_revision = ARGS.new
     old_revision = revision_or_recent_tag_fn(ARGS.old)
 
     new_exe, old_exe = await asyncio.gather(
-        setup_type_checker(ARGS, revision_like=new_revision, suffix="new"),
-        setup_type_checker(ARGS, revision_like=old_revision, suffix="old"),
+        setup_type_checker(
+            ARGS,
+            revision_like=new_revision,
+            suffix="new",
+            typeshed_dir=new_typeshed_dir,
+        ),
+        setup_type_checker(
+            ARGS,
+            revision_like=old_revision,
+            suffix="old",
+            typeshed_dir=old_typeshed_dir,
+        ),
     )
 
     if ARGS.debug:
@@ -167,7 +191,12 @@ async def validate_expected_success(ARGS: _Args) -> None:
 
     recent_type_checker_exes = await asyncio.gather(
         *[
-            setup_type_checker(ARGS, revision_like=recent_type_checker, suffix=recent_type_checker)
+            setup_type_checker(
+                ARGS,
+                revision_like=recent_type_checker,
+                suffix=recent_type_checker,
+                typeshed_dir=None,
+            )
             for recent_type_checker in RECENT_VERSIONS[ARGS.type_checker]
         ]
     )
@@ -207,6 +236,7 @@ async def measure_project_runtimes(ARGS: _Args) -> None:
         ARGS,
         revision_like=ARGS.new or RECENT_VERSIONS[ARGS.type_checker][0],
         suffix="timer_" + (ARGS.new if ARGS.new else ""),
+        typeshed_dir=None,
     )
 
     async def inner(project: Project) -> tuple[float, Project]:
@@ -320,7 +350,12 @@ async def bisect(ARGS: _Args) -> None:
 async def coverage(ARGS: _Args) -> None:
     assert ARGS.type_checker == "mypy"
 
-    mypy_exe = await setup_type_checker(ARGS, revision_like=ARGS.new, suffix="new")
+    mypy_exe = await setup_type_checker(
+        ARGS,
+        revision_like=ARGS.new,
+        suffix="new",
+        typeshed_dir=None,
+    )
 
     projects = select_projects(ARGS)
     if sys.platform == "win32":
@@ -352,8 +387,12 @@ async def coverage(ARGS: _Args) -> None:
 async def primer(ARGS: _Args) -> int:
     projects = select_projects(ARGS)
 
-    new_type_checker, old_type_checker = await setup_new_and_old_type_checker(ARGS)
     new_typeshed_dir, old_typeshed_dir = await setup_new_and_old_typeshed(ARGS)
+    new_type_checker, old_type_checker = await setup_new_and_old_type_checker(
+        ARGS,
+        new_typeshed_dir=new_typeshed_dir,
+        old_typeshed_dir=old_typeshed_dir,
+    )
 
     results = [
         project.primer_result(

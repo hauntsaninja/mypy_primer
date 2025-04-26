@@ -138,6 +138,7 @@ async def setup_pyrefly(
     revision_like: RevisionLike,
     *,
     repo: str | None,
+    typeshed_dir: Path | None,
 ) -> Path:
     pyrefly_dir.mkdir(parents=True, exist_ok=True)
 
@@ -145,11 +146,18 @@ async def setup_pyrefly(
         repo = "https://github.com/facebook/pyrefly"
     repo_dir = await ensure_repo_at_revision(repo, pyrefly_dir, revision_like)
 
+    env = os.environ.copy()
+    if typeshed_dir is not None:
+        if typeshed_dir.name != "typeshed":
+            raise RuntimeError(f"Unexpected typeshed dir {typeshed_dir}")
+        env["TYPESHED_ROOT"] = str(typeshed_dir.parent)
+
     if not os.environ.get("MYPY_PRIMER_NO_REBUILD", False):
         try:
             await run(
                 ["cargo", "build", "--release"],
                 cwd=repo_dir / "pyrefly",
+                env=env,
                 output=True,
             )
         except subprocess.CalledProcessError as e:
