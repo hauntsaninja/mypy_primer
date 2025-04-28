@@ -334,10 +334,10 @@ class Project:
             debug_print(proc.stderr + proc.stdout)
             if proc.returncode == 2:
                 raise RuntimeError(
-                    "Red Knot exited with code 2 which may indicate an internal problem (e.g. IO error)"
+                    f"Red Knot exited with code 2 when checking {self.name!r}. This may indicate an internal problem (e.g. IO error)"
                 )
             else:
-                raise RuntimeError("Red Knot did not exit with code 0, 1 or 2. Panic?")
+                raise RuntimeError(f"Red Knot did not exit with code 0, 1 or 2 when checking {self.name!r}. Panic?")
 
         output = proc.stderr + proc.stdout
 
