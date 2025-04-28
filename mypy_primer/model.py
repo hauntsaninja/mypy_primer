@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import difflib
 import os
+import random
 import re
 import shlex
 import shutil
@@ -330,18 +331,12 @@ class Project:
         if ctx.get().debug:
             debug_print(f"{Style.BLUE}{knot} on {self.name} took {runtime:.2f}s{Style.RESET}")
 
+        output = proc.stderr + proc.stdout
+
         if proc.returncode not in (0, 1):
             debug_print(proc.stderr + proc.stdout)
-            if proc.returncode == 2:
-                raise RuntimeError(
-                    f"Red Knot exited with code 2 when checking {self.name!r}. This may indicate an internal problem (e.g. IO error)"
-                )
-            else:
-                raise RuntimeError(
-                    f"Red Knot did not exit with code 0, 1 or 2 when checking {self.name!r}. Panic?"
-                )
-
-        output = proc.stderr + proc.stdout
+            nonce = "".join(random.choice(string.ascii_lowercase) for _ in range(4))
+            output += f"knot exited with code {proc.returncode}. panic?? [diff{nonce}]"
 
         return TypeCheckResult(
             knot_cmd,
@@ -389,16 +384,12 @@ class Project:
         if ctx.get().debug:
             debug_print(f"{Style.BLUE}{pyrefly} on {self.name} took {runtime:.2f}s{Style.RESET}")
 
+        output = proc.stderr + proc.stdout
+
         if proc.returncode not in (0, 1):
             debug_print(proc.stderr + proc.stdout)
-            if proc.returncode == 2:
-                raise RuntimeError(
-                    "Pyrefly exited with code 2 which may indicate an internal problem (e.g. IO error)"
-                )
-            else:
-                raise RuntimeError("Pyrefly did not exit with code 0, 1 or 2. Panic?")
-
-        output = proc.stderr + proc.stdout
+            nonce = "".join(random.choice(string.ascii_lowercase) for _ in range(4))
+            output += f"pyrefly exited with code {proc.returncode}. panic?? [diff{nonce}]"
 
         return TypeCheckResult(
             pyrefly_cmd,
