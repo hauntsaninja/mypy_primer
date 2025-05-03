@@ -19,10 +19,10 @@ from mypy_primer.globals import _Args, parse_options_and_set_ctx
 from mypy_primer.model import Project, TypeCheckResult
 from mypy_primer.projects import get_projects
 from mypy_primer.type_checker import (
-    setup_knot,
     setup_mypy,
     setup_pyrefly,
     setup_pyright,
+    setup_ty,
     setup_typeshed,
 )
 from mypy_primer.utils import Style, debug_print, get_npm, line_count, run, strip_colour_code
@@ -46,8 +46,8 @@ def setup_type_checker(
     elif ARGS.type_checker == "pyright":
         setup_fn = setup_pyright
         kwargs = {"repo": ARGS.repo}
-    elif ARGS.type_checker == "knot":
-        setup_fn = setup_knot
+    elif ARGS.type_checker == "ty":
+        setup_fn = setup_ty
         kwargs = {"repo": ARGS.repo}
     elif ARGS.type_checker == "pyrefly":
         return setup_pyrefly(
@@ -139,8 +139,8 @@ def select_projects(ARGS: _Args) -> list[Project]:
         project_iter = iter(p for p in project_iter if p.mypy_cmd is not None)
     if ARGS.type_checker == "pyright":
         project_iter = iter(p for p in project_iter if p.pyright_cmd is not None)
-    # if ARGS.type_checker == "knot":
-    #     project_iter = iter(p for p in project_iter if p.knot_cmd is not None)
+    # if ARGS.type_checker == "ty":
+    #     project_iter = iter(p for p in project_iter if p.ty_cmd is not None)
 
     if ARGS.project_selector:
         project_iter = iter(

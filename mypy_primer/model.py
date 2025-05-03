@@ -27,7 +27,7 @@ class Project:
 
     mypy_cmd: str | None
     pyright_cmd: str | None
-    knot_cmd: str | None = None  # TODO: remove this default
+    ty_cmd: str | None = None  # TODO: remove this default
     pyrefly_cmd: str | None = None  # TODO: remove this default
     paths: list[str] | None = None
 
@@ -57,8 +57,8 @@ class Project:
             result += f", name_override={self.name_override!r}"
         if self.pyright_cmd:
             result += f", pyright_cmd={self.pyright_cmd!r}"
-        if self.knot_cmd:
-            result += f", knot_cmd={self.knot_cmd!r}"
+        if self.ty_cmd:
+            result += f", ty_cmd={self.ty_cmd!r}"
         if self.pyrefly_cmd:
             result += f", pyrefly_cmd={self.pyrefly_cmd!r}"
         if self.paths:
@@ -292,21 +292,21 @@ class Project:
             runtime=runtime,
         )
 
-    def get_knot_cmd(self, knot: Path, additional_flags: Sequence[str] = ()) -> str:
-        knot_cmd = self.knot_cmd
-        if knot_cmd is None:
-            knot_cmd = "{knot} check {paths}" if self.paths else "{knot} check"
-        assert "{knot}" in knot_cmd
+    def get_ty_cmd(self, ty: Path, additional_flags: Sequence[str] = ()) -> str:
+        ty_cmd = self.ty_cmd
+        if ty_cmd is None:
+            ty_cmd = "{ty} check {paths}" if self.paths else "{ty} check"
+        assert "{ty}" in ty_cmd
         if additional_flags:
-            knot_cmd += " " + " ".join(additional_flags)
+            ty_cmd += " " + " ".join(additional_flags)
 
-        knot_cmd = knot_cmd.format_map(_FormatMap(knot=knot, paths=self.paths))
+        ty_cmd = ty_cmd.format_map(_FormatMap(ty=ty, paths=self.paths))
 
-        knot_cmd += f" --python {quote_path(self.venv.dir)} --output-format concise"
-        return knot_cmd
+        ty_cmd += f" --python {quote_path(self.venv.dir)} --output-format concise"
+        return ty_cmd
 
-    async def run_knot(
-        self, knot: Path, typeshed_dir: Path | None, prepend_path: Path | None
+    async def run_ty(
+        self, ty: Path, typeshed_dir: Path | None, prepend_path: Path | None
     ) -> TypeCheckResult:
         env = os.environ.copy()
         additional_flags = ctx.get().additional_flags.copy()
@@ -318,9 +318,9 @@ class Project:
 
         env["CLICOLOR_FORCE"] = "1"
 
-        knot_cmd = self.get_knot_cmd(knot, additional_flags)
+        ty_cmd = self.get_ty_cmd(ty, additional_flags)
         proc, runtime = await run(
-            knot_cmd,
+            ty_cmd,
             shell=True,
             output=True,
             check=False,
@@ -328,26 +328,26 @@ class Project:
             env=env,
         )
         if ctx.get().debug:
-            debug_print(f"{Style.BLUE}{knot} on {self.name} took {runtime:.2f}s{Style.RESET}")
+            debug_print(f"{Style.BLUE}{ty} on {self.name} took {runtime:.2f}s{Style.RESET}")
 
         if proc.returncode not in (0, 1):
             debug_print(proc.stderr + proc.stdout)
             if proc.returncode == 2:
                 raise RuntimeError(
-                    f"Red Knot exited with code 2 when checking {self.name!r}. This may indicate an internal problem (e.g. IO error)"
+                    f"ty exited with code 2 when checking {self.name!r}. This may indicate an internal problem (e.g. IO error)"
                 )
             else:
                 raise RuntimeError(
-                    f"Red Knot did not exit with code 0, 1 or 2 when checking {self.name!r}. Panic?"
+                    f"ty did not exit with code 0, 1 or 2 when checking {self.name!r}. Panic?"
                 )
 
         output = proc.stderr + proc.stdout
 
         return TypeCheckResult(
-            knot_cmd,
+            ty_cmd,
             output=output,
             success=not bool(proc.returncode),
-            expected_success="knot" in self.expected_success,
+            expected_success="ty" in self.expected_success,
             runtime=runtime,
         )
 
@@ -415,8 +415,8 @@ class Project:
             return await self.run_mypy(type_checker, typeshed_dir, prepend_path)
         elif ctx.get().type_checker == "pyright":
             return await self.run_pyright(type_checker, typeshed_dir, prepend_path)
-        elif ctx.get().type_checker == "knot":
-            return await self.run_knot(type_checker, typeshed_dir, prepend_path)
+        elif ctx.get().type_checker == "ty":
+            return await self.run_ty(type_checker, typeshed_dir, prepend_path)
         elif ctx.get().type_checker == "pyrefly":
             return await self.run_pyrefly(type_checker, typeshed_dir, prepend_path)
         else:

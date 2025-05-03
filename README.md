@@ -12,7 +12,7 @@ mypy_primer is currently used in the CI of the following projects:
 - pyright
 - basedpyright
 - typeshed
-- red knot
+- ty
 - numpy
 
 It has also inspired similar tooling for other projects in the code quality ecosystem.
