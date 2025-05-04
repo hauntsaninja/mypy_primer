@@ -1517,6 +1517,13 @@ def get_projects() -> list[Project]:
             paths=["strawberry"],
             deps=["graphql-core", "python-dateutil", "packaging"],
         ),
+        Project(
+            location="https://github.com/archlinux/archinstall",
+            mypy_cmd="{mypy} {paths}",
+            pyright_cmd="{pyright} {paths}",
+            paths=["."],
+            deps=["cryptography", "pydantic", "pytest"],
+        ),
     ]
     assert len(projects) == len({p.name for p in projects})
     for p in projects:
