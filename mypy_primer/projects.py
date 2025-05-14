@@ -1472,7 +1472,7 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} {paths}",
             pyright_cmd="{pyright} {paths}",
             paths=["static_frame"],
-            deps=["numpy", "arraykit"],
+            deps=["numpy", "arraykit==0.10.0"],
         ),
         Project(
             location="https://github.com/mikeshardmind/async-utils",
