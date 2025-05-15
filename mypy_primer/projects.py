@@ -751,6 +751,7 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/awslabs/sockeye",
             mypy_cmd="{mypy} --ignore-missing-imports --follow-imports=silent @typechecked-files --no-strict-optional",
+            pyright_cmd=None,
             deps=["types-PyYAML"],
             expected_success=("mypy",),
             cost={"mypy": 14},
