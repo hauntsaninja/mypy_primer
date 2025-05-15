@@ -55,8 +55,7 @@ class Project:
         result = f"Project(location={self.location!r}, mypy_cmd={self.mypy_cmd!r}"
         if self.name_override:
             result += f", name_override={self.name_override!r}"
-        if self.pyright_cmd:
-            result += f", pyright_cmd={self.pyright_cmd!r}"
+        result += f", pyright_cmd={self.pyright_cmd!r}"
         if self.ty_cmd:
             result += f", ty_cmd={self.ty_cmd!r}"
         if self.pyrefly_cmd:
