@@ -915,6 +915,7 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/mesonbuild/meson",
             mypy_cmd="./run_mypy.py --mypy {mypy}",
+            pyright_cmd=None,
             deps=["types-PyYAML", "coverage", "types-chevron", "types-PyYAML", "types-tqdm"],
             expected_success=("mypy",),
             cost={"mypy": 43},
@@ -989,6 +990,7 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/typeddjango/django-stubs",
             mypy_cmd="{mypy} django-stubs",
+            pyright_cmd=None,
             install_cmd="{install} . ./ext",
             deps=["asgiref", "django-stubs-ext", "django", "redis", "tomli", "types-PyYAML"],
             needs_mypy_plugins=True,
@@ -1021,6 +1023,7 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/scipy/scipy",
             mypy_cmd="{mypy} scipy",
+            pyright_cmd=None,
             deps=["numpy", "pytest", "hypothesis", "types-psutil"],
             needs_mypy_plugins=True,
             cost={"mypy": 80},
@@ -1150,6 +1153,7 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/common-workflow-language/schema_salad",
             mypy_cmd="MYPYPATH=$MYPYPATH:mypy-stubs {mypy} schema_salad",
+            pyright_cmd=None,
             install_cmd="{install} $(grep -v mypy mypy-requirements.txt) -r requirements.txt",
             expected_success=("mypy",),
             cost={"mypy": 23},
@@ -1158,6 +1162,7 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/common-workflow-language/cwltool",
             mypy_cmd="MYPYPATH=$MYPYPATH:mypy-stubs {mypy} cwltool tests/*.py setup.py",
+            pyright_cmd=None,
             install_cmd="{install} $(grep -v mypy mypy-requirements.txt) -r requirements.txt",
             expected_success=("mypy",),
             cost={"mypy": 71},
@@ -1431,18 +1436,21 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/python/cpython",
             mypy_cmd="{mypy} --config-file Tools/clinic/mypy.ini",
+            pyright_cmd=None,
             name_override="CPython (Argument Clinic)",
             cost={"mypy": 7},
         ),
         Project(
             location="https://github.com/python/cpython",
             mypy_cmd="{mypy} --config-file Tools/cases_generator/mypy.ini",
+            pyright_cmd=None,
             name_override="CPython (cases_generator)",
             cost={"mypy": 7},
         ),
         Project(
             location="https://github.com/python/cpython",
             mypy_cmd="{mypy} --config-file Tools/peg_generator/mypy.ini",
+            pyright_cmd=None,
             name_override="CPython (peg_generator)",
             deps=["types-setuptools", "types-psutil"],
             cost={"mypy": 7},
