@@ -28,6 +28,6 @@ jobs:
       - name: Run tests
         run: |
           uv run mypy_primer --debug -k hauntsaninja --coverage
-          uv run mypy_primer --debug -k hauntsaninja --type-checker mypy
-          uv run mypy_primer --debug -k hauntsaninja --type-checker pyright
+          uv run mypy_primer --debug -k hauntsaninja --type-checker mypy --new v1.15 --old v1.15
+          uv run mypy_primer --debug -k hauntsaninja --type-checker pyright --new 1.1.400 --old 1.1.400
           uv run mypy_primer --debug -k hauntsaninja --measure-project-runtimes
