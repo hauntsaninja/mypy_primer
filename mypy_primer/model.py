@@ -222,15 +222,6 @@ class Project:
                 if not line.startswith(str(typeshed_dir / "stubs"))
             )
 
-        # Redact "note" lines which contain base_dir
-        # Avoids noisy diffs when e.g., mypy points to a stub definition
-        base_dir_re = (
-            f"({re.escape(str(ctx.get().base_dir))}"
-            f"|{re.escape(str(ctx.get().base_dir.resolve()))})"
-            ".*: note:"
-        )
-        output = re.sub(base_dir_re, "note:", output)
-
         # Avoids some noise in tracebacks
         if "error: INTERNAL ERROR" in output:
             output = re.sub('File ".*/mypy', 'File "', output)
@@ -523,6 +514,21 @@ class PrimerResult:
 
         old_output = self.old_result.output
         new_output = self.new_result.output
+
+        # Redact lines which contain essentially "{base_dir}.*" before a colon
+        # Avoids noisy diffs when e.g. a type checker points to a stub definition
+        base_dir_re = (
+            r"^(?P<header>[^:]*?)"
+            f"(?:{re.escape(str(ctx.get().base_dir.resolve()))}"
+            f"|{re.escape(str(ctx.get().base_dir))})"
+            "[^:]*(?P<trailer>(:|$))"
+        )
+        old_output = re.sub(
+            base_dir_re, r"\g<header>...\g<trailer>", old_output, flags=re.MULTILINE
+        )
+        new_output = re.sub(
+            base_dir_re, r"\g<header>...\g<trailer>", new_output, flags=re.MULTILINE
+        )
 
         old_lines = old_output.splitlines()
         new_lines = new_output.splitlines()
