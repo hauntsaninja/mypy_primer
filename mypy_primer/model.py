@@ -521,7 +521,7 @@ class PrimerResult:
             r"^(?P<header>[^:]*?)"
             f"(?:{re.escape(str(ctx.get().base_dir.resolve()))}"
             f"|{re.escape(str(ctx.get().base_dir))})"
-            "[^:]*(?P<trailer>(:|$))"
+            r"[^:\s]*(?P<trailer>(:|$))"
         )
         old_output = re.sub(
             base_dir_re, r"\g<header>...\g<trailer>", old_output, flags=re.MULTILINE
