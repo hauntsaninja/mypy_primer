@@ -63,14 +63,6 @@ def update_projects(projects: list[Project], check: bool = False) -> None:
 
 
 def get_projects() -> list[Project]:
-    # See https://github.com/hauntsaninja/mypy_primer/issues/112
-    # Project(
-    #     location="https://github.com/ZettaAI/zetta_utils",
-    #     mypy_cmd="{mypy} .",
-    #     install_cmd="{install} types-Pillow types-cachetools types-requests attrs",
-    #     expected_success=("mypy",),
-    #     supported_platforms=["linux", "darwin"],
-    # ),
     projects = [
         Project(
             location="https://github.com/python/mypy",
