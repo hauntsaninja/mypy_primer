@@ -875,7 +875,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/PyCQA/flake8-pyi",
             mypy_cmd="{mypy} {paths}",
             pyright_cmd="{pyright} {paths}",
-            paths=["pyi.py"],
+            paths=["flake8_pyi"],
             deps=["types-pyflakes"],
             expected_success=("mypy", "pyright"),
             cost={"mypy": 6},
