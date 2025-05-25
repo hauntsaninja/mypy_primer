@@ -1508,7 +1508,7 @@ def get_projects() -> list[Project]:
             pyright_cmd="{pyright} {paths}",
             paths=["colour"],
             deps=["matplotlib", "numpy", "pandas-stubs", "pytest", "scipy-stubs"],
-            cost={"mypy": 2, "pyright": 180},
+            cost={"mypy": 800, "pyright": 180},
         ),
         Project(
             location="https://github.com/vega/altair",
