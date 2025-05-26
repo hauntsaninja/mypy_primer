@@ -49,7 +49,12 @@ async def setup_mypy(
             env["MYPY_USE_MYPYC"] = "1"
             env["MYPYC_OPT_LEVEL"] = str(mypyc_compile_level)  # can be zero
             await pip_install(
-                "typing_extensions", "mypy_extensions", "tomli", "types-psutil", "types-setuptools"
+                "typing_extensions",
+                "mypy_extensions",
+                "tomli",
+                "pathspec",
+                "types-psutil",
+                "types-setuptools",
             )
             await run(
                 [str(venv.python), "-m", "pip", "install", ".", "--no-build-isolation"],
@@ -62,6 +67,7 @@ async def setup_mypy(
                 targets.append("--editable")
             targets.append(str(repo_dir))
             targets.append("tomli")
+            targets.append("pathspec")
             await pip_install(*targets)
 
     with open(venv.site_packages / "primer_plugin.pth", "w") as f:
