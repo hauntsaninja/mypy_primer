@@ -643,7 +643,7 @@ def get_projects() -> list[Project]:
         ),
         Project(
             location="https://github.com/ilevkivskyi/com2ann",
-            mypy_cmd="{mypy} --python-version=3.8 src/com2ann.py src/test_com2ann.py",
+            mypy_cmd="{mypy} --python-version=3.9 src/com2ann.py src/test_com2ann.py",
             pyright_cmd="{pyright}",
             expected_success=("mypy",),
             cost={"mypy": 7},
