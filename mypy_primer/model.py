@@ -499,6 +499,16 @@ class TypeCheckResult:
         return ret
 
 
+def _redact_base_dir(output: str, base_dir: Path) -> str:
+    base_dir_re = (
+        r"^(?P<header>[^:]*?)"
+        f"(?:{re.escape(str(base_dir.resolve()))}"
+        f"|{re.escape(str(base_dir))})"
+        r"(?:[^:]*?_(new|old)/)?(?P<trailer>[^:\s]*(:|$))"
+    )
+    return re.sub(base_dir_re, r"\g<header>...\g<trailer>", output, flags=re.MULTILINE)
+
+
 @dataclass(frozen=True)
 class PrimerResult:
     project: Project
@@ -517,18 +527,8 @@ class PrimerResult:
 
         # Redact lines which contain essentially "{base_dir}.*" before a colon
         # Avoids noisy diffs when e.g. a type checker points to a stub definition
-        base_dir_re = (
-            r"^(?P<header>[^:]*?)"
-            f"(?:{re.escape(str(ctx.get().base_dir.resolve()))}"
-            f"|{re.escape(str(ctx.get().base_dir))})"
-            r"[^:\s]*(?P<trailer>(:|$))"
-        )
-        old_output = re.sub(
-            base_dir_re, r"\g<header>...\g<trailer>", old_output, flags=re.MULTILINE
-        )
-        new_output = re.sub(
-            base_dir_re, r"\g<header>...\g<trailer>", new_output, flags=re.MULTILINE
-        )
+        old_output = _redact_base_dir(old_output, ctx.get().base_dir)
+        new_output = _redact_base_dir(new_output, ctx.get().base_dir)
 
         old_lines = old_output.splitlines()
         new_lines = new_output.splitlines()
