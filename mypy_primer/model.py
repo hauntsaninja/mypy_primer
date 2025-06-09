@@ -504,7 +504,7 @@ def _redact_base_dir(output: str, base_dir: Path) -> str:
         r"^(?P<header>[^:]*?)"
         f"(?:{re.escape(str(base_dir.resolve()))}"
         f"|{re.escape(str(base_dir))})"
-        r"(?:[^:]*?_(new|old)/)?(?P<trailer>[^:\s]*(:|$))"
+        r"(?:[^:]*?(new|old)[^/]*/)?(?P<trailer>[^:\s]*(:|$))"
     )
     return re.sub(base_dir_re, r"\g<header>...\g<trailer>", output, flags=re.MULTILINE)
 
