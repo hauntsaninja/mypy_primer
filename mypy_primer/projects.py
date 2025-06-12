@@ -1618,6 +1618,14 @@ def get_projects() -> list[Project]:
             ],
             cost={"mypy": 34},
         ),
+        Project(
+            location="https://github.com/hynek/svcs",
+            mypy_cmd="{mypy} {paths}",
+            pyright_cmd="{pyright} {paths}",
+            paths=["src", "tests/typing"],
+            deps=["attrs", "flask", "aiohttp", "fastapi", "starlette"],
+            expected_success=("mypy", "pyright"),
+        ),
     ]
     assert len(projects) == len({p.name for p in projects})
     for p in projects:
