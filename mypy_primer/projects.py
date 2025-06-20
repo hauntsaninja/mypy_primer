@@ -1016,7 +1016,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/scipy/scipy",
             mypy_cmd="{mypy} scipy",
             pyright_cmd=None,
-            deps=["numpy", "pytest", "hypothesis", "types-psutil"],
+            deps=["numpy", "pytest", "hypothesis", "setuptools>=71.1", "types-psutil"],
             needs_mypy_plugins=True,
             cost={"mypy": 80},
         ),
