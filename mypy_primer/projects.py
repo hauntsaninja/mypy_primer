@@ -1415,7 +1415,7 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} {paths}",
             pyright_cmd="{pyright} {paths}",
             paths=["pwndbg"],
-            deps=["setuptools>=71.1", "types-gdb"],
+            deps=["types-gdb"],
             cost={"mypy": 32, "pyright": 75},
         ),
         Project(
