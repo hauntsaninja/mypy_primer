@@ -8,6 +8,7 @@ import shlex
 import shutil
 import string
 import subprocess
+import sys
 import textwrap
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -24,16 +25,18 @@ class Project:
     location: str
     name_override: str | None = None
 
-    mypy_cmd: str
+    mypy_cmd: str | None
     pyright_cmd: str | None
+    ty_cmd: str | None = None  # TODO: remove this default
+    pyrefly_cmd: str | None = None  # TODO: remove this default
+    paths: list[str] | None = None
 
     install_cmd: str | None = None
     deps: list[str] | None = None
     needs_mypy_plugins: bool = False
 
-    # if expected_success, there is a recent version of mypy which passes cleanly
-    expected_mypy_success: bool = False
-    expected_pyright_success: bool = False
+    # if expected_success, there is a recent version of type checker which passes cleanly
+    expected_success: tuple[str, ...] = ()
 
     # cost is vaguely proportional to type check time
     # for mypy we use the compiled times
@@ -52,18 +55,21 @@ class Project:
         result = f"Project(location={self.location!r}, mypy_cmd={self.mypy_cmd!r}"
         if self.name_override:
             result += f", name_override={self.name_override!r}"
-        if self.pyright_cmd:
-            result += f", pyright_cmd={self.pyright_cmd!r}"
+        result += f", pyright_cmd={self.pyright_cmd!r}"
+        if self.ty_cmd:
+            result += f", ty_cmd={self.ty_cmd!r}"
+        if self.pyrefly_cmd:
+            result += f", pyrefly_cmd={self.pyrefly_cmd!r}"
+        if self.paths:
+            result += f", paths={self.paths!r}"
         if self.install_cmd:
             result += f", install_cmd={self.install_cmd!r}"
         if self.deps:
             result += f", deps={self.deps!r}"
         if self.needs_mypy_plugins:
             result += f", needs_mypy_plugins={self.needs_mypy_plugins!r}"
-        if self.expected_mypy_success:
-            result += f", expected_mypy_success={self.expected_mypy_success!r}"
-        if self.expected_pyright_success:
-            result += f", expected_pyright_success={self.expected_pyright_success!r}"
+        if self.expected_success:
+            result += f", expected_success={self.expected_success!r}"
         if self.cost:
             result += f", cost={self.cost!r}"
         if self.revision:
@@ -84,14 +90,6 @@ class Project:
     @property
     def venv(self) -> Venv:
         return Venv(ctx.get().projects_dir / f"_{self.name}_venv")
-
-    def expected_success(self, type_checker: str) -> bool:
-        if type_checker == "mypy":
-            return self.expected_mypy_success
-        elif type_checker == "pyright":
-            return self.expected_pyright_success
-        else:
-            raise ValueError(f"unknown type checker {type_checker}")
 
     def cost_for_type_checker(self, type_checker: str) -> int:
         default_cost = 5
@@ -137,12 +135,7 @@ class Project:
                     install_cmd = self.install_cmd.format(
                         install=f"{quote_path(self.venv.python)} -m pip install"
                     )
-                await run(
-                    install_cmd,
-                    shell=True,
-                    cwd=repo_dir,
-                    output=True,
-                )
+                await run(install_cmd, shell=True, cwd=repo_dir, output=True)
             except subprocess.CalledProcessError as e:
                 if e.output:
                     print(e.output)
@@ -166,8 +159,10 @@ class Project:
 
     def get_mypy_cmd(self, mypy: str | Path, additional_flags: Sequence[str] = ()) -> str:
         mypy_cmd = self.mypy_cmd
-        assert "{mypy}" in self.mypy_cmd
-        mypy_cmd = mypy_cmd.format(mypy=mypy)
+        if mypy_cmd is None:
+            mypy_cmd = "{mypy} {paths}" if self.paths else "{mypy} ."
+        assert "{mypy}" in mypy_cmd
+        mypy_cmd = mypy_cmd.format_map(_FormatMap(mypy=mypy, paths=self.paths))
 
         python_exe = self.venv.python
         mypy_cmd += f" --python-executable={quote_path(python_exe)}"
@@ -186,14 +181,14 @@ class Project:
         self, mypy: Path, typeshed_dir: Path | None, prepend_path: Path | None
     ) -> TypeCheckResult:
         env = os.environ.copy()
-        env["MYPY_FORCE_COLOR"] = "1"
+        additional_flags = ctx.get().additional_flags.copy()
 
         mypy_path = []  # TODO: this used to be exposed, could be useful to expose it again
-        additional_flags = ctx.get().additional_flags.copy()
         if typeshed_dir is not None:
             additional_flags.append(f"--custom-typeshed-dir={quote_path(typeshed_dir)}")
             mypy_path += list(map(str, typeshed_dir.glob("stubs/*")))
 
+        env["MYPY_FORCE_COLOR"] = "1"
         if "MYPYPATH" in env:
             mypy_path = env["MYPYPATH"].split(os.pathsep) + mypy_path
         env["MYPYPATH"] = os.pathsep.join(mypy_path)
@@ -227,21 +222,16 @@ class Project:
                 if not line.startswith(str(typeshed_dir / "stubs"))
             )
 
-        # Redact "note" lines which contain base_dir
-        # Avoids noisy diffs when e.g., mypy points to a stub definition
-        base_dir_re = (
-            f"({re.escape(str(ctx.get().base_dir))}"
-            f"|{re.escape(str(ctx.get().base_dir.resolve()))})"
-            ".*: note:"
-        )
-        output = re.sub(base_dir_re, "note:", output)
-
         # Avoids some noise in tracebacks
         if "error: INTERNAL ERROR" in output:
             output = re.sub('File ".*/mypy', 'File "', output)
 
         return TypeCheckResult(
-            mypy_cmd, output, not bool(proc.returncode), self.expected_mypy_success, runtime
+            mypy_cmd,
+            output=output,
+            success=not bool(proc.returncode),
+            expected_success="mypy" in self.expected_success,
+            runtime=runtime,
         )
 
     def get_pyright_cmd(self, pyright: Path, additional_flags: Sequence[str] = ()) -> str:
@@ -249,7 +239,11 @@ class Project:
         assert "{pyright}" in pyright_cmd
         if additional_flags:
             pyright_cmd += " " + " ".join(additional_flags)
-        pyright_cmd = pyright_cmd.format(pyright=pyright)
+
+        pyright_cmd = pyright_cmd.format_map(
+            _FormatMap(pyright=f"node {pyright}", paths=self.paths)
+        )
+
         return pyright_cmd
 
     async def run_pyright(
@@ -257,13 +251,17 @@ class Project:
     ) -> TypeCheckResult:
         env = os.environ.copy()
         additional_flags = ctx.get().additional_flags.copy()
+
         if typeshed_dir is not None:
             additional_flags.append(f"--typeshedpath {quote_path(typeshed_dir)}")
         if prepend_path is not None:
             env["MYPY_PRIMER_PREPEND_PATH"] = str(prepend_path)
 
         pyright_cmd = self.get_pyright_cmd(pyright, additional_flags)
-        pyright_cmd = f"source {self.venv.activate}; {pyright_cmd}"
+        if sys.platform == "win32":
+            pyright_cmd = f"{self.venv.activate_cmd} && {pyright_cmd}"
+        else:
+            pyright_cmd = f"{self.venv.activate_cmd}; {pyright_cmd}"
         proc, runtime = await run(
             pyright_cmd,
             shell=True,
@@ -277,7 +275,127 @@ class Project:
 
         output = proc.stderr + proc.stdout
         return TypeCheckResult(
-            pyright_cmd, output, not bool(proc.returncode), self.expected_pyright_success, runtime
+            pyright_cmd,
+            output=output,
+            success=not bool(proc.returncode),
+            expected_success="pyright" in self.expected_success,
+            runtime=runtime,
+        )
+
+    def get_ty_cmd(self, ty: Path, additional_flags: Sequence[str] = ()) -> str:
+        ty_cmd = self.ty_cmd
+        if ty_cmd is None:
+            ty_cmd = "{ty} check {paths}" if self.paths else "{ty} check"
+        assert "{ty}" in ty_cmd
+        if additional_flags:
+            ty_cmd += " " + " ".join(additional_flags)
+
+        ty_cmd = ty_cmd.format_map(_FormatMap(ty=ty, paths=self.paths))
+
+        ty_cmd += f" --python {quote_path(self.venv.dir)} --output-format concise"
+        return ty_cmd
+
+    async def run_ty(
+        self, ty: Path, typeshed_dir: Path | None, prepend_path: Path | None
+    ) -> TypeCheckResult:
+        env = os.environ.copy()
+        additional_flags = ctx.get().additional_flags.copy()
+
+        if typeshed_dir is not None:
+            additional_flags += ["--typeshed", quote_path(typeshed_dir)]
+        if prepend_path is not None:
+            env["MYPY_PRIMER_PREPEND_PATH"] = str(prepend_path)
+
+        env["CLICOLOR_FORCE"] = "1"
+
+        ty_cmd = self.get_ty_cmd(ty, additional_flags)
+        proc, runtime = await run(
+            ty_cmd,
+            shell=True,
+            output=True,
+            check=False,
+            cwd=ctx.get().projects_dir / self.name,
+            env=env,
+        )
+        if ctx.get().debug:
+            debug_print(f"{Style.BLUE}{ty} on {self.name} took {runtime:.2f}s{Style.RESET}")
+
+        if proc.returncode not in (0, 1):
+            debug_print(proc.stderr + proc.stdout)
+            if proc.returncode == 2:
+                raise RuntimeError(
+                    f"ty exited with code 2 when checking {self.name!r}. This may indicate an internal problem (e.g. IO error)"
+                )
+            else:
+                raise RuntimeError(
+                    f"ty did not exit with code 0, 1 or 2 when checking {self.name!r}. Panic?"
+                )
+
+        output = proc.stderr + proc.stdout
+
+        return TypeCheckResult(
+            ty_cmd,
+            output=output,
+            success=not bool(proc.returncode),
+            expected_success="ty" in self.expected_success,
+            runtime=runtime,
+        )
+
+    def get_pyrefly_cmd(self, pyrefly: Path, additional_flags: Sequence[str] = ()) -> str:
+        pyrefly_cmd = self.pyrefly_cmd
+        if pyrefly_cmd is None:
+            pyrefly_cmd = "{pyrefly} check {paths}" if self.paths else "{pyrefly} check"
+        assert "{pyrefly}" in pyrefly_cmd
+        if additional_flags:
+            pyrefly_cmd += " " + " ".join(additional_flags)
+
+        pyrefly_cmd = pyrefly_cmd.format_map(_FormatMap(pyrefly=pyrefly, paths=self.paths))
+
+        pyrefly_cmd += f" --python-interpreter {quote_path(self.venv.dir)}/bin/python"
+        return pyrefly_cmd
+
+    async def run_pyrefly(
+        self, pyrefly: Path, typeshed_dir: Path | None, prepend_path: Path | None
+    ) -> TypeCheckResult:
+        env = os.environ.copy()
+        additional_flags = ctx.get().additional_flags.copy()
+
+        if typeshed_dir is not None:
+            # TODO: Typeshed has to be injected into the build of Pyrefly at the moment,
+            # it cannot be overriden at runtime.
+            pass
+        if prepend_path is not None:
+            env["MYPY_PRIMER_PREPEND_PATH"] = str(prepend_path)
+
+        pyrefly_cmd = self.get_pyrefly_cmd(pyrefly, additional_flags)
+        proc, runtime = await run(
+            pyrefly_cmd,
+            shell=True,
+            output=True,
+            check=False,
+            cwd=ctx.get().projects_dir / self.name,
+            env=env,
+        )
+        if ctx.get().debug:
+            debug_print(f"{Style.BLUE}{pyrefly} on {self.name} took {runtime:.2f}s{Style.RESET}")
+
+        if proc.returncode not in (0, 1):
+            debug_print(proc.stderr + proc.stdout)
+            if proc.returncode == 2:
+                raise RuntimeError(
+                    "Pyrefly exited with code 2 which may indicate an internal problem (e.g. IO error)"
+                )
+            else:
+                raise RuntimeError("Pyrefly did not exit with code 0, 1 or 2. Panic?")
+
+        output = proc.stderr + proc.stdout
+
+        return TypeCheckResult(
+            pyrefly_cmd,
+            output=output,
+            success=not bool(proc.returncode),
+            expected_success="pyrefly" in self.expected_success,
+            runtime=runtime,
         )
 
     async def run_typechecker(
@@ -287,6 +405,10 @@ class Project:
             return await self.run_mypy(type_checker, typeshed_dir, prepend_path)
         elif ctx.get().type_checker == "pyright":
             return await self.run_pyright(type_checker, typeshed_dir, prepend_path)
+        elif ctx.get().type_checker == "ty":
+            return await self.run_ty(type_checker, typeshed_dir, prepend_path)
+        elif ctx.get().type_checker == "pyrefly":
+            return await self.run_pyrefly(type_checker, typeshed_dir, prepend_path)
         else:
             raise ValueError(f"Unknown type checker: {ctx.get().type_checker}")
 
@@ -325,7 +447,12 @@ for source in sources:
             output=True,
             cwd=ctx.get().projects_dir / self.name,
             shell=True,
+            check=False,
         )
+        if proc.returncode:
+            if ctx.get().debug:
+                debug_print(f"{Style.BLUE}failed to find source paths for {self.name}{Style.RESET}")
+            return []
         return [ctx.get().projects_dir / self.name / p for p in proc.stdout.splitlines()]
 
     @classmethod
@@ -339,6 +466,21 @@ for source in sources:
         return Project(
             location=location, mypy_cmd=f"{{mypy}} {location} {additional_flags}", pyright_cmd=None
         )
+
+
+class _FormatMap:
+    def __init__(self, **map: str | Path | list[str] | None) -> None:
+        self.map = map
+
+    def __getitem__(self, key: str) -> str | Path:
+        if key not in self.map:
+            raise KeyError(key)
+        value = self.map[key]
+        if value is None:
+            raise ValueError(f"Required {key} to be specified")
+        if isinstance(value, list):
+            value = " ".join(value)
+        return value
 
 
 @dataclass(frozen=True)
@@ -357,6 +499,16 @@ class TypeCheckResult:
         return ret
 
 
+def _redact_base_dir(output: str, base_dir: Path) -> str:
+    base_dir_re = (
+        r"^(?P<header>[^:]*?)"
+        f"(?:{re.escape(str(base_dir.resolve()))}"
+        f"|{re.escape(str(base_dir))})"
+        r"(?:[^:]*?(new|old)[^/]*/)?(?P<trailer>[^:\s]*(:|$))"
+    )
+    return re.sub(base_dir_re, r"\g<header>...\g<trailer>", output, flags=re.MULTILINE)
+
+
 @dataclass(frozen=True)
 class PrimerResult:
     project: Project
@@ -372,6 +524,11 @@ class PrimerResult:
 
         old_output = self.old_result.output
         new_output = self.new_result.output
+
+        # Redact lines which contain essentially "{base_dir}.*" before a colon
+        # Avoids noisy diffs when e.g. a type checker points to a stub definition
+        old_output = _redact_base_dir(old_output, ctx.get().base_dir)
+        new_output = _redact_base_dir(new_output, ctx.get().base_dir)
 
         old_lines = old_output.splitlines()
         new_lines = new_output.splitlines()
@@ -415,7 +572,11 @@ class PrimerResult:
         else:
             speed = "slower"
 
-        has_runtime_diff = runtime_diff > 10 and runtime_ratio > 1.4
+        # this is disabled by default because it is pretty noisy in github actions
+        has_runtime_diff = False
+        if ctx.get().show_speed_regression:
+            has_runtime_diff = runtime_ratio > 1.05 and runtime_diff > 4
+
         if not self.diff and not has_runtime_diff:
             return ""
 
@@ -424,7 +585,7 @@ class PrimerResult:
             ret += (
                 f": {runtime_ratio:.2f}x {speed} "
                 f"({self.old_result.runtime:.1f}s -> {self.new_result.runtime:.1f}s "
-                "in a single noisy sample)"
+                "in single noisy sample)"
             )
         if self.diff:
             ret += "\n" + self.diff

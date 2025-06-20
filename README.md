@@ -5,16 +5,19 @@ mypy_primer is a tool for regression testing Python static type checkers.
 mypy_primer makes it easy to run different versions of a type checker over several million lines
 of open source Python projects with typing for the purpose of evaluating changes.
 
-mypy_primer currently supports [mypy](https://github.com/python/mypy/) and
-[pyright](https://github.com/microsoft/pyright). mypy_primer's code and ideas have been used to
-improve testing of other tools in the code quality ecosystem; if you maintain such a tool, let me
-know if I can help you!
+mypy_primer was inspired by Rust's [crater](https://github.com/rust-lang/crater).
 
-mypy_primer was inspired by Rust's [crater](https://github.com/rust-lang/crater) and the name
-was inspired by [black](https://github.com/psf/black).
+mypy_primer is currently used in the CI of the following projects:
+- mypy
+- pyright
+- basedpyright
+- typeshed
+- ty
+- numpy
 
-mypy_primer is currently used in the CI of pyright, mypy and typeshed, and has inspired similar
-tooling for other projects in the code quality ecosystem.
+It has also inspired similar tooling for other projects in the code quality ecosystem.
+If you maintain a tool or project that could benefit from similar regression testing, let me know
+if I can help you!
 
 ## Explanation
 
@@ -28,7 +31,7 @@ Here's what mypy_primer does:
 - Lets you bisect to find the mypy commit that causes a given change
 
 mypy_primer contains a hardcoded list of open source projects and their respective mypy setups (to
-which contributions are gladly accepted). The list is visible at the bottom of `mypy_primer.py` and
+which contributions are gladly accepted). The list is visible at `mypy_primer/projects.py` and
 many of them should be recognisable names.
 
 I used https://grep.app / https://cs.github.com / issue reports to help me build this. For example,
@@ -125,6 +128,11 @@ See the difference between HEAD and latest release with:
 mypy_primer -o diff
 ```
 
+Same thing but with pyright:
+```
+mypy_primer -o diff --type-checker pyright
+```
+
 See the impact of your risky change with:
 ```
 mypy_primer --repo https://github.com/hauntsaninja/mypy.git --new my_risky_change --old master
@@ -168,9 +176,9 @@ mypy_primer --coverage -k pypa
 For the record, the total is currently:
 ```
 λ mypy_primer --coverage
-Checking 120 projects...
-Containing 24729 files...
-Totalling to 6953563 lines...
+Checking 149 projects...
+Containing 37531 files...
+Totalling to 10193981 lines...
 ```
 (We use mypy internals to calculate this, so it's pretty accurate, if fragile)
 
@@ -193,3 +201,22 @@ Some other things that could be done are:
 - multiple mypy invocations for the same project
 - improve CLI or output formatting
 - ???
+
+## Adding support for a new type checker
+
+This should mostly be just chaining through boilerplate. Feel free to suggest larger refactors
+if they'd make life easier.
+
+Steps should be something like:
+- Add a build process for your type checker to `type_checker.py`
+- Hook it up to `setup_type_checker` in `main.py`
+- Add a `type_checker_cmd` field to `Project`
+- Hook up `run_typechecker` in `Project`
+- Opt-in as many projects as you want by adding `type_checker_cmd` to `projects.py`
+- At this point the `primer` entrypoint in `main.py` should probably work
+- Optionally add support in other entrypoints as well
+
+You may also wish to add mypy_primer into your type checker's CI. Here is an example for how
+to do so:
+- https://github.com/python/mypy/blob/master/.github/workflows/mypy_primer.yml
+- https://github.com/python/mypy/blob/master/.github/workflows/mypy_primer_comment.yml

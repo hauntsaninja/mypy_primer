@@ -150,11 +150,11 @@ class Venv:
             return self.dir / "lib" / pyname / "site-packages"
 
     @property
-    def activate(self) -> Path:
+    def activate_cmd(self) -> str:
         if sys.platform == "win32":
-            return self.bin / "activate.bat"
+            return str(self.bin / "activate.bat")
         else:
-            return self.bin / "activate"
+            return f". {self.bin / 'activate'}"
 
     async def make_venv(self) -> None:
         if has_uv():
@@ -173,3 +173,16 @@ def line_count(path: Path) -> int:
             return sum(buf.count(b"\n") for buf in buf_iter)
     except FileNotFoundError:
         return 0
+
+
+@functools.cache
+def get_npm() -> str:
+    npm_path = shutil.which("npm")
+    if npm_path is None:
+        raise RuntimeError("'npm' is not found.")
+    if sys.platform == "win32":
+        # On Windows, npm is typically installed as 'npm.cmd'
+        # and `subprocess` requires full name for it to run.
+        return Path(npm_path).name
+    else:
+        return "npm"
