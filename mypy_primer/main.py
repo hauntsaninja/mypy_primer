@@ -50,12 +50,8 @@ def setup_type_checker(
         setup_fn = setup_ty
         kwargs = {"repo": ARGS.repo}
     elif ARGS.type_checker == "pyrefly":
-        return setup_pyrefly(
-            ARGS.base_dir / f"{ARGS.type_checker}_{suffix}",
-            revision_like=revision_like,
-            repo=ARGS.repo,
-            typeshed_dir=typeshed_dir,
-        )
+        setup_fn = setup_pyrefly
+        kwargs = {"repo": ARGS.repo, "typeshed_dir": typeshed_dir}
     else:
         raise ValueError(f"Unknown type checker {ARGS.type_checker}")
 
