@@ -1212,7 +1212,6 @@ def get_projects() -> list[Project]:
             location="https://github.com/psycopg/psycopg",
             mypy_cmd="{mypy}",
             pyright_cmd="{pyright}",
-            ty_cmd="""{ty} check --config 'src.root="./psycopg"'""",
             deps=["pytest", "pproxy"],
             cost={"mypy": 28},
         ),
