@@ -172,7 +172,7 @@ async def setup_pyrefly(
             print(e.stderr, file=sys.stderr)
             raise e
 
-    pyrefly_exe = repo_dir / "pyrefly" / "target" / "release" / "pyrefly"
+    pyrefly_exe = repo_dir / "target" / "release" / "pyrefly"
     assert pyrefly_exe.exists()
     return pyrefly_exe
 
