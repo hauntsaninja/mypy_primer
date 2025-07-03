@@ -807,7 +807,7 @@ def get_projects() -> list[Project]:
                 "packaging",
                 "pandas-stubs",
                 "pydantic",
-                "scipy-stubs"
+                "scipy-stubs",
                 "typeguard",
                 "types-click",
                 "types-PyYAML",
