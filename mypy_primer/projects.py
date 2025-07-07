@@ -1625,6 +1625,13 @@ def get_projects() -> list[Project]:
             deps=["attrs", "flask", "aiohttp", "fastapi", "starlette"],
             expected_success=("mypy", "pyright"),
         ),
+        Project(
+            location="https://github.com/glyph/DateType",
+            mypy_cmd="{mypy} {paths}",
+            pyright_cmd="{pyright} {paths}",
+            paths=["src"],
+            expected_success=("mypy",),
+        ),
     ]
     assert len(projects) == len({p.name for p in projects})
     for p in projects:
