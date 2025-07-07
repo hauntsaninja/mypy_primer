@@ -1592,6 +1592,13 @@ def get_projects() -> list[Project]:
             cost={"mypy": 24},
         ),
         Project(
+            location="https://github.com/zopefoundation/zope.interface",
+            mypy_cmd="{mypy} {paths}",
+            pyright_cmd="{pyright} {paths}",
+            paths=["src"],
+            deps=["zope.testing"],
+        ),
+        Project(
             location="https://github.com/scikit-build/scikit-build-core",
             mypy_cmd="{mypy} {paths}",
             pyright_cmd="{pyright} {paths}",
