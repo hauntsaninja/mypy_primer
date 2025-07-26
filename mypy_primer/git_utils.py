@@ -4,11 +4,11 @@ import os
 import subprocess
 from datetime import date
 from pathlib import Path
-from typing import Awaitable, Callable, Union
+from typing import Awaitable, Callable
 
 from mypy_primer.utils import run
 
-RevisionLike = Union[str, None, Callable[[Path], Awaitable[str]]]
+RevisionLike = str | None | Callable[[Path], Awaitable[str]]
 
 
 # repo_source could be a URL *or* a local path
