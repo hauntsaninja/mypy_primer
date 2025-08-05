@@ -307,6 +307,9 @@ def get_projects() -> list[Project]:
                 "cryptography",
                 "django-stubs",
             ],
+            # TODO: the plugin here is a little involved and might only work on linux
+            # figure out what it would take to make it actually work
+            # needs_mypy_plugins=True,
             expected_success=("mypy",),
             cost={"pyright": 60, "mypy": 173},
         ),
