@@ -1155,7 +1155,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/common-workflow-language/cwltool",
             mypy_cmd="MYPYPATH=$MYPYPATH:mypy-stubs {mypy} cwltool tests/*.py setup.py",
             pyright_cmd=None,
-            install_cmd="{install} $(grep -v mypy mypy-requirements.txt) -r requirements.txt",
+            install_cmd="{install} $(grep -v -e 'mypy' -e ';' mypy-requirements.txt) -r requirements.txt",
             expected_success=("mypy",),
             cost={"mypy": 99},
             supported_platforms=["linux", "darwin"],
