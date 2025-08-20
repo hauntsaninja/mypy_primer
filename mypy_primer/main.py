@@ -179,7 +179,7 @@ def select_projects(ARGS: _Args) -> list[Project]:
 # hidden entrypoint logic
 # ==============================
 
-RECENT_VERSIONS = {"mypy": ["1.15.0"], "pyright": ["1.1.399"]}
+RECENT_VERSIONS = {"mypy": ["1.17.1"], "pyright": ["1.1.399"]}
 
 
 async def validate_expected_success(ARGS: _Args) -> None:

@@ -53,14 +53,22 @@ async def setup_mypy(
                 "mypy_extensions",
                 "tomli",
                 "pathspec",
+                "setuptools",
                 "types-psutil",
                 "types-setuptools",
             )
-            await run(
-                [str(venv.python), "-m", "pip", "install", ".", "--no-build-isolation"],
-                cwd=repo_dir,
-                env=env,
-            )
+            try:
+                await run(
+                    [str(venv.python), "-m", "pip", "install", ".", "--no-build-isolation"],
+                    cwd=repo_dir,
+                    env=env,
+                    output=True,
+                )
+            except subprocess.CalledProcessError as e:
+                print("Error while building mypy", file=sys.stderr)
+                print(e.stdout, file=sys.stderr)
+                print(e.stderr, file=sys.stderr)
+                raise e
         else:
             targets = []
             if editable:
