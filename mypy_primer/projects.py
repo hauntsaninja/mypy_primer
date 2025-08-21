@@ -1647,6 +1647,15 @@ def get_projects() -> list[Project]:
             expected_success=("mypy",),
             cost={"mypy": 6},
         ),
+        Project(
+            location="https://github.com/egraphs-good/egglog-python",
+            mypy_cmd="{mypy} {paths}",
+            pyright_cmd="{pyright} {paths}",
+            paths=["python"],
+            deps=["anywidget", "syrupy"],
+            expected_success=("mypy",),
+            cost={"mypy": 6},
+        ),
     ]
     assert len(projects) == len({p.name for p in projects})
     for p in projects:
