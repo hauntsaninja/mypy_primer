@@ -1351,7 +1351,7 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} {paths}",
             pyright_cmd="{pyright} {paths}",
             paths=["src", "release"],
-            deps=["types-boto", "tornado", "numpy", "jinja2", "scipy-stubs", "selenium"],
+            deps=["types-boto", "tornado", "numpy", "jinja2", "selenium"],
             cost={"pyright": 60, "mypy": 65},
         ),
         Project(
