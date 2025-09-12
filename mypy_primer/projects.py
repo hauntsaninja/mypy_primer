@@ -314,6 +314,16 @@ def get_projects() -> list[Project]:
             cost={"pyright": 60, "mypy": 173},
         ),
         Project(
+            location="https://github.com/wemake-services/django-test-migrations",
+            mypy_cmd="{mypy} {paths}",
+            pyright_cmd=None,
+            paths=["django_test_migrations"],
+            deps=["django-stubs"],
+            needs_mypy_plugins=True,  # we want to test `django-stubs` plugin
+            expected_success=("mypy",),
+            cost={"mypy": 6},
+        ),
+        Project(
             location="https://github.com/dropbox/stone",
             mypy_cmd="{mypy} {paths}",
             pyright_cmd="{pyright} {paths}",
