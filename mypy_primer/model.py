@@ -147,7 +147,7 @@ class Project:
                 install_base = f"uv pip install --python {quote_path(self.venv.python)}"
             else:
                 install_base = f"{quote_path(self.venv.python)} -m pip install"
-            install_cmd = f"{install_base} {' '.join(self.deps)}"
+            install_cmd = f"{install_base} {' '.join(map(shlex.quote, self.deps))}"
             try:
                 await run(install_cmd, shell=True, cwd=repo_dir, output=True)
             except subprocess.CalledProcessError as e:
