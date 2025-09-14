@@ -1275,13 +1275,13 @@ def get_projects() -> list[Project]:
             needs_mypy_plugins=True,
             cost={"mypy": 44},
         ),
-        Project(
-            location="https://github.com/MaterializeInc/materialize",
-            mypy_cmd="MYPYPATH=$MYPYPATH:misc/python {mypy} --explicit-package-bases misc/python",
-            pyright_cmd="{pyright}",
-            install_cmd="{install} -r ci/builder/requirements.txt",
-            cost={"mypy": 109},
-        ),
+        # Project(
+        #     location="https://github.com/MaterializeInc/materialize",
+        #     mypy_cmd="MYPYPATH=$MYPYPATH:misc/python {mypy} --explicit-package-bases misc/python",
+        #     pyright_cmd="{pyright}",
+        #     install_cmd="{install} -r ci/builder/requirements.txt",
+        #     cost={"mypy": 109},
+        # ),
         Project(
             location="https://github.com/canonical/operator",
             mypy_cmd="{mypy} {paths}",
