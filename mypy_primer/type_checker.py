@@ -36,7 +36,7 @@ async def setup_mypy(
     if isinstance(revision_like, str) and not editable and repo is None:
         # optimistically attempt to install the revision of mypy we want from pypi
         try:
-            # TOOD: support installing lib-rt?
+            # TODO: support installing lib-rt when installing mypy from pypi?
             await pip_install(f"mypy=={revision_like}")
             install_from_repo = False
         except subprocess.CalledProcessError:
