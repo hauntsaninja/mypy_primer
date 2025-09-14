@@ -1275,6 +1275,8 @@ def get_projects() -> list[Project]:
             needs_mypy_plugins=True,
             cost={"mypy": 44},
         ),
+        # Disabled for now due to unavailable VCS dependency causing setup failures.
+        # See typeshed#14720.
         # Project(
         #     location="https://github.com/MaterializeInc/materialize",
         #     mypy_cmd="MYPYPATH=$MYPYPATH:misc/python {mypy} --explicit-package-bases misc/python",
