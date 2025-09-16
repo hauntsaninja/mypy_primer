@@ -392,14 +392,16 @@ async def primer(ARGS: _Args) -> int:
 
     async with asyncio.TaskGroup() as tg:
         results = [
-            tg.create_task(project.primer_result(
-                new_type_checker=new_type_checker,
-                old_type_checker=old_type_checker,
-                new_typeshed=new_typeshed_dir,
-                old_typeshed=old_typeshed_dir,
-                new_prepend_path=ARGS.new_prepend_path,
-                old_prepend_path=ARGS.old_prepend_path,
-            ))
+            tg.create_task(
+                project.primer_result(
+                    new_type_checker=new_type_checker,
+                    old_type_checker=old_type_checker,
+                    new_typeshed=new_typeshed_dir,
+                    old_typeshed=old_typeshed_dir,
+                    new_prepend_path=ARGS.new_prepend_path,
+                    old_prepend_path=ARGS.old_prepend_path,
+                )
+            )
             for project in projects
         ]
         retcode = 0
