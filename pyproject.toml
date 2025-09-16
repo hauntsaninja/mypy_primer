@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = [{ name = "Shantanu Jain" }, { email = "hauntsaninja@gmail.com" }]
 description = "Run mypy over millions of lines of code"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = {file = "LICENSE"}
 classifiers = [
     "Intended Audience :: Developers",
