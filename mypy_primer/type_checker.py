@@ -131,7 +131,7 @@ async def setup_ty(
 
         try:
             await run(
-                ["cargo", "build", "--bin", "ty"],
+                ["cargo", "build", "--bin", "ty", "--release"],
                 cwd=repo_dir,
                 env=env,
                 output=True,
@@ -142,7 +142,7 @@ async def setup_ty(
             print(e.stderr, file=sys.stderr)
             raise e
 
-    ty_exe = cargo_target_dir / "debug" / "ty"
+    ty_exe = cargo_target_dir / "release" / "ty"
     assert ty_exe.exists()
     return ty_exe
 
