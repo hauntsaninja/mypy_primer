@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import enum
 import os
 import shutil
 import subprocess
@@ -116,6 +117,7 @@ async def setup_ty(
     ty_dir: Path,
     revision_like: RevisionLike,
     *,
+    build_mode: RustBuildMode,
     repo: str | None,
 ) -> Path:
     ty_dir.mkdir(parents=True, exist_ok=True)
@@ -131,7 +133,7 @@ async def setup_ty(
 
         try:
             await run(
-                ["cargo", "build", "--bin", "ty", "--release"],
+                ["cargo", "build", "--bin", "ty", *build_mode.flags()],
                 cwd=repo_dir,
                 env=env,
                 output=True,
@@ -142,7 +144,7 @@ async def setup_ty(
             print(e.stderr, file=sys.stderr)
             raise e
 
-    ty_exe = cargo_target_dir / "release" / "ty"
+    ty_exe = cargo_target_dir / build_mode.artifact_directory() / "ty"
     assert ty_exe.exists()
     return ty_exe
 
@@ -151,6 +153,7 @@ async def setup_pyrefly(
     pyrefly_dir: Path,
     revision_like: RevisionLike,
     *,
+    build_mode: RustBuildMode,
     repo: str | None,
     typeshed_dir: Path | None,
 ) -> Path:
@@ -169,7 +172,7 @@ async def setup_pyrefly(
     if not os.environ.get("MYPY_PRIMER_NO_REBUILD", False):
         try:
             await run(
-                ["cargo", "build", "--release"],
+                ["cargo", "build", *build_mode.flags()],
                 cwd=repo_dir / "pyrefly",
                 env=env,
                 output=True,
@@ -180,7 +183,7 @@ async def setup_pyrefly(
             print(e.stderr, file=sys.stderr)
             raise e
 
-    pyrefly_exe = repo_dir / "target" / "release" / "pyrefly"
+    pyrefly_exe = repo_dir / "target" / build_mode.artifact_directory() / "pyrefly"
     assert pyrefly_exe.exists()
     return pyrefly_exe
 
@@ -190,3 +193,20 @@ async def setup_typeshed(parent_dir: Path, *, repo: str, revision_like: Revision
         shutil.rmtree(parent_dir)
     parent_dir.mkdir(exist_ok=True)
     return await ensure_repo_at_revision(repo, parent_dir, revision_like)
+
+
+class RustBuildMode(enum.Enum):
+    RELEASE = "release"
+    DEBUG = "debug"
+
+    def flags(self) -> list[str]:
+        if self == RustBuildMode.RELEASE:
+            return ["--release"]
+        else:
+            return []
+
+    def artifact_directory(self) -> Path:
+        if self == RustBuildMode.RELEASE:
+            return Path("release")
+        else:
+            return Path("debug")
