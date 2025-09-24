@@ -17,6 +17,7 @@ class _Args:
     repo: str | None
     type_checker: str
     mypyc_compile_level: int | None
+    debug_build: bool
 
     custom_typeshed_repo: str
     new_typeshed: str | None
@@ -90,6 +91,11 @@ def parse_options(argv: list[str]) -> _Args:
             "type checker repo to use (passed to git clone. if unspecified, we first try pypi, "
             "then fall back to github)"
         ),
+    )
+    type_checker_group.add_argument(
+        "--debug-build",
+        action="store_true",
+        help="build the type checker in debug mode (only relevant for pyrefly/ty)",
     )
     type_checker_group.add_argument(
         "--mypyc-compile-level",
@@ -222,8 +228,16 @@ def parse_options(argv: list[str]) -> _Args:
     primer_group.add_argument("--clear", action="store_true", help="delete repos and venvs")
 
     ret = _Args(**vars(parser.parse_args(argv)))
+
     if (ret.num_shards is not None) != (ret.shard_index is not None):
         parser.error("--shard-index and --num-shards must be used together")
+    if ret.type_checker != "mypy" and ret.mypyc_compile_level is not None:
+        parser.error("--mypyc-compile-level can only be used with --type-checker=mypy")
+    if ret.debug_build and ret.type_checker not in {"pyrefly", "ty"}:
+        parser.error(
+            "`--debug-build` can only be used with `--type-checker=pyrefly` or `--type-checker=ty`"
+        )
+
     return ret
 
 
