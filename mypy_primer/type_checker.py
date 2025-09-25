@@ -18,6 +18,7 @@ async def setup_mypy(
     repo: str | None,
     mypyc_compile_level: int | None,
     editable: bool = False,
+    install_librt: bool = False,
 ) -> Path:
     mypy_dir.mkdir(exist_ok=True)
     venv = Venv(mypy_dir / "venv")
@@ -36,6 +37,7 @@ async def setup_mypy(
     if isinstance(revision_like, str) and not editable and repo is None:
         # optimistically attempt to install the revision of mypy we want from pypi
         try:
+            # TODO: support installing lib-rt when installing mypy from pypi?
             await pip_install(f"mypy=={revision_like}")
             install_from_repo = False
         except subprocess.CalledProcessError:
@@ -78,6 +80,19 @@ async def setup_mypy(
             targets.append("tomli")
             targets.append("pathspec")
             await pip_install(*targets)
+
+        if install_librt:
+            try:
+                await run(
+                    [str(venv.python), "-m", "pip", "install", "./mypyc/lib-rt"],
+                    cwd=repo_dir,
+                    output=True,
+                )
+            except subprocess.CalledProcessError as e:
+                print("Error while building lib-rt", file=sys.stderr)
+                print(e.stdout, file=sys.stderr)
+                print(e.stderr, file=sys.stderr)
+                raise e
 
     with open(venv.site_packages / "primer_plugin.pth", "w") as f:
         # pth file that lets us let mypy import plugins from another venv

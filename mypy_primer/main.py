@@ -43,7 +43,11 @@ def setup_type_checker(
 
     if ARGS.type_checker == "mypy":
         setup_fn = setup_mypy
-        kwargs = {"repo": ARGS.repo, "mypyc_compile_level": ARGS.mypyc_compile_level}
+        kwargs = {
+            "repo": ARGS.repo,
+            "mypyc_compile_level": ARGS.mypyc_compile_level,
+            "install_librt": ARGS.mypy_install_librt,
+        }
     elif ARGS.type_checker == "pyright":
         setup_fn = setup_pyright
         kwargs = {"repo": ARGS.repo}
@@ -281,6 +285,7 @@ async def bisect(ARGS: _Args) -> None:
             repo=ARGS.repo,
             mypyc_compile_level=ARGS.mypyc_compile_level,
             editable=True,  # important
+            install_librt=ARGS.mypy_install_librt,
         )
         repo_dir = ARGS.base_dir / "bisect_mypy" / "mypy"
     elif ARGS.type_checker == "pyright":

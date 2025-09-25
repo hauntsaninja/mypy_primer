@@ -17,6 +17,7 @@ class _Args:
     repo: str | None
     type_checker: str
     mypyc_compile_level: int | None
+    mypy_install_librt: bool
     debug_build: bool
 
     custom_typeshed_repo: str
@@ -102,6 +103,12 @@ def parse_options(argv: list[str]) -> _Args:
         default=None,
         type=int,
         help="Compile mypy with the given mypyc optimisation level",
+    )
+    type_checker_group.add_argument(
+        "--mypy-install-librt",
+        action="store_true",
+        help="(Experimental) Whether to install the mypyc C runtime library "
+        "(mypyc/lib-rt) when using mypy as the type checker",
     )
 
     type_checker_group.add_argument(
