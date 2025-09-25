@@ -1439,6 +1439,8 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/python/cpython",
             mypy_cmd="{mypy} --config-file Tools/clinic/mypy.ini",
+            ty_cmd="{ty} check --project='Tools/clinic'",
+            paths=["Tools/clinic"],
             name_override="CPython (Argument Clinic)",
             pyright_cmd=None,
             cost={"mypy": 10},
@@ -1446,6 +1448,8 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/python/cpython",
             mypy_cmd="{mypy} --config-file Tools/cases_generator/mypy.ini",
+            ty_cmd="{ty} check --project='Tools/cases_generator'",
+            paths=["Tools/cases_generator"],
             name_override="CPython (cases_generator)",
             pyright_cmd=None,
             cost={"mypy": 10},
@@ -1453,6 +1457,8 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/python/cpython",
             mypy_cmd="{mypy} --config-file Tools/peg_generator/mypy.ini",
+            ty_cmd="{ty} check --project='Tools/peg_generator'",
+            paths=["Tools/peg_generator"],
             name_override="CPython (peg_generator)",
             pyright_cmd=None,
             deps=["types-setuptools", "types-psutil"],

@@ -19,6 +19,7 @@ from mypy_primer.globals import _Args, parse_options_and_set_ctx
 from mypy_primer.model import Project, TypeCheckResult
 from mypy_primer.projects import get_projects
 from mypy_primer.type_checker import (
+    RustBuildMode,
     setup_mypy,
     setup_pyrefly,
     setup_pyright,
@@ -52,10 +53,17 @@ def setup_type_checker(
         kwargs = {"repo": ARGS.repo}
     elif ARGS.type_checker == "ty":
         setup_fn = setup_ty
-        kwargs = {"repo": ARGS.repo}
+        kwargs = {
+            "repo": ARGS.repo,
+            "build_mode": (RustBuildMode.DEBUG if ARGS.debug_build else RustBuildMode.RELEASE),
+        }
     elif ARGS.type_checker == "pyrefly":
         setup_fn = setup_pyrefly
-        kwargs = {"repo": ARGS.repo, "typeshed_dir": typeshed_dir}
+        kwargs = {
+            "repo": ARGS.repo,
+            "typeshed_dir": typeshed_dir,
+            "build_mode": (RustBuildMode.DEBUG if ARGS.debug_build else RustBuildMode.RELEASE),
+        }
     else:
         raise ValueError(f"Unknown type checker {ARGS.type_checker}")
 
@@ -395,36 +403,39 @@ async def primer(ARGS: _Args) -> int:
         old_typeshed_dir=old_typeshed_dir,
     )
 
-    results = [
-        project.primer_result(
-            new_type_checker=new_type_checker,
-            old_type_checker=old_type_checker,
-            new_typeshed=new_typeshed_dir,
-            old_typeshed=old_typeshed_dir,
-            new_prepend_path=ARGS.new_prepend_path,
-            old_prepend_path=ARGS.old_prepend_path,
-        )
-        for project in projects
-    ]
-    retcode = 0
-    for result_fut in asyncio.as_completed(results):
-        result = await result_fut
-        if ARGS.old_success and not result.old_result.success:
-            continue
-        if ARGS.output == "full":
-            print(result.format_full())
-        elif ARGS.output == "diff":
-            print(result.format_diff_only())
-        elif ARGS.output == "concise":
-            # using ARGS.output == "concise" also causes us to:
-            # - always pass in --no-pretty and --no-error-summary
-            concise = result.format_concise()
-            if concise:
-                print(concise)
-                print()
-        if not retcode and result.diff:
-            retcode = 1
-    return retcode
+    async with asyncio.TaskGroup() as tg:
+        results = [
+            tg.create_task(
+                project.primer_result(
+                    new_type_checker=new_type_checker,
+                    old_type_checker=old_type_checker,
+                    new_typeshed=new_typeshed_dir,
+                    old_typeshed=old_typeshed_dir,
+                    new_prepend_path=ARGS.new_prepend_path,
+                    old_prepend_path=ARGS.old_prepend_path,
+                )
+            )
+            for project in projects
+        ]
+        retcode = 0
+        for result_fut in asyncio.as_completed(results):
+            result = await result_fut
+            if ARGS.old_success and not result.old_result.success:
+                continue
+            if ARGS.output == "full":
+                print(result.format_full())
+            elif ARGS.output == "diff":
+                print(result.format_diff_only())
+            elif ARGS.output == "concise":
+                # using ARGS.output == "concise" also causes us to:
+                # - always pass in --no-pretty and --no-error-summary
+                concise = result.format_concise()
+                if concise:
+                    print(concise)
+                    print()
+            if not retcode and result.diff:
+                retcode = 1
+        return retcode
 
 
 def main() -> None:
