@@ -548,17 +548,21 @@ class PrimerResult:
         net_change: dict[str, int] = defaultdict(int)
         for line in diff_lines:
             cline = canonicalise(line)
-            net_change[cline] += 1 if line[0] == "+" else -1
+            net_change[cline] += {"+": 1, "-": -1}.get(line[0], 0)
 
         output_lines: list[str] = []
         for line in diff_lines:
             cline = canonicalise(line)
-            if line[0] == "+" and net_change[cline] > 0:
+            if line[0] == "+":
+                if net_change[cline] > 0:
+                    output_lines.append(line)
+                    net_change[cline] -= 1
+            elif line[0] == "-":
+                if net_change[cline] < 0:
+                    output_lines.append(line)
+                    net_change[cline] += 1
+            else:
                 output_lines.append(line)
-                net_change[cline] -= 1
-            elif line[0] == "-" and net_change[cline] < 0:
-                output_lines.append(line)
-                net_change[cline] += 1
 
         return "\n".join(output_lines)
 
