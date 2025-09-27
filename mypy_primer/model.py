@@ -540,7 +540,11 @@ class PrimerResult:
         # mypy's output appears to be nondeterministic for some same line errors, e.g. on pypa/pip
         # Work around that by ignoring identical removal and addition pairs, e.g.
         # "- a.py:1: error xyz" and "+ a.py:1: error xyz"
-        diff_lines = [line for line in d.compare(old_lines, new_lines) if line[0] in ("+", "-")]
+        diff_lines = [
+            line
+            for line in d.compare(old_lines, new_lines)
+            if line[0] in ("+", "-") or "INTERNAL ERROR" in line
+        ]
         net_change: dict[str, int] = defaultdict(int)
         for line in diff_lines:
             cline = canonicalise(line)
