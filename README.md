@@ -14,6 +14,8 @@ mypy_primer is currently used in the CI of the following projects:
 - typeshed
 - ty
 - numpy
+- scipy-stubs
+- django-stubs
 
 It has also inspired similar tooling for other projects in the code quality ecosystem.
 If you maintain a tool or project that could benefit from similar regression testing, let me know
