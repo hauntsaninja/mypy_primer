@@ -1110,14 +1110,6 @@ def get_projects() -> list[Project]:
             cost={"mypy": 26},
         ),
         Project(
-            location="https://github.com/mikeshardmind/SinbadCogs",
-            mypy_cmd="{mypy} {paths}",
-            pyright_cmd="{pyright} {paths}",
-            paths=["."],
-            deps=["attrs", "types-pytz", "types-python-dateutil", "types-PyYAML"],
-            cost={"mypy": 14},
-        ),
-        Project(
             location="https://github.com/rotki/rotki",
             mypy_cmd="{mypy} {paths}",
             pyright_cmd="{pyright} {paths}",
