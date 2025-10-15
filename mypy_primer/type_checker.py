@@ -10,6 +10,14 @@ from mypy_primer.git_utils import RevisionLike, ensure_repo_at_revision
 from mypy_primer.utils import Venv, get_npm, has_uv, run
 
 
+def _cargo_build_artifact_directory(build_profile: str) -> str:
+    """Return the cargo artifact directory name for a given build profile.
+
+    Cargo uses "debug" as the directory name for the "dev" profile.
+    """
+    return "debug" if build_profile == "dev" else build_profile
+
+
 async def setup_mypy(
     mypy_dir: Path,
     *,
@@ -158,9 +166,7 @@ async def setup_ty(
             print(e.stderr, file=sys.stderr)
             raise e
 
-    # Cargo uses "debug" as the directory name for the "dev" profile
-    artifact_dir = "debug" if build_profile == "dev" else build_profile
-    ty_exe = cargo_target_dir / artifact_dir / "ty"
+    ty_exe = cargo_target_dir / _cargo_build_artifact_directory(build_profile) / "ty"
     assert ty_exe.exists()
     return ty_exe
 
@@ -179,7 +185,9 @@ async def setup_pyrefly(
         repo = "https://github.com/facebook/pyrefly"
     repo_dir = await ensure_repo_at_revision(repo, pyrefly_dir, revision_like)
 
+    cargo_target_dir = pyrefly_dir / "target"
     env = os.environ.copy()
+    env["CARGO_TARGET_DIR"] = str(cargo_target_dir)
     if typeshed_dir is not None:
         if typeshed_dir.name != "typeshed":
             raise RuntimeError(f"Unexpected typeshed dir {typeshed_dir}")
@@ -199,9 +207,7 @@ async def setup_pyrefly(
             print(e.stderr, file=sys.stderr)
             raise e
 
-    # Cargo uses "debug" as the directory name for the "dev" profile
-    artifact_dir = "debug" if build_profile == "dev" else build_profile
-    pyrefly_exe = repo_dir / "target" / artifact_dir / "pyrefly"
+    pyrefly_exe = cargo_target_dir / _cargo_build_artifact_directory(build_profile) / "pyrefly"
     assert pyrefly_exe.exists()
     return pyrefly_exe
 
