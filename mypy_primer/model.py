@@ -351,7 +351,7 @@ class Project:
 
         pyrefly_cmd = pyrefly_cmd.format_map(_FormatMap(pyrefly=pyrefly, paths=self.paths))
 
-        pyrefly_cmd += f" --python-interpreter {quote_path(self.venv.dir)}/bin/python --summary=none --output-format min-text"
+        pyrefly_cmd += f" --python-interpreter-path {quote_path(self.venv.dir)}/bin/python --summary=none --output-format min-text"
         return pyrefly_cmd
 
     async def run_pyrefly(
