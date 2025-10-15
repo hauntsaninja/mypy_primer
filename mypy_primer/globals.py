@@ -18,7 +18,7 @@ class _Args:
     type_checker: str
     mypyc_compile_level: int | None
     mypy_install_librt: bool
-    debug_build: bool
+    cargo_profile: str | None
 
     custom_typeshed_repo: str
     new_typeshed: str | None
@@ -94,9 +94,8 @@ def parse_options(argv: list[str]) -> _Args:
         ),
     )
     type_checker_group.add_argument(
-        "--debug-build",
-        action="store_true",
-        help="build the type checker in debug mode (only relevant for pyrefly/ty)",
+        "--cargo-profile",
+        help="cargo build profile to use (e.g., 'dev', 'release', or custom profiles; only relevant for pyrefly/ty)",
     )
     type_checker_group.add_argument(
         "--mypyc-compile-level",
@@ -240,9 +239,9 @@ def parse_options(argv: list[str]) -> _Args:
         parser.error("--shard-index and --num-shards must be used together")
     if ret.type_checker != "mypy" and ret.mypyc_compile_level is not None:
         parser.error("--mypyc-compile-level can only be used with --type-checker=mypy")
-    if ret.debug_build and ret.type_checker not in {"pyrefly", "ty"}:
+    if ret.cargo_profile is not None and ret.type_checker not in {"pyrefly", "ty"}:
         parser.error(
-            "`--debug-build` can only be used with `--type-checker=pyrefly` or `--type-checker=ty`"
+            "`--cargo-profile` can only be used with `--type-checker=pyrefly` or `--type-checker=ty`"
         )
 
     return ret
