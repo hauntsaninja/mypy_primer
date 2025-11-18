@@ -306,8 +306,6 @@ class Project:
         if prepend_path is not None:
             env["MYPY_PRIMER_PREPEND_PATH"] = str(prepend_path)
 
-        env["CLICOLOR_FORCE"] = "1"
-
         ty_cmd = self.get_ty_cmd(ty, additional_flags)
         proc, runtime = await run(
             ty_cmd,
