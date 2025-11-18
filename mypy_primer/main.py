@@ -31,11 +31,7 @@ T = TypeVar("T")
 
 
 def setup_type_checker(
-    ARGS: _Args,
-    *,
-    revision_like: RevisionLike,
-    suffix: str,
-    typeshed_dir: Path | None,
+    ARGS: _Args, *, revision_like: RevisionLike, suffix: str, typeshed_dir: Path | None
 ) -> Awaitable[Path]:
     setup_fn: Callable[..., Awaitable[Path]]
     kwargs: dict[str, Any]
@@ -52,10 +48,7 @@ def setup_type_checker(
         kwargs = {"repo": ARGS.repo}
     elif ARGS.type_checker == "ty":
         setup_fn = setup_ty
-        kwargs = {
-            "repo": ARGS.repo,
-            "build_profile": ARGS.cargo_profile or "release",
-        }
+        kwargs = {"repo": ARGS.repo, "build_profile": ARGS.cargo_profile or "release"}
     elif ARGS.type_checker == "pyrefly":
         setup_fn = setup_pyrefly
         kwargs = {
@@ -72,25 +65,17 @@ def setup_type_checker(
 
 
 async def setup_new_and_old_type_checker(
-    ARGS: _Args,
-    new_typeshed_dir: Path | None,
-    old_typeshed_dir: Path | None,
+    ARGS: _Args, new_typeshed_dir: Path | None, old_typeshed_dir: Path | None
 ) -> tuple[Path, Path]:
     new_revision = ARGS.new
     old_revision = revision_or_recent_tag_fn(ARGS.old)
 
     new_exe, old_exe = await asyncio.gather(
         setup_type_checker(
-            ARGS,
-            revision_like=new_revision,
-            suffix="new",
-            typeshed_dir=new_typeshed_dir,
+            ARGS, revision_like=new_revision, suffix="new", typeshed_dir=new_typeshed_dir
         ),
         setup_type_checker(
-            ARGS,
-            revision_like=old_revision,
-            suffix="old",
-            typeshed_dir=old_typeshed_dir,
+            ARGS, revision_like=old_revision, suffix="old", typeshed_dir=old_typeshed_dir
         ),
     )
 
@@ -359,10 +344,7 @@ async def coverage(ARGS: _Args) -> None:
     assert ARGS.type_checker == "mypy"
 
     mypy_exe = await setup_type_checker(
-        ARGS,
-        revision_like=ARGS.new,
-        suffix="new",
-        typeshed_dir=None,
+        ARGS, revision_like=ARGS.new, suffix="new", typeshed_dir=None
     )
 
     projects = select_projects(ARGS)
@@ -397,9 +379,7 @@ async def primer(ARGS: _Args) -> int:
 
     new_typeshed_dir, old_typeshed_dir = await setup_new_and_old_typeshed(ARGS)
     new_type_checker, old_type_checker = await setup_new_and_old_type_checker(
-        ARGS,
-        new_typeshed_dir=new_typeshed_dir,
-        old_typeshed_dir=old_typeshed_dir,
+        ARGS, new_typeshed_dir=new_typeshed_dir, old_typeshed_dir=old_typeshed_dir
     )
 
     async with asyncio.TaskGroup() as tg:
