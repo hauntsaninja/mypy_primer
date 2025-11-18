@@ -136,11 +136,7 @@ async def setup_pyright(
 
 
 async def setup_ty(
-    ty_dir: Path,
-    revision_like: RevisionLike,
-    *,
-    build_profile: str,
-    repo: str | None,
+    ty_dir: Path, revision_like: RevisionLike, *, build_profile: str, repo: str | None
 ) -> Path:
     ty_dir.mkdir(parents=True, exist_ok=True)
 
