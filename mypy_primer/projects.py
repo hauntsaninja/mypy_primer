@@ -1672,6 +1672,15 @@ def get_projects() -> list[Project]:
             expected_success=("mypy",),
             cost={"mypy": 6},
         ),
+        Project(
+            location="https://github.com/WoLpH/numpy-stl",
+            mypy_cmd="{mypy} {paths}",
+            pyright_cmd="{pyright} {paths}",
+            pyrefly_cmd="{pyrefly}",
+            paths=["stl"],
+            deps=["numpy", "python-utils"],
+            expected_success=("mypy", "pyright", "pyrefly"),
+        ),
     ]
     assert len(projects) == len({p.name for p in projects})
     for p in projects:
