@@ -1553,7 +1553,7 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} {paths}",
             pyright_cmd="{pyright} {paths}",
             paths=["static_frame"],
-            deps=["numpy", "arraykit==0.10.0"],
+            deps=["numpy", "arraykit==1.2.0"],
             cost={"mypy": 280},
         ),
         Project(
