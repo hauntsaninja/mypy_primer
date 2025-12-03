@@ -3,7 +3,7 @@ import tomllib
 
 from mypy_primer.model import Project
 
-PROJECTS_PATH = pathlib.Path(__file__).parent.parent / "projects.toml"
+PROJECTS_PATH = pathlib.Path(__file__).parent / "projects.toml"
 
 
 def get_projects() -> list[Project]:
