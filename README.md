@@ -8,11 +8,12 @@ of open source Python projects with typing for the purpose of evaluating changes
 mypy_primer was inspired by Rust's [crater](https://github.com/rust-lang/crater).
 
 mypy_primer is currently used in the CI of the following projects:
+- typeshed
 - mypy
 - pyright
 - basedpyright
-- typeshed
 - ty
+- pyrefly
 - numpy
 - scipy-stubs
 - django-stubs
