@@ -1621,7 +1621,7 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} {paths}",
             pyright_cmd="{pyright} {paths}",
             paths=["."],
-            deps=["cryptography", "pydantic", "pytest"],
+            deps=["cryptography", "pydantic", "pytest", "textual"],
             cost={"mypy": 34},
         ),
         Project(
