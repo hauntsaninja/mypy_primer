@@ -1693,6 +1693,15 @@ def get_projects() -> list[Project]:
             deps=["numpy", "python-utils"],
             expected_success=("mypy", "pyright", "pyrefly"),
         ),
+        Project(
+            location="https://github.com/pyca/cryptography",
+            mypy_cmd="{mypy} {paths}",
+            pyright_cmd="{pyright} {paths}",
+            paths=["src/cryptography"],
+            deps=["cffi", "typing-extensions"],
+            expected_success=("mypy", "pyright"),
+            cost={"mypy": 6},
+        )
     ]
     assert len(projects) == len({p.name for p in projects})
     for p in projects:
