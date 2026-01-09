@@ -1701,7 +1701,7 @@ def get_projects() -> list[Project]:
             deps=["cffi", "typing-extensions"],
             expected_success=("mypy", "pyright"),
             cost={"mypy": 6},
-        )
+        ),
     ]
     assert len(projects) == len({p.name for p in projects})
     for p in projects:
