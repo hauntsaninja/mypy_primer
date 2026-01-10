@@ -1698,9 +1698,7 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} {paths}",
             pyright_cmd="{pyright} {paths}",
             paths=["src/cryptography", "tests"],
-            deps=["cffi", "typing-extensions"],
-            expected_success=("mypy", "pyright"),
-            cost={"mypy": 6},
+            deps=["cffi", "typing-extensions", "pytest"],
         ),
     ]
     assert len(projects) == len({p.name for p in projects})
