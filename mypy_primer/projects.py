@@ -1697,7 +1697,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/pyca/cryptography",
             mypy_cmd="{mypy} {paths}",
             pyright_cmd="{pyright} {paths}",
-            paths=["src/cryptography"],
+            paths=["src/cryptography", "tests"],
             deps=["cffi", "typing-extensions"],
             expected_success=("mypy", "pyright"),
             cost={"mypy": 6},
