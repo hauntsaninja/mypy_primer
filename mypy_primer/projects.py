@@ -1688,7 +1688,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/WoLpH/numpy-stl",
             mypy_cmd="{mypy} {paths}",
             pyright_cmd="{pyright} {paths}",
-            pyrefly_cmd="{pyrefly}",
+            pyrefly_cmd="{pyrefly} check {paths}",
             paths=["stl"],
             deps=["numpy", "python-utils"],
             expected_success=("mypy", "pyright", "pyrefly"),
