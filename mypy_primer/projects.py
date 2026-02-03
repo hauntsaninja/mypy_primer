@@ -1053,8 +1053,10 @@ def get_projects() -> list[Project]:
             pyright_cmd="{pyright} {paths}",
             paths=["homeassistant"],
             deps=[
+                "aiohttp",
                 "attrs",
                 "pydantic",
+                "SQLAlchemy",
                 "types-setuptools",
                 "types-atomicwrites",
                 "types-certifi",
@@ -1063,6 +1065,7 @@ def get_projects() -> list[Project]:
                 "types-requests",
                 "types-python-slugify",
                 "types-backports",
+                "voluptuous",
             ],
             needs_mypy_plugins=True,
             cost={"mypy": 411, "pyright": 240},
