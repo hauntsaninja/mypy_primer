@@ -1503,7 +1503,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/pypa/setuptools",
             mypy_cmd="{mypy} {paths}",
             pyright_cmd="{pyright} {paths}",
-            paths=["setuptools", "pkg_resources"],
+            paths=["setuptools"],
             deps=["pytest", "filelock", "ini2toml", "packaging", "tomli", "tomli-w"],
             expected_success=("pyright",),
             cost={"mypy": 31},
