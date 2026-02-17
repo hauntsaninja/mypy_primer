@@ -145,7 +145,7 @@ def get_projects() -> list[Project]:
         ),
         Project(
             location="https://github.com/python-attrs/attrs",
-            mypy_cmd="{mypy} src/attr/__init__.pyi src/attr/_version_info.pyi src/attr/converters.pyi src/attr/exceptions.pyi src/attr/filters.pyi src/attr/setters.pyi src/attr/validators.pyi tests/typing_example.py",
+            mypy_cmd="{mypy} src/attrs/__init__.pyi src/attr/__init__.pyi src/attr/_typing_compat.pyi src/attr/_version_info.pyi src/attr/converters.pyi src/attr/exceptions.pyi src/attr/filters.pyi src/attr/setters.pyi src/attr/validators.pyi typing-examples",
             pyright_cmd="{pyright}",
             expected_success=("mypy",),
             cost={"mypy": 9},
