@@ -158,7 +158,9 @@ class Venv:
 
     async def make_venv(self) -> None:
         if has_uv():
-            await run(["uv", "venv", str(self.dir), "--python", sys.executable, "--seed"])
+            await run(
+                ["uv", "venv", str(self.dir), "--python", sys.executable, "--seed", "--clear"]
+            )
         else:
             venv.create(self.dir, with_pip=True, clear=True)
 
