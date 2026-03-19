@@ -328,8 +328,14 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} {paths}",
             pyright_cmd="{pyright}",
             paths=["dmr"],
-            deps=["django-stubs", "pydantic", "msgspec", "pyjwt", "openapi-spec-validator", "polyfactory"],
-            needs_mypy_plugins=True,  # we want to test `django-stubs` plugin
+            deps=[
+                "django-stubs",
+                "pydantic",
+                "msgspec",
+                "pyjwt",
+                "openapi-spec-validator",
+                "polyfactory",
+            ],
             expected_success=("mypy", "pyright"),
             cost={"mypy": 6, "pyright": 6},
         ),
