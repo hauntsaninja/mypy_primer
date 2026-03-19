@@ -327,7 +327,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/wemake-services/django-modern-rest",
             mypy_cmd="{mypy} {paths}",
             pyright_cmd="{pyright}",
-            paths=["django_modern_rest"],
+            paths=["dmr"],
             deps=["django-stubs", "pydantic", "msgspec"],
             needs_mypy_plugins=True,  # we want to test `django-stubs` plugin
             expected_success=("mypy", "pyright"),
