@@ -324,6 +324,22 @@ def get_projects() -> list[Project]:
             cost={"mypy": 6},
         ),
         Project(
+            location="https://github.com/wemake-services/django-modern-rest",
+            mypy_cmd="{mypy} {paths}",
+            pyright_cmd="{pyright}",
+            paths=["dmr"],
+            deps=[
+                "django-stubs",
+                "pydantic",
+                "msgspec",
+                "pyjwt",
+                "openapi-spec-validator",
+                "polyfactory",
+            ],
+            expected_success=("mypy", "pyright"),
+            cost={"mypy": 6, "pyright": 6},
+        ),
+        Project(
             location="https://github.com/dropbox/stone",
             mypy_cmd="{mypy} {paths}",
             pyright_cmd="{pyright} {paths}",
