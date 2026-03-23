@@ -1720,6 +1720,13 @@ def get_projects() -> list[Project]:
             paths=["src/cryptography", "tests"],
             deps=["cffi", "typing-extensions", "pytest"],
         ),
+        Project(
+            location="https://github.com/viur-framework/viur-toolkit",
+            mypy_cmd="{mypy} {paths}",
+            paths=["src"],
+            deps=["viur-core"],
+            expected_success=("mypy",),
+        ),
     ]
     assert len(projects) == len({p.name for p in projects})
     for p in projects:
