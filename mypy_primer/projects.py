@@ -1723,6 +1723,7 @@ def get_projects() -> list[Project]:
         Project(
             location="https://github.com/viur-framework/viur-toolkit",
             mypy_cmd="{mypy} {paths}",
+            pyright_cmd="{pyright} {paths}",
             paths=["src"],
             deps=["viur-core"],
             expected_success=("mypy",),
