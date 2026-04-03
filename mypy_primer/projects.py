@@ -1720,6 +1720,13 @@ def get_projects() -> list[Project]:
             paths=["src/cryptography", "tests"],
             deps=["cffi", "typing-extensions", "pytest"],
         ),
+        Project(
+            location="https://gitlab.com/TTsangSC/pytest-autoprofile",
+            mypy_cmd="{mypy} {paths}",
+            pyright_cmd="{pyright} {paths}",
+            paths=["src/pytest_autoprofile", "tests"],
+            deps=["pytest", "pluggy", "line_profiler", "typing-extensions"],
+        ),
     ]
     assert len(projects) == len({p.name for p in projects})
     for p in projects:
