@@ -1398,7 +1398,7 @@ def get_projects() -> list[Project]:
                 "SQLAlchemy",
             ],
             expected_success=("pyright",),
-            cost={"mypy": 189, "pyright": 75},
+            cost={"mypy": 355, "pyright": 75},
         ),
         Project(
             location="https://github.com/enthought/comtypes",
