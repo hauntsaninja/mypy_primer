@@ -66,7 +66,7 @@ def get_projects() -> list[Project]:
     projects = [
         Project(
             location="https://github.com/python/mypy",
-            mypy_cmd="{mypy} --config-file mypy_self_check.ini -p mypy -p mypyc",
+            mypy_cmd="{mypy} --config-file mypy_self_check.ini --num-workers=0 -p mypy -p mypyc",
             pyright_cmd="{pyright} {paths}",
             paths=["mypy", "mypyc"],
             deps=["pytest", "types-psutil", "types-setuptools", "filelock", "tomli"],
