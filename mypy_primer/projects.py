@@ -1534,7 +1534,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/mhammond/pywin32",
             mypy_cmd="{mypy} {paths}",
             pyright_cmd="{pyright} {paths}",
-            ty_cmd="{ty} check {paths} --exclude Pythonwin/pywin/test/_dbgscript.py",
+            ty_cmd="{ty} check {paths} --exclude pythonwin/pywin/test/_dbgscript.py",
             paths=["."],
             deps=["types-pywin32", "types-regex", "types-setuptools"],
             cost={"mypy": 32, "ty": 4},
