@@ -1100,6 +1100,7 @@ def get_projects() -> list[Project]:
             paths=["ibis"],
             deps=[
                 "SQLAlchemy",
+                "atpublic",
                 "numpy",
                 "packaging",
                 "pandas-stubs",
