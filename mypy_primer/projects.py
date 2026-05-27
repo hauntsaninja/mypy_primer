@@ -1724,6 +1724,22 @@ def get_projects() -> list[Project]:
             cost={"ty": 2},
         ),
         Project(
+            location="https://github.com/astral-sh/docstring-adder",
+            mypy_cmd="{mypy} {paths}",
+            pyright_cmd="{pyright} {paths}",
+            paths=["add_docstrings.py"],
+            install_cmd="{install} .",
+            min_python_version=(3, 10),
+        ),
+        Project(
+            location="https://github.com/astral-sh/ecosystem-analyzer",
+            mypy_cmd="{mypy} {paths}",
+            pyright_cmd="{pyright} {paths}",
+            paths=["."],
+            install_cmd="{install} .",
+            min_python_version=(3, 13),
+        ),
+        Project(
             location="https://gitlab.com/TTsangSC/pytest-autoprofile",
             mypy_cmd="{mypy} {paths}",
             pyright_cmd="{pyright} {paths}",
