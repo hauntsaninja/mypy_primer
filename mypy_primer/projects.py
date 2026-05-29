@@ -1737,6 +1737,7 @@ def get_projects() -> list[Project]:
             pyright_cmd="{pyright} {paths}",
             paths=["."],
             install_cmd="{install} .",
+            deps=["pytest"],
             min_python_version=(3, 13),
         ),
         Project(
