@@ -1899,6 +1899,14 @@ def get_projects() -> list[Project]:
             paths=["src/pytest_autoprofile", "tests"],
             install_cmd="{install} '.[dev]'",
         ),
+        Project(
+            location="https://github.com/cvxpy/cvxpy",
+            mypy_cmd="{mypy} --ignore-missing-imports --exclude=cvxpy/tests {paths}",
+            pyright_cmd="{pyright} {paths}",
+            paths=["cvxpy"],
+            deps=["numpy", "scipy-stubs"],
+            expected_success=("pyright",),
+        ),
     ]
     assert len(projects) == len({p.name for p in projects})
     for p in projects:
