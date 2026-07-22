@@ -1835,7 +1835,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/hynek/svcs",
             mypy_cmd="{mypy} {paths}",
             pyright_cmd="{pyright} {paths}",
-            paths=["src", "tests/typing"],
+            paths=["src", "typing_tests"],
             deps=["attrs", "flask", "aiohttp", "fastapi", "starlette"],
             expected_success=("mypy", "pyright"),
             cost={"mypy": 57, "ty": 1},
