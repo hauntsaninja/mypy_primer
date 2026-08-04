@@ -165,10 +165,10 @@ def get_projects() -> list[Project]:
         ),
         Project(
             location="https://github.com/python-attrs/attrs",
-            mypy_cmd="{mypy} src/attrs/__init__.pyi src/attr/__init__.pyi src/attr/_typing_compat.pyi src/attr/_version_info.pyi src/attr/converters.pyi src/attr/exceptions.pyi src/attr/filters.pyi src/attr/setters.pyi src/attr/validators.pyi typing-examples",
-            # Keep upstream's narrower pyright include: typing-examples/baseline.py.
+            mypy_cmd="{mypy} src/attrs/__init__.pyi src/attr/__init__.pyi src/attr/_typing_compat.pyi src/attr/_version_info.pyi src/attr/converters.pyi src/attr/exceptions.pyi src/attr/filters.pyi src/attr/setters.pyi src/attr/validators.pyi typing_tests",
+            # Keep upstream's narrower pyright include: typing_tests/baseline.py.
             pyright_cmd="{pyright}",
-            paths=["src/attrs", "src/attr", "typing-examples"],
+            paths=["src/attrs", "src/attr", "typing_tests"],
             expected_success=("mypy",),
             cost={"mypy": 9, "ty": 1},
         ),
@@ -1501,7 +1501,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/bokeh/bokeh",
             mypy_cmd="{mypy} {paths}",
             pyright_cmd="{pyright} {paths}",
-            paths=["src", "release"],
+            paths=["src", "tools/release"],
             deps=[
                 "jinja2",
                 "narwhals",
@@ -1515,6 +1515,7 @@ def get_projects() -> list[Project]:
                 "xyzservices",
             ],
             cost={"pyright": 60, "mypy": 65, "ty": 3},
+            min_python_version=(3, 12),
         ),
         Project(
             location="https://github.com/pandas-dev/pandas-stubs",
