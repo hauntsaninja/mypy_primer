@@ -1574,6 +1574,7 @@ def get_projects() -> list[Project]:
                 "types-toml",
             ],
             cost={"mypy": 51, "ty": 1},
+            min_python_version=(3, 14),
         ),
         Project(
             location="https://github.com/Avasam/speedrun.com_global_scoreboard_webapp",
