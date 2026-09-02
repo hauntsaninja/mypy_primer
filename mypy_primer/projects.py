@@ -2009,6 +2009,16 @@ def get_projects() -> list[Project]:
             paths=["src/pytest_autoprofile", "tests"],
             install_cmd="{install} '.[dev]'",
         ),
+        Project(
+            location="https://github.com/OutSquareCapital/pyochain",
+            # mypy 2.3.1 uses excessive memory on this project.
+            mypy_cmd=None,
+            pyright_cmd="{pyright} {paths}",
+            paths=["."],
+            deps=["pytest"],
+            expected_success=("pyright",),
+            min_python_version=(3, 13),
+        ),
     ]
     assert len(projects) == len({p.name for p in projects})
     for p in projects:
