@@ -121,10 +121,12 @@ def select_projects(ARGS: _Args) -> list[Project]:
     if ARGS.local_project:
         return [Project.from_location(ARGS.local_project)]
 
+    python_version = sys.version_info[:3]
     project_iter: Iterator[Project] = iter(
         p
         for p in get_projects()
-        if not (p.min_python_version and sys.version_info < p.min_python_version)
+        if not (p.min_python_version and python_version < p.min_python_version)
+        and not (p.max_python_version and python_version >= p.max_python_version)
     )
 
     if ARGS.type_checker == "mypy":

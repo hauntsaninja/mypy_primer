@@ -33,6 +33,8 @@ class Project:
 
     install_cmd: str | None = None
     deps: list[str] | None = None
+    uv_sync_path: str | None = None
+    setup_cmd: str | None = None
     needs_mypy_plugins: bool = False
 
     # if expected_success, there is a recent version of type checker which passes cleanly
@@ -43,12 +45,19 @@ class Project:
     cost: dict[str, int] = field(default_factory=dict)
 
     revision: str | None = None
-    min_python_version: tuple[int, int] | None = None
+    min_python_version: tuple[int, ...] | None = None
+    # Exclusive upper bound.
+    max_python_version: tuple[int, ...] | None = None
     supported_platforms: list[str] | None = None
 
     def __post_init__(self) -> None:
         if self.deps:
             assert all(d[0] in string.ascii_letters for d in self.deps)
+        if self.uv_sync_path is not None:
+            assert self.install_cmd is None
+            assert self.deps is None
+        if self.setup_cmd is not None:
+            assert "{python}" in self.setup_cmd
 
     # custom __repr__ that omits defaults.
     def __repr__(self) -> str:
@@ -66,6 +75,10 @@ class Project:
             result += f", install_cmd={self.install_cmd!r}"
         if self.deps:
             result += f", deps={self.deps!r}"
+        if self.uv_sync_path is not None:
+            result += f", uv_sync_path={self.uv_sync_path!r}"
+        if self.setup_cmd:
+            result += f", setup_cmd={self.setup_cmd!r}"
         if self.needs_mypy_plugins:
             result += f", needs_mypy_plugins={self.needs_mypy_plugins!r}"
         if self.expected_success:
@@ -76,6 +89,8 @@ class Project:
             result += f", revision={self.revision!r}"
         if self.min_python_version:
             result += f", min_python_version={self.min_python_version!r}"
+        if self.max_python_version:
+            result += f", max_python_version={self.max_python_version!r}"
         if self.supported_platforms:
             result += f", supported_platforms={self.supported_platforms!r}"
         result += ")"
@@ -124,6 +139,25 @@ class Project:
                 r"""import os; import sys; exec('''env = os.environ.get("MYPY_PRIMER_PREPEND_PATH")\nif env: sys.path = env.split(os.pathsep) + sys.path''')"""
             )
 
+        if self.uv_sync_path is not None:
+            if not has_uv():
+                raise RuntimeError(f"uv is required to sync dependencies for {self.name}")
+            env = os.environ.copy()
+            env["VIRTUAL_ENV"] = str(self.venv.dir)
+            try:
+                await run(
+                    ["uv", "sync", "--active", "--frozen"],
+                    cwd=repo_dir / self.uv_sync_path,
+                    env=env,
+                    output=True,
+                )
+            except subprocess.CalledProcessError as e:
+                if e.output:
+                    print(e.output)
+                if e.stderr:
+                    print(e.stderr)
+                raise RuntimeError(f"uv sync failed for {self.name}") from e
+
         if self.install_cmd:
             assert "{install}" in self.install_cmd
             try:
@@ -156,6 +190,16 @@ class Project:
                 if e.stderr:
                     print(e.stderr)
                 raise RuntimeError(f"dependency install failed for {self.name}") from e
+        if self.setup_cmd:
+            setup_cmd = self.setup_cmd.format(python=quote_path(self.venv.python))
+            try:
+                await run(setup_cmd, shell=True, cwd=repo_dir, output=True)
+            except subprocess.CalledProcessError as e:
+                if e.output:
+                    print(e.output)
+                if e.stderr:
+                    print(e.stderr)
+                raise RuntimeError(f"project setup failed for {self.name}") from e
 
     def get_mypy_cmd(self, mypy: str | Path, additional_flags: Sequence[str] = ()) -> str:
         mypy_cmd = self.mypy_cmd
