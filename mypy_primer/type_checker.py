@@ -33,7 +33,11 @@ async def setup_mypy(
 
     async def pip_install(*targets: str) -> None:
         if has_uv():
-            await run(["uv", "pip", "install", "--python", str(venv.python), *targets])
+            # Install mypy independently of the caller's uv configuration.
+            await run(
+                ["uv", "pip", "install", "--python", str(venv.python), *targets],
+                env={**os.environ, "UV_NO_CONFIG": "1"},
+            )
         else:
             await run([str(venv.python), "-m", "pip", "install", *targets])
 

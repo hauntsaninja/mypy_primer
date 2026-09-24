@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import functools
+import os
 import re
 import shlex
 import shutil
@@ -158,8 +159,10 @@ class Venv:
 
     async def make_venv(self) -> None:
         if has_uv():
+            # Ignore the caller's uv configuration when creating and seeding the venv.
             await run(
-                ["uv", "venv", str(self.dir), "--python", sys.executable, "--seed", "--clear"]
+                ["uv", "venv", str(self.dir), "--python", sys.executable, "--seed", "--clear"],
+                env={**os.environ, "UV_NO_CONFIG": "1"},
             )
         else:
             venv.create(self.dir, with_pip=True, clear=True)
