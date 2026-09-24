@@ -124,6 +124,10 @@ class Project:
                 r"""import os; import sys; exec('''env = os.environ.get("MYPY_PRIMER_PREPEND_PATH")\nif env: sys.path = env.split(os.pathsep) + sys.path''')"""
             )
 
+        # Use the harness's installer settings. Project or user uv configuration
+        # can require a different uv version or change dependency resolution.
+        install_env = {**os.environ, "UV_NO_CONFIG": "1"}
+
         if self.install_cmd:
             assert "{install}" in self.install_cmd
             try:
@@ -135,7 +139,7 @@ class Project:
                     install_cmd = self.install_cmd.format(
                         install=f"{quote_path(self.venv.python)} -m pip install"
                     )
-                await run(install_cmd, shell=True, cwd=repo_dir, output=True)
+                await run(install_cmd, shell=True, cwd=repo_dir, output=True, env=install_env)
             except subprocess.CalledProcessError as e:
                 if e.output:
                     print(e.output)
@@ -149,7 +153,7 @@ class Project:
                 install_base = f"{quote_path(self.venv.python)} -m pip install"
             install_cmd = f"{install_base} {' '.join(self.deps)}"
             try:
-                await run(install_cmd, shell=True, cwd=repo_dir, output=True)
+                await run(install_cmd, shell=True, cwd=repo_dir, output=True, env=install_env)
             except subprocess.CalledProcessError as e:
                 if e.output:
                     print(e.output)
