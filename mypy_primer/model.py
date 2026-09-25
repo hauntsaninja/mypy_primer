@@ -173,7 +173,7 @@ class Project:
 
         mypy_cmd += " --warn-unused-ignores --warn-redundant-casts"
         mypy_cmd += (
-            f" --no-incremental --cache-dir={os.devnull} --show-traceback --soft-error-limit=-1"
+            f" --no-incremental --show-traceback --soft-error-limit=-1"
         )
         return mypy_cmd
 
