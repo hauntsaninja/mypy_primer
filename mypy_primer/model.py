@@ -17,7 +17,15 @@ from typing import Sequence
 
 from mypy_primer.git_utils import ensure_repo_at_revision
 from mypy_primer.globals import ctx
-from mypy_primer.utils import Style, Venv, debug_print, has_uv, quote_path, run
+from mypy_primer.utils import (
+    Style,
+    Venv,
+    debug_print,
+    has_uv,
+    quote_path,
+    remove_uv_version_requirement,
+    run,
+)
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -116,6 +124,7 @@ class Project:
                 name_override=self.name_override,
             )
         assert repo_dir == ctx.get().projects_dir / self.name
+        remove_uv_version_requirement(repo_dir)
         await self.venv.make_venv()
 
         with open(self.venv.site_packages / "primer_prepend.pth", "w") as f:
@@ -123,10 +132,6 @@ class Project:
             f.write(
                 r"""import os; import sys; exec('''env = os.environ.get("MYPY_PRIMER_PREPEND_PATH")\nif env: sys.path = env.split(os.pathsep) + sys.path''')"""
             )
-
-        # Use the harness's installer settings. Project or user uv configuration
-        # can require a different uv version or change dependency resolution.
-        install_env = {**os.environ, "UV_NO_CONFIG": "1"}
 
         if self.install_cmd:
             assert "{install}" in self.install_cmd
@@ -139,7 +144,7 @@ class Project:
                     install_cmd = self.install_cmd.format(
                         install=f"{quote_path(self.venv.python)} -m pip install"
                     )
-                await run(install_cmd, shell=True, cwd=repo_dir, output=True, env=install_env)
+                await run(install_cmd, shell=True, cwd=repo_dir, output=True)
             except subprocess.CalledProcessError as e:
                 if e.output:
                     print(e.output)
@@ -153,7 +158,7 @@ class Project:
                 install_base = f"{quote_path(self.venv.python)} -m pip install"
             install_cmd = f"{install_base} {' '.join(self.deps)}"
             try:
-                await run(install_cmd, shell=True, cwd=repo_dir, output=True, env=install_env)
+                await run(install_cmd, shell=True, cwd=repo_dir, output=True)
             except subprocess.CalledProcessError as e:
                 if e.output:
                     print(e.output)
