@@ -85,6 +85,7 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} -p mypy_primer --strict",
             pyright_cmd="{pyright} {paths}",
             paths=["."],
+            deps=["tomlkit"],
             expected_success=("mypy", "pyright"),
             cost={"mypy": 12, "ty": 1},
         ),
