@@ -172,9 +172,7 @@ class Project:
             mypy_cmd += "  --no-pretty --no-error-summary"
 
         mypy_cmd += " --warn-unused-ignores --warn-redundant-casts"
-        mypy_cmd += (
-            f" --no-incremental --show-traceback --soft-error-limit=-1"
-        )
+        mypy_cmd += " --no-incremental --show-traceback --soft-error-limit=-1"
         return mypy_cmd
 
     async def run_mypy(
