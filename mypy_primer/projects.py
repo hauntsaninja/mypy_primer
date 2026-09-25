@@ -2019,6 +2019,14 @@ def get_projects() -> list[Project]:
             expected_success=("pyright",),
             min_python_version=(3, 13),
         ),
+        Project(
+            location="https://github.com/cvxpy/cvxpy",
+            mypy_cmd="{mypy} --ignore-missing-imports --exclude=cvxpy/tests {paths}",
+            pyright_cmd="{pyright} {paths}",
+            paths=["cvxpy"],
+            deps=["numpy", "scipy-stubs"],
+            expected_success=("pyright",),
+        ),
     ]
     assert len(projects) == len({p.name for p in projects})
     for p in projects:
