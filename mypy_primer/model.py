@@ -542,7 +542,7 @@ class PrimerResult:
             for line in d.compare(old_lines, new_lines)
             if line[0] in ("+", "-")
             or "INTERNAL ERROR" in line
-            or line.startswith(("  error:", "  mypy: error:"))
+            or line.strip().startswith(("error:", "mypy: error:"))
         ]
         net_change: dict[str, int] = defaultdict(int)
         for line in diff_lines:
