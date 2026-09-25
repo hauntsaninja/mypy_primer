@@ -272,6 +272,10 @@ class Project:
             debug_print(f"{Style.BLUE}{pyright} on {self.name} took {runtime:.2f}s{Style.RESET}")
 
         output = proc.stderr + proc.stdout
+        if proc.returncode not in (0, 1):
+            raise RuntimeError(
+                f"Pyright exited with code {proc.returncode} when checking {self.name!r}:\n{output}"
+            )
         return TypeCheckResult(
             pyright_cmd,
             output=output,
@@ -316,18 +320,11 @@ class Project:
         if ctx.get().debug:
             debug_print(f"{Style.BLUE}{ty} on {self.name} took {runtime:.2f}s{Style.RESET}")
 
-        if proc.returncode not in (0, 1):
-            debug_print(proc.stderr + proc.stdout)
-            if proc.returncode == 2:
-                raise RuntimeError(
-                    f"ty exited with code 2 when checking {self.name!r}. This may indicate an internal problem (e.g. IO error)"
-                )
-            else:
-                raise RuntimeError(
-                    f"ty did not exit with code 0, 1 or 2 when checking {self.name!r}. Panic?"
-                )
-
         output = proc.stderr + proc.stdout
+        if proc.returncode not in (0, 1):
+            raise RuntimeError(
+                f"ty exited with code {proc.returncode} when checking {self.name!r}:\n{output}"
+            )
 
         return TypeCheckResult(
             ty_cmd,
@@ -375,16 +372,11 @@ class Project:
         if ctx.get().debug:
             debug_print(f"{Style.BLUE}{pyrefly} on {self.name} took {runtime:.2f}s{Style.RESET}")
 
-        if proc.returncode not in (0, 1):
-            debug_print(proc.stderr + proc.stdout)
-            if proc.returncode == 2:
-                raise RuntimeError(
-                    "Pyrefly exited with code 2 which may indicate an internal problem (e.g. IO error)"
-                )
-            else:
-                raise RuntimeError("Pyrefly did not exit with code 0, 1 or 2. Panic?")
-
         output = proc.stderr + proc.stdout
+        if proc.returncode not in (0, 1):
+            raise RuntimeError(
+                f"Pyrefly exited with code {proc.returncode} when checking {self.name!r}:\n{output}"
+            )
 
         return TypeCheckResult(
             pyrefly_cmd,
@@ -536,10 +528,13 @@ class PrimerResult:
         # mypy's output appears to be nondeterministic for some same line errors, e.g. on pypa/pip
         # Work around that by ignoring identical removal and addition pairs, e.g.
         # "- a.py:1: error xyz" and "+ a.py:1: error xyz"
+        # Keep internal errors and startup errors without a source location even if unchanged.
         diff_lines = [
             line
             for line in d.compare(old_lines, new_lines)
-            if line[0] in ("+", "-") or "INTERNAL ERROR" in line
+            if line[0] in ("+", "-")
+            or "INTERNAL ERROR" in line
+            or line.strip().startswith(("error:", "mypy: error:"))
         ]
         net_change: dict[str, int] = defaultdict(int)
         for line in diff_lines:
