@@ -59,10 +59,7 @@ def setup_type_checker(
         }
     elif ARGS.type_checker == "zuban":
         setup_fn = setup_zuban
-        kwargs = {
-            "repo": ARGS.repo,
-            "build_profile": ARGS.cargo_profile or "release",
-        }
+        kwargs = {"repo": ARGS.repo, "build_profile": ARGS.cargo_profile or "release"}
     else:
         raise ValueError(f"Unknown type checker {ARGS.type_checker}")
 

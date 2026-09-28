@@ -209,11 +209,7 @@ async def setup_pyrefly(
 
 
 async def setup_zuban(
-    zuban_dir: Path,
-    revision_like: RevisionLike,
-    *,
-    build_profile: str,
-    repo: str | None,
+    zuban_dir: Path, revision_like: RevisionLike, *, build_profile: str, repo: str | None
 ) -> Path:
     zuban_dir.mkdir(parents=True, exist_ok=True)
 
@@ -228,10 +224,7 @@ async def setup_zuban(
     if not os.environ.get("MYPY_PRIMER_NO_REBUILD", False):
         try:
             await run(
-                ["cargo", "build", "--profile", build_profile],
-                cwd=repo_dir,
-                env=env,
-                output=True,
+                ["cargo", "build", "--profile", build_profile], cwd=repo_dir, env=env, output=True
             )
         except subprocess.CalledProcessError as e:
             print("Error while building 'zuban'", file=sys.stderr)
