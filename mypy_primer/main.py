@@ -21,10 +21,10 @@ from mypy_primer.projects import get_projects
 from mypy_primer.type_checker import (
     setup_mypy,
     setup_pyrefly,
-    setup_zuban,
     setup_pyright,
     setup_ty,
     setup_typeshed,
+    setup_zuban,
 )
 from mypy_primer.utils import Style, debug_print, get_npm, line_count, run, strip_colour_code
 
