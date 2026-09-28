@@ -221,12 +221,16 @@ async def setup_zuban(
         repo = "https://github.com/zubanls/zuban"
     repo_dir = await ensure_repo_at_revision(repo, zuban_dir, revision_like)
 
-    cargo_target_dir = repo_dir / "target"
+    cargo_target_dir = zuban_dir / "target"
+    env = os.environ.copy()
+    env["CARGO_TARGET_DIR"] = str(cargo_target_dir)
+
     if not os.environ.get("MYPY_PRIMER_NO_REBUILD", False):
         try:
             await run(
                 ["cargo", "build", "--profile", build_profile],
                 cwd=repo_dir,
+                env=env,
                 output=True,
             )
         except subprocess.CalledProcessError as e:
