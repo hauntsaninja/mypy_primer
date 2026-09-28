@@ -416,7 +416,9 @@ class Project:
         if prepend_path is not None:
             zuban_cmd += f" --extra-search-path {quote_path(prepend_path)}"
         if typeshed_dir is None:
-            typeshed_dir = zuban.parent.parent.parent / "zuban" / "third_party" / "typeshed"
+            base = zuban.parent.parent.parent
+            repo_name = next(entry for entry in base.iterdir() if entry.name != "target")
+            typeshed_dir = base / repo_name / "third_party" / "typeshed"
         zuban_cmd += f" --custom-typeshed-dir {quote_path(typeshed_dir)}"
         return zuban_cmd
 
