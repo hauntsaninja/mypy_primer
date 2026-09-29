@@ -24,6 +24,7 @@ from mypy_primer.type_checker import (
     setup_pyright,
     setup_ty,
     setup_typeshed,
+    setup_zuban,
 )
 from mypy_primer.utils import Style, debug_print, get_npm, line_count, run, strip_colour_code
 
@@ -56,6 +57,9 @@ def setup_type_checker(
             "typeshed_dir": typeshed_dir,
             "build_profile": ARGS.cargo_profile or "release",
         }
+    elif ARGS.type_checker == "zuban":
+        setup_fn = setup_zuban
+        kwargs = {"repo": ARGS.repo, "build_profile": ARGS.cargo_profile or "release"}
     else:
         raise ValueError(f"Unknown type checker {ARGS.type_checker}")
 

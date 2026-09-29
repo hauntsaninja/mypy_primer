@@ -37,6 +37,7 @@ class Project:
     pyright_cmd: str | None
     ty_cmd: str | None = None  # TODO: remove this default
     pyrefly_cmd: str | None = None  # TODO: remove this default
+    zuban_cmd: str | None = None  # TODO: remove this default
     paths: list[str] | None = None
 
     install_cmd: str | None = None
@@ -68,6 +69,8 @@ class Project:
             result += f", ty_cmd={self.ty_cmd!r}"
         if self.pyrefly_cmd:
             result += f", pyrefly_cmd={self.pyrefly_cmd!r}"
+        if self.zuban_cmd:
+            result += f", zuban_cmd={self.zuban_cmd!r}"
         if self.paths:
             result += f", paths={self.paths!r}"
         if self.install_cmd:
@@ -404,6 +407,74 @@ class Project:
             runtime=runtime,
         )
 
+    def get_zuban_cmd(
+        self, zuban: Path, typeshed_dir: Path | None, prepend_path: Path | None
+    ) -> str:
+        zuban_cmd = self.zuban_cmd
+        if zuban_cmd is None:
+            zuban_cmd = "{zuban} check {paths}" if self.paths else "{zuban} check"
+        assert "{zuban}" in zuban_cmd
+        additional_flags = ctx.get().additional_flags.copy()
+        if additional_flags:
+            zuban_cmd += " " + " ".join(additional_flags)
+
+        zuban_cmd = zuban_cmd.format_map(_FormatMap(zuban=zuban, paths=self.paths))
+
+        zuban_cmd += f" --python-executable {quote_path(self.venv.dir)}/bin/python"
+        if prepend_path is not None:
+            zuban_cmd += f" --extra-search-path {quote_path(prepend_path)}"
+        if typeshed_dir is None:
+            # Zuban unfortunately needs to know where its typeshed dir is. This
+            # is not needed if it was installed by a wheel, but since we
+            # haven't technically installed Zuban we have to "guess" the
+            # typeshed path, which is inside of the Zuban repository.
+            base = zuban.parent.parent.parent
+            repo_name = next(
+                entry for entry in base.iterdir() if (entry / "third_party" / "typeshed").exists()
+            )
+
+            typeshed_dir = base / repo_name / "third_party" / "typeshed"
+        zuban_cmd += f" --custom-typeshed-dir {quote_path(typeshed_dir)}"
+        return zuban_cmd
+
+    async def run_zuban(
+        self, zuban: Path, typeshed_dir: Path | None, prepend_path: Path | None
+    ) -> TypeCheckResult:
+        env = os.environ.copy()
+
+        zuban_cmd = self.get_zuban_cmd(zuban, typeshed_dir, prepend_path)
+        proc, runtime = await run(
+            zuban_cmd,
+            shell=True,
+            output=True,
+            check=False,
+            cwd=ctx.get().projects_dir / self.name,
+            env=env,
+        )
+        if ctx.get().debug:
+            debug_print(f"{Style.BLUE}{zuban} on {self.name} took {runtime:.2f}s{Style.RESET}")
+
+        if proc.returncode not in (0, 1):
+            debug_print(proc.stderr + proc.stdout)
+            if proc.returncode == 2:
+                raise RuntimeError(
+                    f"Zuban exited with code 2 when checking {self.name!r}. This may indicate an internal problem (e.g. IO error)"
+                )
+            else:
+                raise RuntimeError(
+                    f"Zuban did not exit with code 0, 1 or 2 when checking {self.name!r}. Panic?"
+                )
+
+        output = proc.stderr + proc.stdout
+
+        return TypeCheckResult(
+            zuban_cmd,
+            output=output,
+            success=not bool(proc.returncode),
+            expected_success="zuban" in self.expected_success,
+            runtime=runtime,
+        )
+
     async def run_typechecker(
         self, type_checker: Path, typeshed_dir: Path | None, *, prepend_path: Path | None
     ) -> TypeCheckResult:
@@ -415,6 +486,8 @@ class Project:
             return await self.run_ty(type_checker, typeshed_dir, prepend_path)
         elif ctx.get().type_checker == "pyrefly":
             return await self.run_pyrefly(type_checker, typeshed_dir, prepend_path)
+        elif ctx.get().type_checker == "zuban":
+            return await self.run_zuban(type_checker, typeshed_dir, prepend_path)
         else:
             raise ValueError(f"Unknown type checker: {ctx.get().type_checker}")
 
