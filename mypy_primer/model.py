@@ -416,8 +416,13 @@ class Project:
         if prepend_path is not None:
             zuban_cmd += f" --extra-search-path {quote_path(prepend_path)}"
         if typeshed_dir is None:
+            # Zuban unfortunately needs to know where its typeshed dir is. This
+            # is not needed if it was installed by a wheel, but since we
+            # haven't technically installed Zuban we have to "guess" the
+            # typeshed path, which is inside of the Zuban repository.
             base = zuban.parent.parent.parent
             repo_name = next(entry for entry in base.iterdir() if entry.name != "target")
+
             typeshed_dir = base / repo_name / "third_party" / "typeshed"
         zuban_cmd += f" --custom-typeshed-dir {quote_path(typeshed_dir)}"
         return zuban_cmd
@@ -443,10 +448,12 @@ class Project:
             debug_print(proc.stderr + proc.stdout)
             if proc.returncode == 2:
                 raise RuntimeError(
-                    "Zuban exited with code 2 which may indicate an internal problem (e.g. IO error)"
+                    f"Zuban exited with code 2 when checking {self.name!r}. This may indicate an internal problem (e.g. IO error)"
                 )
             else:
-                raise RuntimeError("Zuban did not exit with code 0, 1 or 2. Panic?")
+                raise RuntimeError(
+                    f"Zuban did not exit with code 0, 1 or 2 when checking {self.name!r}. Panic?"
+                )
 
         output = proc.stderr + proc.stdout
 
