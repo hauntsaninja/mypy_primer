@@ -17,7 +17,15 @@ from typing import Sequence
 
 from mypy_primer.git_utils import ensure_repo_at_revision
 from mypy_primer.globals import ctx
-from mypy_primer.utils import Style, Venv, debug_print, has_uv, quote_path, run
+from mypy_primer.utils import (
+    Style,
+    Venv,
+    debug_print,
+    has_uv,
+    quote_path,
+    remove_uv_version_requirement,
+    run,
+)
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -116,6 +124,7 @@ class Project:
                 name_override=self.name_override,
             )
         assert repo_dir == ctx.get().projects_dir / self.name
+        remove_uv_version_requirement(repo_dir)
         await self.venv.make_venv()
 
         with open(self.venv.site_packages / "primer_prepend.pth", "w") as f:

@@ -13,6 +13,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
+import tomlkit
+
 from mypy_primer.globals import ctx
 
 if sys.platform == "win32":
@@ -117,6 +119,26 @@ async def run(
 @functools.cache
 def has_uv() -> bool:
     return bool(shutil.which("uv"))
+
+
+def remove_uv_version_requirement(repo_dir: Path) -> None:
+    """Remove uv version requirements from a checkout before installing dependencies.
+
+    This can also be called by other consumers of the project corpus, such as
+    ecosystem-analyzer, which manage their own checkouts and installations.
+    """
+    for filename in ("pyproject.toml", "uv.toml"):
+        path = repo_dir / filename
+        try:
+            contents = path.read_text(encoding="utf-8")
+        except FileNotFoundError:
+            continue
+
+        config = tomlkit.parse(contents)
+        uv_config = config.get("tool", {}).get("uv", {}) if filename == "pyproject.toml" else config
+        if "required-version" in uv_config:
+            del uv_config["required-version"]
+            path.write_text(tomlkit.dumps(config), encoding="utf-8")
 
 
 class Venv:
