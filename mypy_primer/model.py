@@ -421,7 +421,7 @@ class Project:
             # haven't technically installed Zuban we have to "guess" the
             # typeshed path, which is inside of the Zuban repository.
             base = zuban.parent.parent.parent
-            repo_name = next(entry for entry in base.iterdir() if entry.name != "target")
+            repo_name = next(entry for entry in base.iterdir() if (entry / "third_party" / "typeshed").exists())
 
             typeshed_dir = base / repo_name / "third_party" / "typeshed"
         zuban_cmd += f" --custom-typeshed-dir {quote_path(typeshed_dir)}"
