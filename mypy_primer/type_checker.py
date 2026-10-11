@@ -208,6 +208,35 @@ async def setup_pyrefly(
     return pyrefly_exe
 
 
+async def setup_zuban(
+    zuban_dir: Path, revision_like: RevisionLike, *, build_profile: str, repo: str | None
+) -> Path:
+    zuban_dir.mkdir(parents=True, exist_ok=True)
+
+    if repo is None:
+        repo = "https://github.com/zubanls/zuban"
+    repo_dir = await ensure_repo_at_revision(repo, zuban_dir, revision_like)
+
+    cargo_target_dir = zuban_dir / "target"
+    env = os.environ.copy()
+    env["CARGO_TARGET_DIR"] = str(cargo_target_dir)
+
+    if not os.environ.get("MYPY_PRIMER_NO_REBUILD", False):
+        try:
+            await run(
+                ["cargo", "build", "--profile", build_profile], cwd=repo_dir, env=env, output=True
+            )
+        except subprocess.CalledProcessError as e:
+            print("Error while building 'zuban'", file=sys.stderr)
+            print(e.stdout, file=sys.stderr)
+            print(e.stderr, file=sys.stderr)
+            raise e
+
+    zuban_exe = cargo_target_dir / _cargo_build_artifact_directory(build_profile) / "zuban"
+    assert zuban_exe.exists()
+    return zuban_exe
+
+
 async def setup_typeshed(parent_dir: Path, *, repo: str, revision_like: RevisionLike) -> Path:
     if parent_dir.exists():
         shutil.rmtree(parent_dir)
