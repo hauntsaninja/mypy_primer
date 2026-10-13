@@ -1356,7 +1356,7 @@ def get_projects() -> list[Project]:
         ),
         Project(
             location="https://github.com/common-workflow-language/schema_salad",
-            mypy_cmd="MYPYPATH=$MYPYPATH:mypy-stubs {mypy} schema_salad",
+            mypy_cmd="MYPYPATH=$MYPYPATH:mypy-stubs {mypy} src/schema_salad",
             pyright_cmd=None,
             install_cmd="{install} $(grep -v mypy mypy-requirements.txt) -r requirements.txt",
             deps=["pytest", "setuptools"],
