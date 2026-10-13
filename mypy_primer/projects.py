@@ -73,6 +73,7 @@ def get_projects() -> list[Project]:
                 "pytest",
                 "types-psutil",
                 "types-setuptools",
+                "setuptools>=83",  # For distutils --> setuptools._distutils alias
                 "filelock",
                 "tomli",
                 "mypy-extensions",
@@ -521,7 +522,11 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} {paths} --ignore-missing-imports",
             pyright_cmd="{pyright} {paths}",
             paths=["aioredis"],
-            deps=["async-timeout"],
+            deps=[
+                "async-timeout",
+                "types-setuptools",
+                "setuptools>=83",  # For distutils --> setuptools._distutils alias
+            ],
             cost={"mypy": 14, "ty": 1},
         ),
         Project(
@@ -1007,6 +1012,7 @@ def get_projects() -> list[Project]:
                 "attrs",
                 "types-six",
                 "types-setuptools",
+                "setuptools",  # For distutils --> setuptools._distutils alias
                 "types-docutils",
                 "types-PyYAML",
                 "types-protobuf",
@@ -1206,6 +1212,10 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} {paths}",
             pyright_cmd="{pyright} {paths}",
             paths=["src"],
+            deps=[
+                "types-setuptools",
+                "setuptools>=83",  # For distutils --> setuptools._distutils alias
+            ],
             cost={"pyright": 45, "mypy": 36, "ty": 4},
         ),
         Project(
@@ -1626,7 +1636,11 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} {paths} --platform win32",
             pyright_cmd="{pyright} {paths}",
             paths=["comtypes"],
-            deps=["numpy"],
+            deps=[
+                "numpy",
+                "types-setuptools",
+                "setuptools>=83",  # For distutils --> setuptools._distutils alias
+            ],
             cost={"mypy": 34, "ty": 1},
         ),
         Project(
