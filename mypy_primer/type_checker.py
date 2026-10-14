@@ -104,9 +104,10 @@ async def setup_mypy(
     with open(venv.site_packages / "primer_plugin.pth", "w") as f:
         # pth file that lets us let mypy import plugins from another venv
         # importantly, this puts the plugin paths at the back of sys.path, so they cannot
-        # clobber mypy or its dependencies
+        # clobber mypy or its dependencies. Treat them as site directories so their own
+        # pth files are processed too.
         f.write(
-            r"""import os; import sys; exec('''env = os.environ.get("MYPY_PRIMER_PLUGIN_SITE_PACKAGES")\nif env: sys.path.extend(env.split(os.pathsep))''')"""
+            r"""import os; import site; exec('''env = os.environ.get("MYPY_PRIMER_PLUGIN_SITE_PACKAGES")\nif env:\n for path in env.split(os.pathsep): site.addsitedir(path)''')"""
         )
 
     mypy_exe = venv.script("mypy")
