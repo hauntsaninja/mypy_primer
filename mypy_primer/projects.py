@@ -2030,6 +2030,13 @@ def get_projects() -> list[Project]:
             deps=["numpy", "scipy-stubs"],
             expected_success=("pyright",),
         ),
+        Project(
+            location="https://github.com/pymc-devs/pytensor",
+            mypy_cmd="{mypy} {paths}",
+            pyright_cmd="{pyright} {paths}",
+            paths=["pytensor"],
+            deps=["numpy", "scipy-stubs"],
+        ),
     ]
     assert len(projects) == len({p.name for p in projects})
     for p in projects:
