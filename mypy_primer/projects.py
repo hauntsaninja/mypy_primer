@@ -201,6 +201,7 @@ def get_projects() -> list[Project]:
                 "snowballstemmer",
                 "requests",
                 "pytest",
+                "types-Pygments",
             ],
             cost={"mypy": 125, "ty": 3},
         ),
