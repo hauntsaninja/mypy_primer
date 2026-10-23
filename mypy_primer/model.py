@@ -549,7 +549,12 @@ class PrimerResult:
         diff_lines = [
             line
             for line in d.compare(old_lines, new_lines)
-            if line[0] in ("+", "-") or "INTERNAL ERROR" in line
+            if (
+                (line[0] in ("+", "-") or "INTERNAL ERROR" in line)
+                # Also drop lines with this note, because where it appears is non-deterministic
+                # with parallel type checking
+                and "running_mypy.html#missing-imports" not in line
+            )
         ]
         net_change: dict[str, int] = defaultdict(int)
         for line in diff_lines:
