@@ -409,6 +409,7 @@ def get_projects() -> list[Project]:
             location="https://github.com/wemake-services/django-modern-rest",
             mypy_cmd="{mypy} {paths}",
             pyright_cmd="{pyright}",
+            pyrefly_cmd="{pyrefly} check {paths}",
             paths=["dmr"],
             deps=[
                 "django-stubs",
@@ -419,7 +420,7 @@ def get_projects() -> list[Project]:
                 "polyfactory",
                 "redis",
             ],
-            expected_success=("mypy", "pyright"),
+            expected_success=("mypy", "pyright", "pyrefly"),
             cost={"mypy": 6, "pyright": 6},
         ),
         Project(
