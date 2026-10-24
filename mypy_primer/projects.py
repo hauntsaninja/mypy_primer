@@ -1190,7 +1190,7 @@ def get_projects() -> list[Project]:
             pyright_cmd=None,
             paths=["django-stubs"],
             install_cmd="{install} . ./ext",
-            deps=["asgiref", "django-stubs-ext", "django", "redis", "tomli", "types-PyYAML"],
+            deps=["asgiref", "django-stubs-ext", "django", "psycopg2-binary", "redis", "tomli", "types-PyYAML"],
             needs_mypy_plugins=True,
             expected_success=("mypy",),
             cost={"mypy": 32, "ty": 3},
