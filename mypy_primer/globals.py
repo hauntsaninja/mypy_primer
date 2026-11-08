@@ -83,7 +83,7 @@ def parse_options(argv: list[str]) -> _Args:
     type_checker_group.add_argument(
         "--type-checker",
         default="mypy",
-        choices=["mypy", "pyright", "ty", "pyrefly"],
+        choices=["mypy", "pyright", "ty", "pyrefly", "zuban"],
         help="type checker to use",
     )
     type_checker_group.add_argument(
@@ -95,7 +95,7 @@ def parse_options(argv: list[str]) -> _Args:
     )
     type_checker_group.add_argument(
         "--cargo-profile",
-        help="cargo build profile to use (e.g., 'dev', 'release', or custom profiles; only relevant for pyrefly/ty)",
+        help="cargo build profile to use (e.g., 'dev', 'release', or custom profiles; only relevant for pyrefly/ty/zuban)",
     )
     type_checker_group.add_argument(
         "--mypyc-compile-level",
@@ -239,9 +239,9 @@ def parse_options(argv: list[str]) -> _Args:
         parser.error("--shard-index and --num-shards must be used together")
     if ret.type_checker != "mypy" and ret.mypyc_compile_level is not None:
         parser.error("--mypyc-compile-level can only be used with --type-checker=mypy")
-    if ret.cargo_profile is not None and ret.type_checker not in {"pyrefly", "ty"}:
+    if ret.cargo_profile is not None and ret.type_checker not in {"pyrefly", "ty", "zuban"}:
         parser.error(
-            "`--cargo-profile` can only be used with `--type-checker=pyrefly` or `--type-checker=ty`"
+            "`--cargo-profile` can only be used with `--type-checker=pyrefly`, `--type-checker=ty` or `--type-checker=zuban`"
         )
 
     return ret
