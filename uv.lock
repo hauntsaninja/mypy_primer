@@ -1,6 +1,10 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.11"
+
+[options]
+exclude-newer = "0001-01-01T00:00:00Z" # This has no effect and is included for backwards compatibility when using relative exclude-newer values.
+exclude-newer-span = "P4D"
 
 [[package]]
 name = "black"
@@ -129,6 +133,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "tomlkit" },
+    { name = "typing-extensions" },
 ]
 
 [package.dev-dependencies]
@@ -140,7 +145,10 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "tomlkit", specifier = ">=0.13.2" }]
+requires-dist = [
+    { name = "tomlkit", specifier = ">=0.13.2" },
+    { name = "typing-extensions", specifier = ">=4.12.2" },
+]
 
 [package.metadata.requires-dev]
 dev = [
