@@ -140,6 +140,19 @@ def get_projects() -> list[Project]:
             cost={"mypy": 47, "ty": 3},
         ),
         Project(
+            location="https://github.com/numpy/numpy",
+            # Skip NumPy in mypy primer runs. It added over nine minutes in a benchmark.
+            mypy_cmd=None,
+            # Skip NumPy in Pyright primer runs. It added at least fourteen minutes in a benchmark.
+            pyright_cmd=None,
+            # Exclude the typing-test fixtures, which include intentionally invalid inputs.
+            ty_cmd="{ty} check {paths} --exclude numpy/typing/tests/data",
+            pyrefly_cmd=None,
+            paths=["numpy"],
+            deps=["charset-normalizer", "hypothesis", "pytest"],
+            min_python_version=(3, 12),
+        ),
+        Project(
             location="https://github.com/pandas-dev/pandas",
             mypy_cmd="{mypy} {paths}",
             pyright_cmd="{pyright} {paths}",
