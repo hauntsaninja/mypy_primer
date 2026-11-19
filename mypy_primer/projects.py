@@ -147,11 +147,7 @@ def get_projects() -> list[Project]:
             pyright_cmd=None,
             # Exclude the typing-test fixtures, which include intentionally invalid inputs.
             ty_cmd="{ty} check {paths} --exclude numpy/typing/tests/data",
-            # NumPy's Pyrefly config only includes stubs. File globs also select runtime tests.
-            pyrefly_cmd=(
-                "{pyrefly} check 'numpy/**/*.py' 'numpy/**/*.pyi'"
-                " --project-excludes 'numpy/typing/tests/data/**'"
-            ),
+            pyrefly_cmd=None,
             paths=["numpy"],
             deps=["charset-normalizer", "hypothesis", "pytest"],
             min_python_version=(3, 12),
