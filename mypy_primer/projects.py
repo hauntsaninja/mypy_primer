@@ -2062,8 +2062,8 @@ def get_projects() -> list[Project]:
         ),
         Project(
             location="https://github.com/python-jsonschema/jsonschema",
-            # The upstream mypy configuration excludes jsonschema/benchmarks.
-            mypy_cmd="{mypy} --config-file= --ignore-missing-imports --check-untyped-defs {paths}",
+            # Note that mypy excludes jsonschema/benchmarks through configuration
+            mypy_cmd="{mypy} {paths}",
             pyright_cmd="{pyright} {paths}",
             paths=["jsonschema"],
             deps=[
@@ -2079,8 +2079,7 @@ def get_projects() -> list[Project]:
         ),
         Project(
             location="https://github.com/python-attrs/cattrs",
-            # Check unannotated tests and benchmarks without requiring annotations.
-            mypy_cmd="{mypy} --config-file= --check-untyped-defs {paths}",
+            mypy_cmd="{mypy} {paths}",
             pyright_cmd="{pyright} {paths}",
             paths=["src", "tests", "bench"],
             deps=[
