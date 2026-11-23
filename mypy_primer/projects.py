@@ -2082,14 +2082,7 @@ def get_projects() -> list[Project]:
             mypy_cmd="{mypy} {paths}",
             pyright_cmd="{pyright} {paths}",
             paths=["src", "tests", "bench"],
-            deps=[
-                "attrs",
-                "hypothesis",
-                "immutables",
-                "pytest",
-                "pytest-benchmark",
-                "typing-extensions",
-            ],
+            deps=["attrs", "hypothesis", "immutables", "pytest", "pytest-benchmark"],
             min_python_version=(3, 10),
         ),
     ]
