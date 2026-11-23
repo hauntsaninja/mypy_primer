@@ -2060,6 +2060,31 @@ def get_projects() -> list[Project]:
             paths=["pytensor"],
             deps=["numpy", "scipy-stubs"],
         ),
+        Project(
+            location="https://github.com/python-jsonschema/jsonschema",
+            # Note that mypy excludes jsonschema/benchmarks through configuration
+            mypy_cmd="{mypy} {paths}",
+            pyright_cmd="{pyright} {paths}",
+            paths=["jsonschema"],
+            deps=[
+                "attrs",
+                "hypothesis",
+                "jsonpath-ng",
+                "jsonschema-specifications",
+                "pyperf",
+                "referencing",
+                "rpds-py",
+            ],
+            min_python_version=(3, 12),
+        ),
+        Project(
+            location="https://github.com/python-attrs/cattrs",
+            mypy_cmd="{mypy} {paths}",
+            pyright_cmd="{pyright} {paths}",
+            paths=["src", "tests", "bench"],
+            deps=["attrs", "hypothesis", "immutables", "pytest", "pytest-benchmark"],
+            min_python_version=(3, 10),
+        ),
     ]
     assert len(projects) == len({p.name for p in projects})
     for p in projects:
